@@ -1,4 +1,31 @@
 {
+  "weekly-example-1": [
+    {
+      "slug": "hello-world",
+      "title": "Hello World",
+      "similarity": 0.478
+    },
+    {
+      "slug": "astro-koharu-guide",
+      "title": "astro-koharu 使用指南",
+      "similarity": 0.449
+    },
+    {
+      "slug": "markdown-features",
+      "title": "Markdown 增强功能演示",
+      "similarity": 0.418
+    },
+    {
+      "slug": "toc-no-numbering",
+      "title": "关闭目录编号示例",
+      "similarity": 0.409
+    },
+    {
+      "slug": "theme-customization",
+      "title": "主题定制指南",
+      "similarity": 0.373
+    }
+  ],
   "getting-started": [
     {
       "slug": "astro-koharu-guide",
@@ -53,6 +80,33 @@
       "similarity": 0.527
     }
   ],
+  "hello-world": [
+    {
+      "slug": "astro-koharu-guide",
+      "title": "astro-koharu 使用指南",
+      "similarity": 0.527
+    },
+    {
+      "slug": "weekly-example-1",
+      "title": "示例周刊 Vol.1",
+      "similarity": 0.478
+    },
+    {
+      "slug": "theme-customization",
+      "title": "主题定制指南",
+      "similarity": 0.462
+    },
+    {
+      "slug": "getting-started",
+      "title": "欢迎使用 astro-koharu",
+      "similarity": 0.425
+    },
+    {
+      "slug": "markdown-features",
+      "title": "Markdown 增强功能演示",
+      "similarity": 0.406
+    }
+  ],
   "toc-no-numbering": [
     {
       "slug": "theme-customization",
@@ -75,9 +129,9 @@
       "similarity": 0.513
     },
     {
-      "slug": "hello-world",
-      "title": "Hello World",
-      "similarity": 0.364
+      "slug": "weekly-example-1",
+      "title": "示例周刊 Vol.1",
+      "similarity": 0.409
     }
   ],
   "markdown-features": [
@@ -102,36 +156,9 @@
       "similarity": 0.541
     },
     {
-      "slug": "hello-world",
-      "title": "Hello World",
-      "similarity": 0.406
-    }
-  ],
-  "hello-world": [
-    {
-      "slug": "astro-koharu-guide",
-      "title": "astro-koharu 使用指南",
-      "similarity": 0.527
-    },
-    {
-      "slug": "theme-customization",
-      "title": "主题定制指南",
-      "similarity": 0.462
-    },
-    {
-      "slug": "getting-started",
-      "title": "欢迎使用 astro-koharu",
-      "similarity": 0.425
-    },
-    {
-      "slug": "markdown-features",
-      "title": "Markdown 增强功能演示",
-      "similarity": 0.406
-    },
-    {
-      "slug": "toc-no-numbering",
-      "title": "关闭目录编号示例",
-      "similarity": 0.364
+      "slug": "weekly-example-1",
+      "title": "示例周刊 Vol.1",
+      "similarity": 0.418
     }
   ],
   "theme-customization": [

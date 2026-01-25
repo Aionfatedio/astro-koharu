@@ -2,18 +2,18 @@
 title: Markdown 增强功能演示
 link: markdown-features
 catalog: true
-date: 2024-01-02 00:00:00
+date: 2024-01-02 08:00:00
 description: 展示 astro-koharu 支持的所有 Markdown 增强功能，包括代码高亮、Mermaid 图表、GFM 表格等。
 tags:
   - Markdown
   - 教程
 categories:
   - 笔记
+updated: 2026-01-25 15:34:45
 ---
-
 本文展示 astro-koharu 支持的所有 Markdown 增强功能。
 
-## 链接嵌入功能
+## 链接嵌入
 
 astro-koharu 支持自动嵌入独行链接，包括 Tweet 和通用链接预览。
 
@@ -21,13 +21,13 @@ astro-koharu 支持自动嵌入独行链接，包括 Tweet 和通用链接预览
 
 下面是一条独行的 Twitter 链接，应该自动转换为 Tweet 组件：
 
-https://twitter.com/vercel_dev/status/1997059920936775706
+<https://twitter.com/vercel_dev/status/1997059920936775706>
 
 这是普通段落中的链接 [Vercel Tweet](https://twitter.com/vercel_dev/status/1997059920936775706)，不应该被嵌入。
 
 使用新域名 x.com 的 Tweet：
 
-https://x.com/vercel_dev/status/1997059920936775706
+<https://x.com/vercel_dev/status/1997059920936775706>
 
 ### 通用链接预览测试
 
@@ -35,26 +35,68 @@ https://x.com/vercel_dev/status/1997059920936775706
 
 下面是一个独行的普通链接，应该显示 OG 预览卡片：
 
-https://github.com/vercel/react-tweet
+<https://github.com/vercel/react-tweet>
 
 这是没有 OG 图的链接
 
-https://react-tweet.vercel.app/
+<https://react-tweet.vercel.app/>
 
 这是获取不到 OG 信息的链接
 
-https://zhuanlan.zhihu.com/p/1900483903984243480
+<https://zhuanlan.zhihu.com/p/1900483903984243480>
 
 ### Codepen 链接嵌入
 
-https://codepen.io/botteu/pen/YPKBrJX/
+<https://codepen.io/botteu/pen/YPKBrJX/>
 
 ### 链接嵌入规则
 
-- 独行的 Twitter/X 链接自动转换为 Tweet 组件
-- 独行的其他链接显示 OG 预览卡片
-- 段落内的链接保持原样
-- 支持深色/浅色主题切换
+* 独行的 Twitter/X 链接自动转换为 Tweet 组件
+
+* 独行的其他链接显示 OG 预览卡片
+
+* 段落内的链接保持原样
+
+* 支持深色/浅色主题切换
+
+## 图片嵌入
+
+图片会自动应用 LQIP（低质量图片占位符）效果：
+
+![示例图片](/img/cover/3.webp)
+
+## 视频嵌入
+
+<video src="/media/test.webm"></video>
+
+## 漫画阅读器
+
+使用 `::comic{}` 指令可以嵌入漫画阅读器卡片。点击卡片即可全屏阅读漫画。\
+::comic{id="manga1" name="催眠されちゃった私" src="/img/comic/manga1/manifest.json" author="みけねこ (simao)"}
+::comic{id="manga2" name="教え子と理性崩壊セックス" src="/img/comic/manga2/manifest.json" author="みけねこ (simao)"}
+::comic{id="manga3" name="少年よ、私を抱け。" src="/img/comic/manga3/manifest.json" author="鳥居ヨシツナ"}
+
+### 漫画指令语法
+
+```markdown
+::comic{id="漫画ID" name="催眠されちゃった私" src="/path/to/manifest.json" author="みけねこ (simao) " cover="/path/to/cover.jpg"}
+```
+
+**参数说明：**
+
+* `id`：漫画唯一标识符（必填）
+
+* `name`：漫画显示名称（必填）
+
+* `src`：manifest.json 文件路径（必填）
+
+```bash
+pnpm generate:comics
+```
+
+* `author`：作者名称（可选）
+
+* `cover`：封面图片路径（可选）
 
 ## 代码高亮
 
@@ -123,19 +165,19 @@ echo "Server is running at http://localhost:4321"
 
 ## GFM 表格
 
-| 功能     | 支持状态 |         说明 |
-| :------- | :------: | -----------: |
-| 表格     |    ✅    |     支持对齐 |
-| 任务列表 |    ✅    |       复选框 |
-| 删除线   |    ✅    | ~~删除文本~~ |
-| 自动链接 |    ✅    | 自动识别 URL |
+| 功能   | 支持状态 | 说明       |
+| ---- | ---- | -------- |
+| 表格   | ✅    | 支持对齐     |
+| 任务列表 | ✅    | 复选框      |
+| 删除线  | ✅    | ~~删除文本~~ |
+| 自动链接 | ✅    | 自动识别 URL |
 
 ## 任务列表
 
-- [x] 安装 astro-koharu
-- [x] 配置站点信息
-- [ ] 写第一篇文章
-- [ ] 部署到 Vercel
+* [x] 安装 astro-koharu
+* [x] 配置站点信息
+* [ ] 写第一篇文章
+* [ ] 部署到 Vercel
 
 ## Mermaid 图表
 
@@ -177,16 +219,19 @@ pie title 博客内容分布
 
 ## 文本样式
 
-- **粗体文本**
-- _斜体文本_
-- ~~删除线~~
-- `行内代码`
-- [链接文本](https://github.com/cosZone/astro-koharu)
+* **粗体文本**
+
+* *斜体文本*
+
+* ~~删除线~~
+
+* `行内代码`
+
+* [链接文本](https://github.com/cosZone/astro-koharu)
 
 ## 引用
 
-> 这是一段引用文本。
->
+> 这是一段引用文本。\
 > astro-koharu 让博客搭建变得简单而优雅。
 
 ## 标题层级
@@ -203,59 +248,35 @@ pie title 博客内容分布
 
 ## 分割线
 
----
+***
 
 ## 列表
 
 ### 无序列表
 
-- 项目一
-  - 子项目 A
-  - 子项目 B
-- 项目二
-- 项目三
+* 项目一
+
+  * 子项目 A
+
+  * 子项目 B
+
+* 项目二
+
+* 项目三
 
 ### 有序列表
 
 1. 第一步
+
 2. 第二步
+
    1. 子步骤 A
+
    2. 子步骤 B
+
       1. 子步骤 C
+
 3. 第三步
-
-## 图片
-
-图片会自动应用 LQIP（低质量图片占位符）效果：
-
-![示例图片](/img/cover/3.webp)
-
-## 漫画阅读器
-
-使用 `::comic{}` 指令可以嵌入漫画阅读器卡片。点击卡片即可全屏阅读漫画。
-
-::comic{id="manga1" name="催眠されちゃった私" src="/img/comic/manga1/manifest.json" author="みけねこ (simao)"}
-::comic{id="manga2" name="教え子と理性崩壊セックス" src="/img/comic/manga2/manifest.json" author="みけねこ (simao)"}
-::comic{id="manga3" name="少年よ、私を抱け。" src="/img/comic/manga3/manifest.json" author="鳥居ヨシツナ"}
-
-### 漫画指令语法
-
-```markdown
-::comic{id="漫画ID" name="催眠されちゃった私" src="/path/to/manifest.json" author="みけねこ (simao) " cover="/path/to/cover.jpg"}
-```
-
-**参数说明：**
-
-- `id`：漫画唯一标识符（必填）
-- `name`：漫画显示名称（必填）
-- `src`：manifest.json 文件路径（必填）
-
-```bash
-pnpm generate:comics
-```
-
-- `author`：作者名称（可选）
-- `cover`：封面图片路径（可选）
 
 ## 总结
 
