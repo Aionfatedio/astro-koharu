@@ -8,7 +8,9 @@
     "generate:similarities": "npx tsx src/scripts/generateSimilarities.ts",
     "generate:summaries": "npx tsx src/scripts/generateSummaries.ts",
     "generate:summaries:force": "npx tsx src/scripts/generateSummaries.ts --force",
-    "generate:all": "npm run generate:lqips && npm run generate:summaries && npm run generate:similarities",
+    "generate:comics": "npx tsx src/scripts/generateComicManifests.ts",
+    "generate:comics:force": "npx tsx src/scripts/generateComicManifests.ts --force",
+    "generate:all": "npm run generate:lqips && npm run generate:summaries && npm run generate:similarities && npm run generate:comics",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
@@ -67,6 +69,7 @@
     "metascraper-url": "^5.49.7",
     "motion": "^11.18.2",
     "nanostores": "^0.11.4",
+    "photoswipe": "^5.4.4",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "react-error-boundary": "^5.0.0",
@@ -75,6 +78,7 @@
     "reading-time": "^1.5.0",
     "rehype-autolink-headings": "^7.1.0",
     "rehype-slug": "^6.0.0",
+    "remark-directive": "^4.0.0",
     "sanitize-html": "^2.17.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^2.6.0",
@@ -126,5 +130,6 @@
     "*.{md,mdx}": [
       "lint-md --fix"
     ]
-  }
+  },
+  "packageManager": "pnpm@10.12.1+sha512.f0dda8580f0ee9481c5c79a1d927b9164f2c478e90992ad268bbb2465a736984391d6333d2c327913578b2804af33474ca554ba29c04a8b13060a717675ae3ac"
 }

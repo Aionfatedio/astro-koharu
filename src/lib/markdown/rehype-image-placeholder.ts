@@ -14,6 +14,12 @@ export function rehypeImagePlaceholder() {
       // Skip if already wrapped (e.g., in a figure or custom component)
       if (parent.type === 'element' && parent.tagName === 'figure') return;
 
+      // Skip comic card cover preview images (handled by remark-comic)
+      const existingClass = Array.isArray(node.properties?.class)
+        ? node.properties.class.join(' ')
+        : (node.properties?.class ?? '');
+      if (existingClass.includes('comic-card-cover-preview')) return;
+
       // Skip wrapping if image is inside a link (e.g., [![alt](img)](url))
       // Only add lazy loading attributes, don't wrap with figure
       if (parent.type === 'element' && parent.tagName === 'a') {
@@ -26,9 +32,6 @@ export function rehypeImagePlaceholder() {
       }
 
       // Get existing class (handle both string and array formats per HAST spec)
-      const existingClass = Array.isArray(node.properties?.class)
-        ? node.properties.class.join(' ')
-        : (node.properties?.class ?? '');
 
       // Add lazy loading attributes and class
       node.properties = {

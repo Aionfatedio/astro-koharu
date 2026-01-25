@@ -230,6 +230,33 @@ pie title 博客内容分布
 
 ![示例图片](/img/cover/3.webp)
 
+## 漫画阅读器
+
+使用 `::comic{}` 指令可以嵌入漫画阅读器卡片。点击卡片即可全屏阅读漫画。
+
+::comic{id="manga1" name="催眠されちゃった私" src="/img/comic/manga1/manifest.json" author="みけねこ (simao)"}
+::comic{id="manga2" name="教え子と理性崩壊セックス" src="/img/comic/manga2/manifest.json" author="みけねこ (simao)"}
+::comic{id="manga3" name="少年よ、私を抱け。" src="/img/comic/manga3/manifest.json" author="鳥居ヨシツナ"}
+
+### 漫画指令语法
+
+```markdown
+::comic{id="漫画ID" name="催眠されちゃった私" src="/path/to/manifest.json" author="みけねこ (simao) " cover="/path/to/cover.jpg"}
+```
+
+**参数说明：**
+
+- `id`：漫画唯一标识符（必填）
+- `name`：漫画显示名称（必填）
+- `src`：manifest.json 文件路径（必填）
+
+```bash
+pnpm generate:comics
+```
+
+- `author`：作者名称（可选）
+- `cover`：封面图片路径（可选）
+
 ## 总结
 
 以上展示了 astro-koharu 支持的主要 Markdown 功能。更多功能请参考 [使用指南](/post/astro-koharu-guide)。

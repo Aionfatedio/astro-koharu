@@ -102,7 +102,7 @@ export default function ThemeToggle({ className }: ThemeToggleProps) {
 
   return (
     <button
-      className={`theme-toggle scale-80 cursor-pointer transition duration-300 hover:scale-90 ${className || ''}`}
+      className={`theme-toggle scale-55 cursor-pointer transition duration-300 hover:scale-60 ${className || ''}`}
       tabIndex={0}
       aria-label="toggle theme"
       onKeyDown={handleKeyDown}

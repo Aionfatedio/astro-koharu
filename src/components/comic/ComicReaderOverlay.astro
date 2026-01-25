@@ -1,0 +1,338 @@
+---
+/**
+ * Comic Reader Integration Component
+ * Integrates ComicReadScript for reading comics
+ *
+ * Features:
+ * - Dynamic loading of local ComicReadScript UMD library
+ * - Reading progress persistence via localStorage
+ * - Proper cleanup on page navigation (View Transitions)
+ *
+ * Note: The reader manages its own UI (overlay, controls, etc.)
+ * We only handle library loading and triggering the open() method
+ */
+---
+
+<script>
+  interface ComicManifest {
+    id: string;
+    name: string;
+    author?: string;
+    images: string[];
+  }
+
+  interface ComicReaderAPI {
+    open: (imgList: string[], title?: string) => void;
+    goto: (pageIndex: number) => void;
+    close?: () => void;
+    version: string;
+  }
+
+  // Use window to persist state across Astro page navigations
+  declare global {
+    interface Window {
+      __comicReaderState?: {
+        instance: ComicReaderAPI | null;
+        isInitializing: boolean;
+        initPromise: Promise<ComicReaderAPI> | null;
+        clickHandlerBound: boolean;
+      };
+    }
+  }
+
+  // Initialize global state if not exists
+  function getState() {
+    if (!window.__comicReaderState) {
+      window.__comicReaderState = {
+        instance: null,
+        isInitializing: false,
+        initPromise: null,
+        clickHandlerBound: false,
+      };
+    }
+    return window.__comicReaderState;
+  }
+
+  /**
+   * Destroy existing reader instance and reset state
+   * Called on page navigation to ensure fresh state
+   */
+  function destroyReader(): void {
+    const state = getState();
+
+    // Try to close the reader if it has a close method
+    if (state.instance?.close) {
+      try {
+        state.instance.close();
+      } catch {
+        // Ignore close errors
+      }
+    }
+
+    // Remove any leftover Shadow DOM elements from ComicReadScript
+    const shadowHosts = document.querySelectorAll('[data-comic-reader-host]');
+    shadowHosts.forEach((el) => el.remove());
+
+    // Also try to find and remove the reader's root element by common patterns
+    const possibleRoots = document.querySelectorAll(
+      '#comic-reader-root, .comic-reader-overlay, [class*="comic-read"]'
+    );
+    possibleRoots.forEach((el) => {
+      if (el.shadowRoot || el.getAttribute('data-comic-reader')) {
+        el.remove();
+      }
+    });
+
+    // Reset state
+    state.instance = null;
+    state.isInitializing = false;
+    state.initPromise = null;
+  }
+
+  /**
+   * Load and initialize ComicReader UMD library
+   * Creates fresh instance each time to avoid stale DOM references
+   */
+  function loadComicReader(): Promise<ComicReaderAPI> {
+    const state = getState();
+
+    // Return existing instance if available and valid
+    if (state.instance) {
+      return Promise.resolve(state.instance);
+    }
+
+    // Return existing initialization promise if in progress
+    if (state.initPromise) {
+      return state.initPromise;
+    }
+
+    state.isInitializing = true;
+    state.initPromise = new Promise((resolve, reject) => {
+      // Check if script already loaded
+      const ComicReadScript = (window as any).ComicReadScript;
+      if (ComicReadScript?.initComicReader) {
+        initializeReader(resolve, reject);
+        return;
+      }
+
+      // Check if script tag already exists
+      const existingScript = document.querySelector('script[src="/libs/ComicReader.umd.js"]');
+      if (existingScript) {
+        // Script exists but not loaded yet, wait for it
+        existingScript.addEventListener('load', () => initializeReader(resolve, reject));
+        existingScript.addEventListener('error', () => {
+          state.isInitializing = false;
+          state.initPromise = null;
+          reject(new Error('Failed to load ComicReader library'));
+        });
+        return;
+      }
+
+      // Load script dynamically
+      const script = document.createElement('script');
+      script.src = '/libs/ComicReader.umd.js';
+      script.async = true;
+
+      script.onload = () => {
+        initializeReader(resolve, reject);
+      };
+
+      script.onerror = () => {
+        state.isInitializing = false;
+        state.initPromise = null;
+        reject(new Error('Failed to load ComicReader library'));
+      };
+
+      document.head.appendChild(script);
+    });
+
+    return state.initPromise;
+
+    function initializeReader(
+      resolve: (api: ComicReaderAPI) => void,
+      reject: (error: Error) => void
+    ) {
+      try {
+        const ComicReadScript = (window as any).ComicReadScript;
+        if (!ComicReadScript?.initComicReader) {
+          throw new Error('ComicReadScript.initComicReader not found');
+        }
+
+        const initComicReader = ComicReadScript.initComicReader;
+
+        // Use defaultConfig() if available
+        let config: any;
+
+        if (typeof initComicReader.defaultConfig === 'function') {
+          config = initComicReader.defaultConfig();
+        } else {
+          config = {
+            polyfill: {
+              GM: {
+                getValue: async (key: string, defaultValue: any) => {
+                  try {
+                    const value = localStorage.getItem(`comic-reader-${key}`);
+                    return value ? JSON.parse(value) : defaultValue;
+                  } catch {
+                    return defaultValue;
+                  }
+                },
+                setValue: async (key: string, value: any) => {
+                  localStorage.setItem(`comic-reader-${key}`, JSON.stringify(value));
+                },
+              },
+            },
+            props: {
+              option: {},
+              hotkeys: {},
+              fillEffect: 'zoom',
+            },
+          };
+        }
+
+        const state = getState();
+        state.instance = initComicReader(config);
+        state.isInitializing = false;
+        resolve(state.instance!);
+      } catch (error) {
+        const state = getState();
+        state.isInitializing = false;
+        state.initPromise = null;
+        reject(error instanceof Error ? error : new Error(String(error)));
+      }
+    }
+  }
+
+  /**
+   * Get saved reading progress for a comic
+   */
+  function getReadingProgress(comicId: string): number {
+    try {
+      const key = `comic-progress-${comicId}`;
+      const saved = localStorage.getItem(key);
+      return saved ? parseInt(saved, 10) : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  /**
+   * Open comic reader with specified manifest
+   */
+  async function openComic(
+    comicId: string,
+    comicName: string,
+    manifestSrc: string
+  ): Promise<void> {
+    const state = getState();
+
+    try {
+      // Load manifest first
+      const response = await fetch(manifestSrc);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch manifest: ${response.status}`);
+      }
+
+      const manifest: ComicManifest = await response.json();
+      const images = manifest.images || [];
+
+      if (images.length === 0) {
+        throw new Error('No images found in manifest');
+      }
+
+      // Load and get reader instance
+      const reader = await loadComicReader();
+
+      // Get saved progress
+      const savedPage = getReadingProgress(comicId);
+
+      // Open comic - the reader handles its own UI
+      reader.open(images, comicName);
+
+      // Jump to saved page if any
+      if (savedPage > 0 && savedPage < images.length) {
+        setTimeout(() => {
+          reader.goto(savedPage);
+        }, 200);
+      }
+
+    } catch (error) {
+      console.error('[Comic Reader] Error opening comic:', error);
+      if (!state.isInitializing) {
+        alert(`无法打开漫画: ${error instanceof Error ? error.message : '未知错误'}`);
+      }
+    }
+  }
+
+  /**
+   * Handle click on comic read button (event delegation)
+   */
+  function handleComicClick(e: MouseEvent): void {
+    const target = e.target as HTMLElement;
+    const readBtn = target.closest('.comic-card-read-btn');
+
+    if (readBtn) {
+      const card = readBtn.closest('.comic-card-container');
+      if (card) {
+        const comicId = card.getAttribute('data-comic-id');
+        const comicName = card.getAttribute('data-comic-name');
+        const comicSrc = card.getAttribute('data-comic-src');
+
+        if (comicId && comicName && comicSrc) {
+          e.preventDefault();
+          e.stopPropagation();
+          openComic(comicId, comicName, comicSrc);
+        }
+      }
+    }
+  }
+
+  /**
+   * Initialize event listeners (only once)
+   */
+  function initComicReaderEvents(): void {
+    const state = getState();
+
+    // Only bind click handler once
+    if (!state.clickHandlerBound) {
+      document.addEventListener('click', handleComicClick);
+      state.clickHandlerBound = true;
+    }
+  }
+
+  /**
+   * Pre-load reader if comic cards exist on page
+   */
+  function preloadReaderIfNeeded(): void {
+    const state = getState();
+    const hasComicCards = document.querySelector('.comic-card-container');
+
+    if (hasComicCards && !state.instance && !state.isInitializing) {
+      loadComicReader().catch(() => {
+        // Silently ignore preload errors
+      });
+    }
+  }
+
+  // Initialize on first load
+  if (document.readyState !== 'loading') {
+    initComicReaderEvents();
+    preloadReaderIfNeeded();
+  } else {
+    document.addEventListener('DOMContentLoaded', () => {
+      initComicReaderEvents();
+      preloadReaderIfNeeded();
+    });
+  }
+
+  // Handle Astro page navigation - destroy old instance before swap
+  document.addEventListener('astro:before-swap', () => {
+    destroyReader();
+  });
+
+  // Re-initialize on Astro page load
+  document.addEventListener('astro:page-load', () => {
+    initComicReaderEvents();
+    preloadReaderIfNeeded();
+  });
+</script>

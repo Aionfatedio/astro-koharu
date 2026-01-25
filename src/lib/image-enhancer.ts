@@ -1,440 +1,167 @@
 /**
  * Image loading enhancement
- * Adds loaded/error states, lightbox, and portrait image grouping
+ * Adds loaded/error states and portrait image grouping
+ * Uses PhotoSwipe for lightbox functionality
  */
 
-// 使用 WeakSet 跟踪已增强的图片，避免重复处理
+import type PhotoSwipe from 'photoswipe';
+import type { SlideData } from 'photoswipe';
+
+// Track enhanced images to avoid duplicate processing
 const enhancedImages = new WeakSet<HTMLImageElement>();
 
-// Zoom state for lightbox
-interface ZoomState {
-  scale: number;
-  translateX: number;
-  translateY: number;
-  lastPinchDistance: number;
-  isPinching: boolean;
-  isPanning: boolean;
-  isMouseDragging: boolean;
-  lastPanPoint: { x: number; y: number };
-}
+// Track containers that have click listeners bound
+const boundContainers = new WeakSet<Element>();
 
-const MIN_SCALE = 1;
-const MAX_SCALE = 5;
-
-function getInitialZoomState(): ZoomState {
-  return {
-    scale: 1,
-    translateX: 0,
-    translateY: 0,
-    lastPinchDistance: 0,
-    isPinching: false,
-    isPanning: false,
-    isMouseDragging: false,
-    lastPanPoint: { x: 0, y: 0 },
-  };
-}
-
-let zoomState = getInitialZoomState();
-
-// Cached lightbox image reference (set when lightbox is created)
-let lightboxImg: HTMLImageElement | null = null;
+// PhotoSwipe instance management
+let photoSwipeInstance: PhotoSwipe | null = null;
+let isOpening = false; // Prevent double-click race condition
 
 /**
- * Get or create lightbox element (handles SPA navigation)
+ * Collect all markdown images in container as PhotoSwipe slide data
  */
-function getLightbox(): HTMLElement {
-  let overlay = document.querySelector('.markdown-image-lightbox');
-  if (!overlay) {
-    overlay = createLightbox();
-    document.body.appendChild(overlay);
-  } else {
-    // Update cached reference if lightbox already exists
-    lightboxImg = overlay.querySelector('.markdown-image-lightbox-img');
+function collectImageSlides(container: Element): SlideData[] {
+  const images = container.querySelectorAll<HTMLImageElement>('.markdown-image.loaded');
+  const slides: SlideData[] = [];
+
+  images.forEach((img) => {
+    if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+      slides.push({
+        src: img.src,
+        width: img.naturalWidth,
+        height: img.naturalHeight,
+        alt: img.alt || '',
+        // Use the same src as placeholder for smooth animation (image is already loaded)
+        msrc: img.src,
+        // Store reference to thumbnail element for zoom animation
+        element: img,
+      });
+    }
+  });
+
+  return slides;
+}
+
+/**
+ * Find index of clicked image in slides array
+ */
+function findImageIndex(slides: SlideData[], clickedImg: HTMLImageElement): number {
+  return slides.findIndex((slide) => slide.src === clickedImg.src);
+}
+
+/**
+ * Open PhotoSwipe lightbox
+ */
+async function openPhotoSwipe(container: Element, clickedImg: HTMLImageElement): Promise<void> {
+  // Prevent double-opening
+  if (isOpening || photoSwipeInstance) {
+    return;
   }
-  return overlay as HTMLElement;
-}
 
-/**
- * Create fullscreen button for images
- */
-function createFullscreenButton(): HTMLButtonElement {
-  const button = document.createElement('button');
-  button.className = 'markdown-image-fullscreen';
-  button.setAttribute('type', 'button');
-  button.setAttribute('aria-label', '全屏查看');
-  button.title = '全屏查看';
-  button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>`;
-  return button;
-}
+  isOpening = true;
 
-/**
- * Get distance between two touch points
- */
-function getTouchDistance(touches: TouchList): number {
-  if (touches.length < 2) return 0;
-  const dx = touches[0].clientX - touches[1].clientX;
-  const dy = touches[0].clientY - touches[1].clientY;
-  return Math.sqrt(dx * dx + dy * dy);
-}
+  try {
+    // Dynamically import PhotoSwipe
+    const { default: PhotoSwipe } = await import('photoswipe');
 
-/**
- * Get center point between two touches
- */
-function getTouchCenter(touches: TouchList): { x: number; y: number } {
-  if (touches.length < 2) {
-    return { x: touches[0].clientX, y: touches[0].clientY };
-  }
-  return {
-    x: (touches[0].clientX + touches[1].clientX) / 2,
-    y: (touches[0].clientY + touches[1].clientY) / 2,
-  };
-}
-
-/**
- * Clamp translation to keep image within reasonable bounds
- */
-function clampTranslation(img: HTMLImageElement): void {
-  if (zoomState.scale <= 1) return;
-
-  const rect = img.getBoundingClientRect();
-  const containerWidth = window.innerWidth;
-  const containerHeight = window.innerHeight;
-
-  // Calculate scaled dimensions
-  const scaledWidth = rect.width;
-  const scaledHeight = rect.height;
-
-  // Allow panning up to half the image size beyond viewport
-  const maxX = Math.max(0, (scaledWidth - containerWidth) / 2 + containerWidth * 0.3);
-  const maxY = Math.max(0, (scaledHeight - containerHeight) / 2 + containerHeight * 0.3);
-
-  zoomState.translateX = Math.max(-maxX, Math.min(maxX, zoomState.translateX));
-  zoomState.translateY = Math.max(-maxY, Math.min(maxY, zoomState.translateY));
-}
-
-/**
- * Apply zoom transform to lightbox image
- */
-function applyZoomTransform(img: HTMLImageElement): void {
-  clampTranslation(img);
-  const { scale, translateX, translateY } = zoomState;
-  img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-  img.style.cursor = scale > 1 ? (zoomState.isMouseDragging ? 'grabbing' : 'grab') : 'zoom-in';
-}
-
-/**
- * Reset zoom state and transform
- */
-function resetZoom(): void {
-  zoomState = getInitialZoomState();
-  if (lightboxImg) {
-    lightboxImg.style.transform = '';
-    lightboxImg.style.cursor = 'zoom-in';
-  }
-}
-
-/**
- * Handle touch start for pinch zoom
- */
-function handleTouchStart(e: TouchEvent): void {
-  if (e.touches.length === 2) {
-    e.preventDefault();
-    zoomState.isPinching = true;
-    zoomState.lastPinchDistance = getTouchDistance(e.touches);
-  } else if (e.touches.length === 1 && zoomState.scale > 1) {
-    // Start panning when zoomed in
-    zoomState.isPanning = true;
-    zoomState.lastPanPoint = {
-      x: e.touches[0].clientX,
-      y: e.touches[0].clientY,
-    };
-  }
-}
-
-/**
- * Handle touch move for pinch zoom and pan
- */
-function handleTouchMove(e: TouchEvent): void {
-  if (!lightboxImg) return;
-
-  if (e.touches.length === 2 && zoomState.isPinching) {
-    e.preventDefault();
-    const currentDistance = getTouchDistance(e.touches);
-    const scaleDelta = currentDistance / zoomState.lastPinchDistance;
-
-    // Calculate new scale
-    let newScale = zoomState.scale * scaleDelta;
-    newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
-
-    // Zoom towards pinch center
-    if (newScale !== zoomState.scale) {
-      const center = getTouchCenter(e.touches);
-      const rect = lightboxImg.getBoundingClientRect();
-      const imgCenterX = rect.left + rect.width / 2;
-      const imgCenterY = rect.top + rect.height / 2;
-
-      // Adjust translation to zoom towards pinch point
-      const scaleRatio = newScale / zoomState.scale;
-      zoomState.translateX = center.x - (center.x - imgCenterX - zoomState.translateX) * scaleRatio - imgCenterX;
-      zoomState.translateY = center.y - (center.y - imgCenterY - zoomState.translateY) * scaleRatio - imgCenterY;
-
-      zoomState.scale = newScale;
-      applyZoomTransform(lightboxImg);
+    // Collect all loaded images as slides
+    const slides = collectImageSlides(container);
+    if (slides.length === 0) {
+      isOpening = false;
+      return;
     }
 
-    zoomState.lastPinchDistance = currentDistance;
-  } else if (e.touches.length === 1 && zoomState.isPanning && zoomState.scale > 1) {
-    e.preventDefault();
-    const deltaX = e.touches[0].clientX - zoomState.lastPanPoint.x;
-    const deltaY = e.touches[0].clientY - zoomState.lastPanPoint.y;
-
-    zoomState.translateX += deltaX;
-    zoomState.translateY += deltaY;
-    zoomState.lastPanPoint = {
-      x: e.touches[0].clientX,
-      y: e.touches[0].clientY,
-    };
-
-    applyZoomTransform(lightboxImg);
-  }
-}
-
-/**
- * Handle touch end
- */
-function handleTouchEnd(e: TouchEvent): void {
-  if (e.touches.length < 2) {
-    zoomState.isPinching = false;
-  }
-  if (e.touches.length === 0) {
-    zoomState.isPanning = false;
-    if (lightboxImg && zoomState.scale > 1) {
-      lightboxImg.style.cursor = 'grab';
+    // Find clicked image index
+    const index = findImageIndex(slides, clickedImg);
+    if (index === -1) {
+      isOpening = false;
+      return;
     }
-  }
 
-  // Reset if scale is close to 1
-  if (zoomState.scale < 1.05) {
-    resetZoom();
+    // Initialize PhotoSwipe
+    const pswp = new PhotoSwipe({
+      dataSource: slides,
+      index,
+      // Animation settings - zoom from thumbnail
+      showHideAnimationType: 'zoom',
+      // Background opacity
+      bgOpacity: 0.9,
+      // Padding around image
+      padding: { top: 20, bottom: 20, left: 20, right: 20 },
+      // Enable close on background click
+      bgClickAction: 'close',
+      // Keyboard bindings
+      escKey: true,
+      arrowKeys: true,
+      // Zoom settings
+      wheelToZoom: true,
+      // Preload adjacent slides
+      preload: [1, 2],
+
+      // === Zoom configuration ===
+      // Allow secondary zoom (click to zoom in further)
+      allowPanToNext: true,
+      // Initial zoom level: fit image to viewport
+      initialZoomLevel: 'fit',
+      // Secondary zoom level: 2x or fill viewport (whichever is larger)
+      secondaryZoomLevel: (zoomLevelObject) => {
+        return 2;
+      },
+      // Maximum zoom level: 4x original size
+      maxZoomLevel: 4,
+
+      // === UI configuration ===
+      // Show zoom button
+      zoom: false,
+      // Show close button
+      close: true,
+
+      // Get thumbnail bounds for zoom animation
+      getThumbBoundsFn: (idx) => {
+        const slide = slides[idx];
+        const thumb = slide?.element as HTMLImageElement | undefined;
+        if (!thumb) return undefined;
+
+        const rect = thumb.getBoundingClientRect();
+        const pageYScroll = window.scrollY || document.documentElement.scrollTop;
+
+        return {
+          x: rect.left,
+          y: rect.top + pageYScroll,
+          w: rect.width,
+        };
+      },
+    });
+
+    // Store instance reference
+    photoSwipeInstance = pswp;
+
+    // Clean up on destroy
+    pswp.on('destroy', () => {
+      photoSwipeInstance = null;
+      isOpening = false;
+    });
+
+    // Initialize and open
+    pswp.init();
+  } catch (error) {
+    console.error('[Image Enhancer] Failed to open PhotoSwipe:', error);
+    isOpening = false;
   }
 }
 
 /**
- * Handle wheel for zoom (ctrl/cmd + scroll or trackpad pinch)
+ * Handle image click for lightbox (using event delegation)
  */
-function handleWheel(e: WheelEvent): void {
-  // Trackpad pinch fires wheel events with ctrlKey
-  if (!e.ctrlKey && !e.metaKey) return;
-  if (!lightboxImg) return;
-
-  e.preventDefault();
-
-  // Calculate new scale
-  const delta = e.deltaY > 0 ? 0.9 : 1.1;
-  let newScale = zoomState.scale * delta;
-  newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
-
-  if (newScale !== zoomState.scale) {
-    const rect = lightboxImg.getBoundingClientRect();
-    const imgCenterX = rect.left + rect.width / 2;
-    const imgCenterY = rect.top + rect.height / 2;
-
-    // Zoom towards cursor position
-    const scaleRatio = newScale / zoomState.scale;
-    zoomState.translateX = e.clientX - (e.clientX - imgCenterX - zoomState.translateX) * scaleRatio - imgCenterX;
-    zoomState.translateY = e.clientY - (e.clientY - imgCenterY - zoomState.translateY) * scaleRatio - imgCenterY;
-
-    zoomState.scale = newScale;
-    applyZoomTransform(lightboxImg);
-  }
-
-  // Reset if scale is close to 1
-  if (zoomState.scale < 1.05) {
-    resetZoom();
-  }
-}
-
-/**
- * Handle double tap/click to toggle zoom
- */
-function handleDoubleClick(e: MouseEvent): void {
-  if (!lightboxImg) return;
+function handleImageClick(container: Element, e: Event): void {
   const target = e.target as HTMLElement;
-  if (!target.classList.contains('markdown-image-lightbox-img')) return;
 
-  e.preventDefault();
-  e.stopPropagation();
-
-  if (zoomState.scale > 1) {
-    // Reset zoom
-    resetZoom();
-  } else {
-    // Zoom to 2x at click point
-    const rect = lightboxImg.getBoundingClientRect();
-    const imgCenterX = rect.left + rect.width / 2;
-    const imgCenterY = rect.top + rect.height / 2;
-
-    const newScale = 2;
-    const scaleRatio = newScale / zoomState.scale;
-    zoomState.translateX = e.clientX - (e.clientX - imgCenterX) * scaleRatio - imgCenterX;
-    zoomState.translateY = e.clientY - (e.clientY - imgCenterY) * scaleRatio - imgCenterY;
-    zoomState.scale = newScale;
-
-    applyZoomTransform(lightboxImg);
-  }
-}
-
-/**
- * Handle mouse move for panning when zoomed
- */
-function handleMouseMove(e: MouseEvent): void {
-  if (!zoomState.isMouseDragging || zoomState.scale <= 1 || !lightboxImg) return;
-
-  const deltaX = e.clientX - zoomState.lastPanPoint.x;
-  const deltaY = e.clientY - zoomState.lastPanPoint.y;
-
-  zoomState.translateX += deltaX;
-  zoomState.translateY += deltaY;
-  zoomState.lastPanPoint = { x: e.clientX, y: e.clientY };
-
-  applyZoomTransform(lightboxImg);
-}
-
-/**
- * Handle mouse up to end panning
- */
-function handleMouseUp(): void {
-  if (zoomState.isMouseDragging) {
-    zoomState.isMouseDragging = false;
-    if (lightboxImg && zoomState.scale > 1) {
-      lightboxImg.style.cursor = 'grab';
-    }
-  }
-}
-
-/**
- * Create lightbox overlay for fullscreen image viewing
- */
-function createLightbox(): HTMLElement {
-  const overlay = document.createElement('div');
-  overlay.className = 'markdown-image-lightbox';
-  overlay.setAttribute('role', 'dialog');
-  overlay.setAttribute('aria-modal', 'true');
-  overlay.setAttribute('aria-label', '图片全屏查看');
-
-  // Close button
-  const closeBtn = document.createElement('button');
-  closeBtn.className = 'markdown-image-lightbox-close';
-  closeBtn.setAttribute('type', 'button');
-  closeBtn.setAttribute('aria-label', '关闭');
-  closeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
-
-  // Image container
-  const imgContainer = document.createElement('div');
-  imgContainer.className = 'markdown-image-lightbox-content';
-
-  const img = document.createElement('img');
-  img.className = 'markdown-image-lightbox-img';
-
-  // Cache the image reference
-  lightboxImg = img;
-
-  imgContainer.appendChild(img);
-  overlay.appendChild(closeBtn);
-  overlay.appendChild(imgContainer);
-
-  // Close on overlay click (not image), but not when zoomed and panning
-  overlay.addEventListener('click', (e) => {
-    if (zoomState.scale > 1) return; // Don't close when zoomed
-    if (e.target === overlay || e.target === imgContainer) {
-      closeLightbox();
-    }
-  });
-
-  // Close button click
-  closeBtn.addEventListener('click', closeLightbox);
-
-  // Touch events for pinch zoom
-  imgContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
-  imgContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
-  imgContainer.addEventListener('touchend', handleTouchEnd);
-  imgContainer.addEventListener('touchcancel', handleTouchEnd);
-
-  // Wheel event for ctrl+scroll zoom (and trackpad pinch)
-  imgContainer.addEventListener('wheel', handleWheel, { passive: false });
-
-  // Double click/tap to toggle zoom
-  img.addEventListener('dblclick', handleDoubleClick);
-
-  // Mouse drag for panning when zoomed (on imgContainer to capture moves outside img)
-  img.addEventListener('mousedown', (e) => {
-    if (zoomState.scale > 1) {
-      e.preventDefault();
-      zoomState.isMouseDragging = true;
-      zoomState.lastPanPoint = { x: e.clientX, y: e.clientY };
-      img.style.cursor = 'grabbing';
-    }
-  });
-
-  // Use imgContainer for mousemove/mouseup to avoid adding listeners to document
-  imgContainer.addEventListener('mousemove', handleMouseMove);
-  imgContainer.addEventListener('mouseup', handleMouseUp);
-  imgContainer.addEventListener('mouseleave', handleMouseUp);
-
-  return overlay;
-}
-
-/**
- * Open lightbox with image
- */
-function openLightbox(imgSrc: string, imgAlt: string): void {
-  const overlay = getLightbox();
-
-  // Reset zoom state at start (ensures clean state even if previous close was interrupted)
-  resetZoom();
-
-  if (!lightboxImg) return;
-
-  // 先隐藏图片，防止显示上一张
-  lightboxImg.classList.remove('loaded');
-  lightboxImg.src = '';
-
-  // 设置新图片源
-  lightboxImg.alt = imgAlt;
-  lightboxImg.src = imgSrc;
-
-  // 图片加载完成后显示
-  lightboxImg.onload = () => {
-    lightboxImg?.classList.add('loaded');
-  };
-
-  overlay.classList.add('active');
-  document.body.classList.add('lightbox-open');
-
-  // Add ESC listener
-  document.addEventListener('keydown', handleLightboxKeydown);
-}
-
-/**
- * Close lightbox
- */
-function closeLightbox(): void {
-  const overlay = document.querySelector('.markdown-image-lightbox');
-  if (overlay) {
-    overlay.classList.remove('active');
-    document.body.classList.remove('lightbox-open');
-    document.removeEventListener('keydown', handleLightboxKeydown);
-    // Reset zoom state
-    resetZoom();
-  }
-}
-
-/**
- * Handle keydown for lightbox
- */
-function handleLightboxKeydown(e: KeyboardEvent): void {
-  if (e.key === 'Escape') {
-    closeLightbox();
+  // Check if clicked on a loaded markdown image
+  if (target.classList.contains('markdown-image') && target.classList.contains('loaded')) {
+    const img = target as HTMLImageElement;
+    e.preventDefault();
+    e.stopPropagation();
+    openPhotoSwipe(container, img);
   }
 }
 
@@ -464,32 +191,18 @@ function createErrorPlaceholder(img: HTMLImageElement): HTMLElement {
 }
 
 /**
- * Handle image click for lightbox (using event delegation)
+ * Main enhancement function
  */
-function handleImageClick(e: Event): void {
-  const target = e.target as HTMLElement;
-
-  // Check if clicked on image or fullscreen button
-  if (target.classList.contains('markdown-image')) {
-    const img = target as HTMLImageElement;
-    openLightbox(img.src, img.alt || '图片');
-  } else if (target.closest('.markdown-image-fullscreen')) {
-    const wrapper = target.closest('.markdown-image-wrapper');
-    const img = wrapper?.querySelector('.markdown-image') as HTMLImageElement;
-    if (img) {
-      e.stopPropagation();
-      openLightbox(img.src, img.alt || '图片');
-    }
-  }
-}
-
 export function enhanceImages(container: Element): void {
   const images = container.querySelectorAll<HTMLImageElement>('.markdown-image');
   let loadedCount = 0;
   const totalImages = images.length;
 
-  // 使用事件委托处理点击，避免为每个图片添加监听器
-  container.addEventListener('click', handleImageClick);
+  // Only bind click listener once per container
+  if (!boundContainers.has(container)) {
+    container.addEventListener('click', (e) => handleImageClick(container, e));
+    boundContainers.add(container);
+  }
 
   const checkAllLoaded = () => {
     loadedCount++;
@@ -557,14 +270,7 @@ function handleImageLoaded(img: HTMLImageElement): void {
     img.closest('.markdown-image-wrapper')?.classList.add('portrait');
   }
 
-  const wrapper = img.closest('.markdown-image-wrapper');
-  if (!wrapper || wrapper.querySelector('.markdown-image-fullscreen')) return;
-
-  // Add fullscreen button (click handled by event delegation)
-  const fullscreenBtn = createFullscreenButton();
-  wrapper.appendChild(fullscreenBtn);
-
-  // Set cursor style
+  // Set cursor style to indicate clickable
   img.style.cursor = 'zoom-in';
 }
 

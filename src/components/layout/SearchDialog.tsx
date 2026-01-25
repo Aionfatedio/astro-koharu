@@ -317,11 +317,11 @@ export function SearchTrigger({ className }: { className?: string }) {
     <button
       type="button"
       onClick={handleClick}
-      className={cn('cursor-pointer transition duration-300 hover:scale-125', className)}
+      className={cn('cursor-pointer transition duration-300 hover:scale-110', className)}
       aria-label="搜索"
       title={title}
     >
-      <SearchIcon className="size-8" />
+      <SearchIcon className="size-5" />
     </button>
   );
 }

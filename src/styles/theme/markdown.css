@@ -91,7 +91,7 @@
     opacity: 0.5;
 
     /* 等宽字体 */
-    font-family: ui-monospace, SFMono-Regular, monospace;
+    font-family: Consolas, ui-monospace, SFMono-Regular, monospace;
 
     transition: opacity 0.3s ease;
   }
@@ -400,7 +400,7 @@
   font-size: 0.75rem;
   font-weight: 500;
   color: hsl(var(--muted-foreground));
-  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-family: Consolas, ui-monospace, SFMono-Regular, monospace;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-left: 0.25rem;
@@ -492,45 +492,6 @@
   object-fit: contain;
 }
 
-/* 全屏按钮样式 */
-.prose .markdown-image-fullscreen {
-  position: absolute;
-  bottom: 0.5rem;
-  right: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  padding: 0;
-  border: none;
-  border-radius: 0.375rem;
-  background: hsl(var(--background) / 0.8);
-  color: hsl(var(--muted-foreground));
-  cursor: pointer;
-  opacity: 0;
-  backdrop-filter: blur(4px);
-  transition:
-    opacity 0.2s ease,
-    background-color 0.2s ease,
-    color 0.2s ease,
-    transform 0.1s ease;
-}
-
-.prose .markdown-image-fullscreen:hover {
-  background: hsl(var(--accent));
-  color: hsl(var(--accent-foreground));
-}
-
-.prose .markdown-image-fullscreen:active {
-  transform: scale(0.95);
-}
-
-/* 悬停时显示按钮 */
-.prose .markdown-image-wrapper:hover .markdown-image-fullscreen {
-  opacity: 1;
-}
-
 /* ========== 竖图并排显示 ========== */
 
 .prose .markdown-image-row {
@@ -547,138 +508,6 @@
 
 .prose .markdown-image-row .markdown-image.loaded {
   max-height: 60vh;
-}
-
-/* ========== 图片全屏 Lightbox ========== */
-
-.markdown-image-lightbox {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: hsl(0 0% 0% / 0.9);
-  backdrop-filter: blur(8px);
-  opacity: 0;
-  visibility: hidden;
-  transition:
-    opacity 0.3s ease,
-    visibility 0.3s ease;
-}
-
-.markdown-image-lightbox.active {
-  opacity: 1;
-  visibility: visible;
-}
-
-/* 关闭按钮 */
-.markdown-image-lightbox-close {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 3rem;
-  height: 3rem;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: hsl(var(--background) / 0.2);
-  color: white;
-  cursor: pointer;
-  transition:
-    background-color 0.2s ease,
-    transform 0.1s ease;
-}
-
-.markdown-image-lightbox-close:hover {
-  background: hsl(var(--background) / 0.4);
-}
-
-.markdown-image-lightbox-close:active {
-  transform: scale(0.95);
-}
-
-/* 图片容器 */
-.markdown-image-lightbox-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  max-width: 90vw;
-  max-height: 90vh;
-  padding: 1rem;
-  /* 禁止浏览器默认触摸行为，让我们自己处理手势 */
-  touch-action: none;
-  /* 禁止选中图片 */
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-/* Lightbox 图片 */
-.markdown-image-lightbox-img {
-  max-width: 100%;
-  max-height: 85vh;
-  object-fit: contain;
-  border-radius: 0.5rem;
-  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.5);
-
-  /* 加载前隐藏，防止显示上一张图片 */
-  opacity: 0;
-  transition: opacity 0.2s ease-in-out;
-
-  /* 默认缩放光标 */
-  cursor: zoom-in;
-
-  /* 允许 transform 动画 */
-  transform-origin: center center;
-  will-change: transform;
-}
-
-.markdown-image-lightbox-img.loaded {
-  opacity: 1;
-}
-
-/* 缩放提示 */
-.markdown-image-lightbox::after {
-  content: "双击放大 · 滚轮/双指缩放";
-  position: absolute;
-  bottom: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 0.5rem 1rem;
-  background: hsl(0 0% 0% / 0.5);
-  color: hsl(0 0% 100% / 0.7);
-  font-size: 0.75rem;
-  border-radius: 1rem;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-/* 触屏设备显示不同提示 */
-@media (pointer: coarse) {
-  .markdown-image-lightbox::after {
-    content: "双击放大 · 双指缩放";
-  }
-}
-
-.markdown-image-lightbox.active::after {
-  opacity: 1;
-  animation: fade-out-hint 3s ease forwards;
-  animation-delay: 2s;
-}
-
-@keyframes fade-out-hint {
-  to {
-    opacity: 0;
-  }
-}
-
-/* Lightbox 打开时禁止背景滚动 */
-body.lightbox-open {
-  overflow: hidden;
 }
 
 /* 图片加载失败状态 - 隐藏损坏图片 */
@@ -797,7 +626,7 @@ body.lightbox-open {
   font-size: 0.75rem;
   font-weight: 500;
   color: hsl(var(--muted-foreground));
-  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-family: Consolas, ui-monospace, SFMono-Regular, monospace;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-left: 0.25rem;
@@ -1048,4 +877,238 @@ body.lightbox-open {
 .mermaid-button[disabled] {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+/* ========================================
+   Comic Card Styles
+   ======================================== */
+
+.comic-card-container {
+  margin: 1.5rem 0;
+}
+
+.comic-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+  box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1);
+}
+
+.comic-card:hover {
+  background: hsl(var(--accent));
+  border-color: hsl(var(--primary) / 0.3);
+  box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.15);
+  transform: translateY(-2px);
+}
+
+.comic-card:active {
+  transform: translateY(0);
+}
+
+/* Comic icon - always show SVG placeholder */
+.comic-card-icon {
+  position: relative;
+  flex-shrink: 0;
+  width: 3.5rem;
+  height: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: hsl(var(--primary) / 0.1);
+  border-radius: 0.5rem;
+  color: hsl(var(--primary));
+  transition: all 0.2s ease;
+}
+
+.comic-card-icon-svg {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+/* Hover cover preview - floating near cursor */
+.comic-card-cover-preview {
+  position: absolute;
+  left: calc(100% + 0.75rem);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 200px;
+  height: auto;
+  max-width: 9999px;
+  max-height: 9999px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  box-shadow: 0 8px 24px -4px rgb(0 0 0 / 0.3);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease,
+    transform 0.2s ease;
+  z-index: 100;
+}
+
+.comic-card-icon:hover .comic-card-cover-preview {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) scale(1.02);
+}
+
+/* Adjust preview position on small screens */
+@media (max-width: 640px) {
+  .comic-card-cover-preview {
+    left: 50%;
+    top: auto;
+    bottom: calc(100% + 0.5rem);
+    transform: translateX(-50%);
+    width: 100px;
+    max-height: 150px;
+  }
+
+  .comic-card-icon:hover .comic-card-cover-preview {
+    transform: translateX(-50%) scale(1.02);
+  }
+}
+
+/* Comic info */
+.comic-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.comic-card-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comic-card-author {
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  margin-top: 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Read button */
+.comic-card-read-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease;
+}
+
+.comic-card-read-btn:hover {
+  background: hsl(var(--primary) / 0.9);
+}
+
+.comic-card-read-btn:active {
+  transform: scale(0.97);
+}
+
+.comic-card-arrow {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.comic-card:hover .comic-card-arrow {
+  transform: translateX(2px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .comic-card {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .comic-card-info {
+    flex: 1 1 calc(100% - 4.5rem);
+  }
+
+  .comic-card-read-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Dark mode adjustments */
+.dark .comic-card {
+  box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.3);
+}
+
+.dark .comic-card:hover {
+  box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.4);
+}
+
+.dark .comic-card-cover-preview {
+  box-shadow: 0 8px 24px -4px rgb(0 0 0 / 0.5);
+}
+
+/* ========================================
+   PhotoSwipe Customization
+   ======================================== */
+
+/* Custom background color (no blur for performance) */
+.pswp {
+  --pswp-bg: rgb(0 0 0 / 0.9);
+  --pswp-icon-color: rgba(255, 255, 255, 0.85);
+  --pswp-icon-color-secondary: rgba(255, 255, 255, 0.5);
+  --pswp-icon-stroke-color: rgba(0, 0, 0, 0.3);
+  --pswp-icon-stroke-width: 1px;
+  --pswp-error-text-color: rgba(255, 255, 255, 0.65);
+}
+
+/* Rounded corners for final image only (not placeholder)
+   Placeholder uses transform:scale() which would magnify border-radius */
+.pswp__img--placeholder {
+  border-radius: 0.2rem;
+}
+
+.pswp__img:not(.pswp__img--placeholder) {
+  border-radius: 0.5rem;
+}
+
+/* Enhance button hover states */
+.pswp__button {
+  transition: opacity 0.2s ease;
+}
+
+.pswp__button:hover {
+  /* biome-ignore lint/complexity/noImportantStyles: Override PhotoSwipe default opacity */
+  opacity: 1 !important;
+}
+
+/* Counter styling */
+.pswp__counter {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.875rem;
+  opacity: 0.75;
 }

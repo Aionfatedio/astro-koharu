@@ -10,10 +10,12 @@ import mermaid from 'astro-mermaid';
 import pagefind from 'astro-pagefind';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeSlug from 'rehype-slug';
+import remarkDirective from 'remark-directive';
 import { visualizer } from 'rollup-plugin-visualizer';
 import svgr from 'vite-plugin-svgr';
 import YAML from 'yaml';
 import { rehypeImagePlaceholder } from './src/lib/markdown/rehype-image-placeholder.ts';
+import { remarkComic } from './src/lib/markdown/remark-comic.ts';
 import { remarkLinkEmbed } from './src/lib/markdown/remark-link-embed.ts';
 import { normalizeUrl } from './src/lib/utils.ts';
 
@@ -72,6 +74,7 @@ export default defineConfig({
     gfm: true,
     // Configure remark plugins for link embedding
     remarkPlugins: [
+      remarkDirective, // Must be first to enable directive syntax
       [
         remarkLinkEmbed,
         {
@@ -79,6 +82,7 @@ export default defineConfig({
           enableOGPreview: yamlConfig.content?.enableOGPreview ?? true,
         },
       ],
+      remarkComic, // Comic reader directive
     ],
     // Configure rehype plugins for automatic heading IDs and anchor links
     rehypePlugins: [

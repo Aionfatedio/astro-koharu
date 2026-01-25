@@ -76,7 +76,7 @@
   code,
   kbd,
   samp {
-    font-family: ui-monospace, SFMono-Regular, monospace;
+    font-family: Consolas, ui-monospace, SFMono-Regular, monospace;
   }
 
   svg {
