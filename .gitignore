@@ -33,3 +33,7 @@ pnpm-debug.log*
 
 # Backup files
 backups/
+
+# Test files
+log/
+public/img/comic/
