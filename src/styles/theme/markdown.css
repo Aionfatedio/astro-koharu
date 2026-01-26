@@ -8,12 +8,12 @@
 
   /* ========== 行内代码样式 ========== */
   /* 移除 Typography 默认的反引号 */
-  :not(pre) > code::before,
-  :not(pre) > code::after {
+  :not(pre)>code::before,
+  :not(pre)>code::after {
     content: none;
   }
 
-  :not(pre) > code {
+  :not(pre)>code {
     /* 背景色和圆角 */
     background: hsl(var(--primary) / 0.08);
     border-radius: 0.375rem;
@@ -36,7 +36,7 @@
       box-shadow 0.2s ease;
   }
 
-  :not(pre) > code:hover {
+  :not(pre)>code:hover {
     background: hsl(var(--primary) / 0.12);
     border-color: hsl(var(--primary) / 0.2);
     box-shadow: 0 2px 4px 0 hsl(var(--primary) / 0.1);
@@ -47,6 +47,7 @@
     @apply relative;
     text-decoration: none;
     opacity: 1;
+
     &:hover {
       text-decoration: none;
     }
@@ -67,6 +68,7 @@
   h6 {
     position: relative;
     scroll-margin-top: 4rem;
+
     &:hover .anchor-link::before {
       opacity: 1;
     }
@@ -112,7 +114,7 @@
     vertical-align: middle;
   }
 
-  a.anchor-link > span::before {
+  a.anchor-link>span::before {
     display: block;
     content: "";
     width: 1em;
@@ -133,12 +135,12 @@
     @apply opacity-0 transition-opacity duration-300;
   }
 
-  h1:hover .anchor-link > span::before,
-  h2:hover .anchor-link > span::before,
-  h3:hover .anchor-link > span::before,
-  h4:hover .anchor-link > span::before,
-  h5:hover .anchor-link > span::before,
-  h6:hover .anchor-link > span::before {
+  h1:hover .anchor-link>span::before,
+  h2:hover .anchor-link>span::before,
+  h3:hover .anchor-link>span::before,
+  h4:hover .anchor-link>span::before,
+  h5:hover .anchor-link>span::before,
+  h6:hover .anchor-link>span::before {
     opacity: 1;
   }
 
@@ -150,32 +152,34 @@
     padding-left: 0;
   }
 
-  ul > li {
+  ul>li {
     position: relative;
     padding-left: 1.75rem;
     margin-top: 0.5em;
     margin-bottom: 0.5em;
     transition: background-color 0.2s ease;
-    transition-delay: 50ms; /* 避免快速移动闪烁 */
+    transition-delay: 50ms;
+    /* 避免快速移动闪烁 */
     border-radius: 0.375rem;
   }
 
-  ul > li:hover:not(:has(li:hover)) {
+  ul>li:hover:not(:has(li:hover)) {
     background: hsl(var(--primary) / 0.05);
   }
 
   /* 隐藏默认 marker */
-  ul > li::marker {
+  ul>li::marker {
     content: none;
     color: transparent;
   }
 
   /* 自定义项目符号 */
-  ul > li::before {
+  ul>li::before {
     content: "";
     position: absolute;
     left: 0.5rem;
-    top: 0.625em; /* 使用 em 单位，相对于行高居中 */
+    top: 0.625em;
+    /* 使用 em 单位，相对于行高居中 */
     width: 0.375rem;
     height: 0.375rem;
     border-radius: 50%;
@@ -191,7 +195,7 @@
   }
 
   /* 嵌套列表使用空心圆 */
-  ul ul > li::before {
+  ul ul>li::before {
     background: transparent;
     border: 1.5px solid hsl(var(--primary));
     opacity: 0.6;
@@ -207,7 +211,7 @@
     margin-bottom: 1rem;
   }
 
-  ol > li {
+  ol>li {
     position: relative;
     counter-increment: list-counter;
     padding-left: 2.5rem;
@@ -215,25 +219,26 @@
     margin-top: 0.5em;
     margin-bottom: 0.5em;
     transition: background-color 0.2s ease;
-    transition-delay: 50ms; /* 避免快速移动闪烁 */
+    transition-delay: 50ms;
+    /* 避免快速移动闪烁 */
     border-radius: 0.375rem;
     padding-top: 0.25rem;
     padding-bottom: 0.25rem;
     padding-right: 0.5rem;
   }
 
-  ol > li:hover:not(:has(li:hover)) {
+  ol>li:hover:not(:has(li:hover)) {
     background: hsl(var(--primary) / 0.05);
   }
 
   /* 隐藏默认 marker */
-  ol > li::marker {
+  ol>li::marker {
     content: none;
     color: transparent;
   }
 
   /* 自定义数字样式 */
-  ol > li::before {
+  ol>li::before {
     content: counter(list-counter);
     position: absolute;
     left: 0.5rem;
@@ -264,11 +269,11 @@
     counter-reset: nested-list-counter;
   }
 
-  ol ol > li {
+  ol ol>li {
     counter-increment: nested-list-counter;
   }
 
-  ol ol > li::before {
+  ol ol>li::before {
     content: counter(nested-list-counter, lower-alpha);
     background: hsl(var(--primary) / 0.12);
     border: none;
@@ -283,11 +288,11 @@
     counter-reset: deep-nested-counter;
   }
 
-  ol ol ol > li {
+  ol ol ol>li {
     counter-increment: deep-nested-counter;
   }
 
-  ol ol ol > li::before {
+  ol ol ol>li::before {
     content: counter(deep-nested-counter, lower-roman);
     background: hsl(var(--primary) / 0.08);
     border: none;
@@ -446,11 +451,12 @@
 }
 
 .code-block-button.copied svg {
-  stroke: hsl(142.1 76.2% 36.3%); /* green-600 */
+  stroke: hsl(142.1 76.2% 36.3%);
+  /* green-600 */
 }
 
 /* 如果第一个子节点就是标题 */
-.custom-content:first-child > :is(h1, h2, h3, h4, h5, h6) {
+.custom-content:first-child> :is(h1, h2, h3, h4, h5, h6) {
   margin-top: 1rem;
 }
 
@@ -552,17 +558,17 @@
 /* ========== 深色模式样式 ========== */
 
 /* 深色模式 - 行内代码 */
-.dark .prose :not(pre) > code {
+.dark .prose :not(pre)>code {
   background: hsl(var(--background) / 0.8);
 }
 
-.dark .prose :not(pre) > code:hover {
+.dark .prose :not(pre)>code:hover {
   background: hsl(var(--background) / 0.4);
 }
 
 /* 深色模式 - 列表 hover */
-.dark .prose ul > li:hover:not(:has(li:hover)),
-.dark .prose ol > li:hover:not(:has(li:hover)) {
+.dark .prose ul>li:hover:not(:has(li:hover)),
+.dark .prose ol>li:hover:not(:has(li:hover)) {
   background: hsl(var(--primary) / 0.1);
 }
 
@@ -675,7 +681,7 @@
 }
 
 /* Mermaid pre styling when in wrapper */
-.mermaid-wrapper > pre.mermaid {
+.mermaid-wrapper>pre.mermaid {
   border-radius: 0 0 0.75rem 0.75rem;
   border: 1px solid hsl(var(--border));
   border-top: none;
@@ -845,9 +851,10 @@
 /* ========== View Source Toggle Styles ========== */
 
 /* Infographic source view styling */
-.infographic-wrapper[data-view-mode="source"] > pre {
+.infographic-wrapper[data-view-mode="source"]>pre {
   /* biome-ignore lint/complexity/noImportantStyles: Safe - Override inline style */
-  display: block !important; /* Override inline style */
+  display: block !important;
+  /* Override inline style */
   border-radius: 0 0 0.75rem 0.75rem;
   border: 1px solid hsl(var(--border));
   border-top: none;
@@ -857,7 +864,7 @@
 }
 
 /* Mermaid source view styling */
-.mermaid-wrapper[data-view-mode="source"] > pre.mermaid {
+.mermaid-wrapper[data-view-mode="source"]>pre.mermaid {
   padding: 0;
   overflow: visible;
 }
@@ -1073,39 +1080,43 @@
 }
 
 /* ========================================
-   Video Player Styles
+   Video Player Styles (Artplayer)
    ======================================== */
 
-/* Video container - consistent with image wrapper */
+/* Video container - wrapper for Artplayer */
 .prose .markdown-video-wrapper {
   position: relative;
-  display: block;
-  margin: 1.5rem 0;
-  overflow: hidden;
-  border-radius: 0.5rem;
-  background-color: hsl(var(--muted));
-}
-
-/* Video element */
-.prose .markdown-video {
-  display: block;
   width: 100%;
-  height: auto;
-  max-height: 70vh;
-  object-fit: contain;
+  aspect-ratio: 16 / 9;
+  margin: 1.5rem 0;
   border-radius: 0.5rem;
-  background-color: hsl(var(--muted));
+  overflow: hidden;
 }
 
-/* Video controls styling - enhance native controls appearance */
-.prose .markdown-video::-webkit-media-controls-panel {
-  background: linear-gradient(transparent, hsl(var(--background) / 0.8));
+/* Artplayer container - fills the wrapper completely */
+.prose .artplayer-container {
+  width: 100%;
+  height: 100%;
 }
 
-/* Focus state for accessibility */
-.prose .markdown-video:focus {
-  outline: 2px solid hsl(var(--primary));
-  outline-offset: 2px;
+/* Override Tailwind Typography's default video margins */
+.prose .artplayer-container video {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* Override Artplayer's default styles for consistency */
+.prose .artplayer-container .art-video-player {
+  border-radius: 0.5rem;
+}
+
+/* Hidden unnecessary elements */
+.art-contextmenu.art-contextmenu-version {
+  display: none !important;
+}
+
+.art-video-player .art-bottom {
+  z-index: 30 !important;
 }
 
 /* ========================================

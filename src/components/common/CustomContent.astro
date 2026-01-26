@@ -30,6 +30,7 @@ const finalConfig = { ...defaultContentConfig, ...config };
   import { enhanceImages } from '@lib/image-enhancer';
   import { initInfographicEnhancer } from '@lib/infographic-enhancer';
   import { initMermaidEnhancer } from '@lib/mermaid-enhancer';
+  import { enhanceVideos, cleanupVideos } from '@lib/video-enhancer';
 
   // Custom content enhancement script
   function enhanceContent() {
@@ -133,6 +134,9 @@ const finalConfig = { ...defaultContentConfig, ...config };
     // Enhance images with loading states
     enhanceImages(contentContainer);
 
+    // Enhance videos with Artplayer
+    enhanceVideos(contentContainer);
+
     // Mark as enhanced
     contentContainer.setAttribute('data-enhanced', 'true');
   }
@@ -145,6 +149,14 @@ const finalConfig = { ...defaultContentConfig, ...config };
       contentContainer.removeAttribute('data-enhanced');
     }
     enhanceContent();
+  });
+
+  // Cleanup videos before page swap (Astro View Transitions)
+  document.addEventListener('astro:before-swap', () => {
+    const contentContainer = document.querySelector('.custom-content');
+    if (contentContainer) {
+      cleanupVideos(contentContainer);
+    }
   });
 
   // Run immediately if already loaded

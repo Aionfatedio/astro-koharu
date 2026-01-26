@@ -55,6 +55,7 @@
     "@types/react-dom": "^19.2.3",
     "@waline/client": "^3.8.0",
     "@yeskunall/astro-umami": "0.0.4",
+    "artplayer": "^5.3.0",
     "astro": "^5.16.6",
     "astro-icon": "^1.1.5",
     "astro-loading-indicator": "^0.7.1",

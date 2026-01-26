@@ -1,3 +1,15 @@
+# astro-koharu Mod v1.3
+
+- 修改图片灯箱容器为 [photoswipe](https://photoswipe.com/) 以提供更好的体验
+
+- 自定义Markdown语法 `::video` 为视频文件提供支持
+
+- 自定义Markdown语法 `::comic` ，使用 [ComicRead](https://github.com/hymbz/ComicReadScript) 作为漫画阅读器实现漫画阅读
+
+  ![Demo](./public/gif/demo.gif)
+
+- 前端样式优化
+
 # astro-koharu
 
 ![](https://r2.cosine.ren/i/2026/01/94383107ba4586f773938ed4dae34ff1.webp)

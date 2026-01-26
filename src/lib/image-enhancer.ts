@@ -115,7 +115,7 @@ async function openPhotoSwipe(container: Element, clickedImg: HTMLImageElement):
       zoom: false,
       // Show close button
       close: true,
-      counter: false
+      counter: false,
     });
 
     // Store instance reference

@@ -1,6 +1,6 @@
 /**
- * Remark plugin for video embedding
- * Transforms ::video{} directives into video elements with proper structure
+ * Remark plugin for video embedding with Artplayer
+ * Transforms ::video{} directives into Artplayer container elements
  *
  * Usage in Markdown:
  * ::video{src="/media/video.webm"}
@@ -10,11 +10,11 @@
  * Attributes:
  * - src: Video source URL (required)
  * - poster: Poster image URL (optional)
- * - autoplay: Auto-play video (optional, boolean)
- * - loop: Loop video (optional, boolean)
- * - muted: Mute video (optional, boolean)
- * - controls: Show controls (optional, defaults to true)
- * - playsinline: Play inline on mobile (optional, defaults to true)
+ * - autoplay: Auto-play video (optional, requires muted)
+ * - loop: Loop video (optional)
+ * - muted: Mute video (optional)
+ *
+ * The container is initialized by video-enhancer.ts on the client side
  */
 
 import type { Root } from 'mdast';
@@ -43,11 +43,11 @@ function isValidUrl(url: string | undefined): boolean {
  */
 function parseBooleanAttr(value: string | null | undefined): boolean {
   // In directive syntax, boolean attrs are present with empty string or 'true'
-  return value !== undefined && value !== 'false';
+  return value !== undefined && value !== null && value !== 'false';
 }
 
 /**
- * Remark plugin to transform ::video directives into video elements
+ * Remark plugin to transform ::video directives into Artplayer containers
  */
 export function remarkVideo() {
   return (tree: Root) => {
@@ -63,10 +63,6 @@ export function remarkVideo() {
         const autoplay = parseBooleanAttr(attributes.autoplay);
         const loop = parseBooleanAttr(attributes.loop);
         const muted = parseBooleanAttr(attributes.muted);
-        // Controls defaults to true unless explicitly set to false
-        const controls = attributes.controls !== 'false';
-        // Playsinline defaults to true for better mobile experience
-        const playsinline = attributes.playsinline !== 'false';
 
         // Validate required fields
         if (!src) {
@@ -85,19 +81,6 @@ export function remarkVideo() {
           return;
         }
 
-        // Build video properties
-        const videoProperties: Record<string, string | boolean> = {
-          src,
-          class: 'markdown-video',
-        };
-
-        if (poster) videoProperties.poster = poster;
-        if (controls) videoProperties.controls = true;
-        if (playsinline) videoProperties.playsinline = true;
-        if (autoplay) videoProperties.autoplay = true;
-        if (loop) videoProperties.loop = true;
-        if (muted) videoProperties.muted = true;
-
         // Transform to HTML
         if (!directive.data) {
           directive.data = {};
@@ -110,11 +93,23 @@ export function remarkVideo() {
           class: 'markdown-video-wrapper',
         };
 
+        // Create Artplayer container with data attributes
+        // The actual player initialization happens on the client side
+        const containerProps: Record<string, string> = {
+          class: 'artplayer-container',
+          'data-video-src': src,
+        };
+
+        if (poster) containerProps['data-video-poster'] = poster;
+        if (autoplay) containerProps['data-video-autoplay'] = 'true';
+        if (loop) containerProps['data-video-loop'] = 'true';
+        if (muted) containerProps['data-video-muted'] = 'true';
+
         data.hChildren = [
           {
             type: 'element',
-            tagName: 'video',
-            properties: videoProperties,
+            tagName: 'div',
+            properties: containerProps,
             children: [],
           },
         ];

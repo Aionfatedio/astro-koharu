@@ -69,7 +69,7 @@ astro-koharu 支持自动嵌入独行链接，包括 Tweet 和通用链接预览
 
 使用 `::video{}` 指令可以嵌入视频播放器：
 
-::video{src="/media/test.webm"}
+::video{src="/media/test.mp4"}
 
 ### 视频指令语法
 
