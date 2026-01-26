@@ -31,6 +31,36 @@ function getThemeColor(): string {
 }
 
 /**
+ * Get quality label based on video resolution
+ */
+function getQualityLabel(width: number, height: number): string {
+  // Use the larger dimension to determine quality (handles both landscape and portrait)
+  const maxDimension = Math.max(width, height);
+  const minDimension = Math.min(width, height);
+
+  // Check based on standard resolutions
+  if (maxDimension >= 3840 || minDimension >= 2160) {
+    return '4K UHD';
+  }
+  if (maxDimension >= 2560 || minDimension >= 1440) {
+    return '2K QHD';
+  }
+  if (maxDimension >= 1920 || minDimension >= 1080) {
+    return '1080P FHD';
+  }
+  if (maxDimension >= 1280 || minDimension >= 720) {
+    return '720P HD';
+  }
+  if (maxDimension >= 854 || minDimension >= 480) {
+    return '480P SD';
+  }
+  if (maxDimension >= 640 || minDimension >= 360) {
+    return '360P';
+  }
+  return `Quality`;
+}
+
+/**
  * Initialize a single Artplayer instance
  */
 async function initializePlayer(container: Element): Promise<void> {
@@ -76,7 +106,7 @@ async function initializePlayer(container: Element): Promise<void> {
       theme: getThemeColor(),
 
       // UI Controls
-      
+
       hotkey: true, // Keyboard shortcuts
       pip: true, // Picture-in-picture
       fullscreen: true, // Fullscreen button
@@ -88,7 +118,7 @@ async function initializePlayer(container: Element): Promise<void> {
           tooltip: loop ? '开启' : '关闭',
           icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="currentColor" d="M2 5h10v3l4-4l-4-4v3H0v6h2zm12 6H4V8l-4 4l4 4v-3h12V7h-2z"/></svg>',
           switch: loop,
-          onSwitch: function (item) {
+          onSwitch: (item) => {
             const nextState = !item.switch;
             if (player.video) {
               player.video.loop = nextState;
@@ -125,9 +155,34 @@ async function initializePlayer(container: Element): Promise<void> {
     }
 
     // Also set loop when video is ready (in case video element wasn't ready above)
+    // And add quality label based on video resolution
     player.on('ready', () => {
       if (loop && player.video) {
         player.video.loop = true;
+      }
+    });
+
+    // Add quality label control when video metadata is loaded
+    player.on('video:loadedmetadata', () => {
+      const video = player.video;
+      if (video && video.videoWidth > 0 && video.videoHeight > 0) {
+        const qualityLabel = getQualityLabel(video.videoWidth, video.videoHeight);
+
+        // Add quality label as a custom control in the control bar
+        player.controls.add({
+          name: 'quality-label',
+          position: 'right',
+          index: 1,
+          html: `<span class="art-quality-label">${qualityLabel}</span>`,
+          style: {
+            padding: '0 8px',
+            fontSize: '15px',
+            color: 'rgba(255, 255, 255, 0.9)',
+            cursor: 'default',
+            userSelect: 'none',
+          },
+          tooltip: `当前画质：${video.videoWidth}×${video.videoHeight}`,
+        });
       }
     });
 

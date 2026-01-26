@@ -37,6 +37,12 @@ astro-koharu 支持自动嵌入独行链接，包括 Tweet 和通用链接预览
 
 <https://github.com/vercel/react-tweet>
 
+<https://github.com/dimsemenov/photoswipe>
+
+<https://github.com/zhw2590582/ArtPlayer>
+
+<https://github.com/hymbz/ComicReadScript>
+
 这是没有 OG 图的链接
 
 <https://react-tweet.vercel.app/>
@@ -69,7 +75,7 @@ astro-koharu 支持自动嵌入独行链接，包括 Tweet 和通用链接预览
 
 使用 `::video{}` 指令可以嵌入视频播放器：
 
-::video{src="/media/test.mp4"}
+::video{src="/media/test.webm"}
 
 ### 视频指令语法
 
