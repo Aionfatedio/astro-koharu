@@ -20,6 +20,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import type { ElementContent, Element as HastElement } from 'hast';
 import type { Root } from 'mdast';
 import type { LeafDirective } from 'mdast-util-directive';
 import sanitizeHtml from 'sanitize-html';
@@ -38,7 +39,7 @@ interface ComicManifest {
 /**
  * Sanitize user input to prevent XSS attacks
  */
-function sanitizeText(text: string | undefined): string {
+function sanitizeText(text: string | null | undefined): string {
   if (!text) return '';
   return sanitizeHtml(text, {
     allowedTags: [],
@@ -149,11 +150,11 @@ export function remarkComic() {
         };
 
         // Build icon children: SVG + optional cover preview image
-        const iconChildren: any[] = [
+        const iconChildren: ElementContent[] = [
           {
             type: 'raw',
             value: COMIC_ICON_SVG,
-          },
+          } as unknown as ElementContent,
         ];
 
         // Add cover preview image if available (shown on hover)
@@ -168,7 +169,7 @@ export function remarkComic() {
               loading: 'lazy',
             },
             children: [],
-          });
+          } as HastElement);
         }
 
         data.hChildren = [
@@ -201,10 +202,10 @@ export function remarkComic() {
                   ...(author
                     ? [
                         {
-                          type: 'element',
+                          type: 'element' as const,
                           tagName: 'div',
                           properties: { class: 'comic-card-author' },
-                          children: [{ type: 'text', value: author }],
+                          children: [{ type: 'text' as const, value: author }],
                         },
                       ]
                     : []),

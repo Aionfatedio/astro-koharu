@@ -1073,6 +1073,42 @@
 }
 
 /* ========================================
+   Video Player Styles
+   ======================================== */
+
+/* Video container - consistent with image wrapper */
+.prose .markdown-video-wrapper {
+  position: relative;
+  display: block;
+  margin: 1.5rem 0;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background-color: hsl(var(--muted));
+}
+
+/* Video element */
+.prose .markdown-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: 0.5rem;
+  background-color: hsl(var(--muted));
+}
+
+/* Video controls styling - enhance native controls appearance */
+.prose .markdown-video::-webkit-media-controls-panel {
+  background: linear-gradient(transparent, hsl(var(--background) / 0.8));
+}
+
+/* Focus state for accessibility */
+.prose .markdown-video:focus {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* ========================================
    PhotoSwipe Customization
    ======================================== */
 

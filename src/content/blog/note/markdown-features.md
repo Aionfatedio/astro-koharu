@@ -67,7 +67,35 @@ astro-koharu 支持自动嵌入独行链接，包括 Tweet 和通用链接预览
 
 ## 视频嵌入
 
-<video src="/media/test.webm"></video>
+使用 `::video{}` 指令可以嵌入视频播放器：
+
+::video{src="/media/test.webm"}
+
+### 视频指令语法
+
+```markdown
+::video{src="/media/video.webm"}
+
+::video{src="/media/video.mp4" poster="/img/poster.jpg"}
+
+::video{src="/media/video.webm" autoplay loop muted}
+```
+
+**参数说明：**
+
+* `src`：视频源地址（必填）
+
+* `poster`：封面图片地址（可选）
+
+* `autoplay`：自动播放（可选，布尔值）
+
+* `loop`：循环播放（可选，布尔值）
+
+* `muted`：静音（可选，布尔值）
+
+* `controls`：显示控件（可选，默认 true）
+
+* `playsinline`：移动端内联播放（可选，默认 true）
 
 ## 漫画阅读器
 

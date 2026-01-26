@@ -15,9 +15,8 @@ export function rehypeImagePlaceholder() {
       if (parent.type === 'element' && parent.tagName === 'figure') return;
 
       // Skip comic card cover preview images (handled by remark-comic)
-      const existingClass = Array.isArray(node.properties?.class)
-        ? node.properties.class.join(' ')
-        : (node.properties?.class ?? '');
+      const classValue = node.properties?.class;
+      const existingClass = Array.isArray(classValue) ? classValue.join(' ') : typeof classValue === 'string' ? classValue : '';
       if (existingClass.includes('comic-card-cover-preview')) return;
 
       // Skip wrapping if image is inside a link (e.g., [![alt](img)](url))

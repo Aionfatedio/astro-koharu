@@ -103,34 +103,19 @@ async function openPhotoSwipe(container: Element, clickedImg: HTMLImageElement):
       allowPanToNext: true,
       // Initial zoom level: fit image to viewport
       initialZoomLevel: 'fit',
-      // Secondary zoom level: 2x or fill viewport (whichever is larger)
-      secondaryZoomLevel: (zoomLevelObject) => {
-        return 2;
-      },
+      // Secondary zoom level: 2x
+      secondaryZoomLevel: 2,
       // Maximum zoom level: 4x original size
       maxZoomLevel: 4,
 
       // === UI configuration ===
+      arrowPrev: false,
+      arrowNext: false,
       // Show zoom button
       zoom: false,
       // Show close button
       close: true,
-
-      // Get thumbnail bounds for zoom animation
-      getThumbBoundsFn: (idx) => {
-        const slide = slides[idx];
-        const thumb = slide?.element as HTMLImageElement | undefined;
-        if (!thumb) return undefined;
-
-        const rect = thumb.getBoundingClientRect();
-        const pageYScroll = window.scrollY || document.documentElement.scrollTop;
-
-        return {
-          x: rect.left,
-          y: rect.top + pageYScroll,
-          w: rect.width,
-        };
-      },
+      counter: false
     });
 
     // Store instance reference

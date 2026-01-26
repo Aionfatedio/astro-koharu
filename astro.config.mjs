@@ -21,6 +21,7 @@ import YAML from 'yaml';
 import { rehypeImagePlaceholder } from './src/lib/markdown/rehype-image-placeholder.ts';
 import { remarkComic } from './src/lib/markdown/remark-comic.ts';
 import { remarkLinkEmbed } from './src/lib/markdown/remark-link-embed.ts';
+import { remarkVideo } from './src/lib/markdown/remark-video.ts';
 import { normalizeUrl } from './src/lib/utils.ts';
 
 // Load YAML config directly with Node.js (before Vite plugins are available)
@@ -135,6 +136,7 @@ export default defineConfig({
         },
       ],
       remarkComic, // Comic reader directive
+      remarkVideo, // Video embedding directive
     ],
     // Configure rehype plugins for automatic heading IDs and anchor links
     rehypePlugins: [

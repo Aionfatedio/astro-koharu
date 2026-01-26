@@ -156,7 +156,7 @@ const lqipProps = getLqipProps(finalCover);
           )}
         >
           {data?.data.tags?.length
-            ? data?.data.tags.map((tag: string, index: number) => (
+            ? data?.data.tags.map((tag: string) => (
                 <a href={buildTagPath(tag)}>
                   <Badge
                     className='hover:text-badge-primary/80 shrink-0 cursor-pointer gap-0.5 border-none px-1 text-xs font-bold whitespace-nowrap transition-colors duration-300 flex'
