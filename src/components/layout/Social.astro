@@ -3,6 +3,18 @@ import { socialConfig } from '@constants/site-config';
 import { cn } from '@lib/utils';
 import { Icon } from 'astro-icon/components';
 import { capitalize } from 'es-toolkit';
+
+// 判断是否为本地图标路径
+function isLocalIcon(icon: string): boolean {
+  return (
+    icon.startsWith('/') ||
+    icon.startsWith('./') ||
+    icon.startsWith('img/') ||
+    icon.endsWith('.svg') ||
+    icon.endsWith('.png') ||
+    icon.endsWith('.ico')
+  );
+}
 ---
 
 <!-- TODO: use CSS squircle corner-shape replace the rounded-xl border-radius with a squircle corner-shape (https://www.squircle.style/) -->
@@ -10,6 +22,7 @@ import { capitalize } from 'es-toolkit';
   {
     Object.entries(socialConfig).map(([key, config]) => {
       const { url, icon, color } = config;
+      const isLocal = isLocalIcon(icon);
       return (
         <div>
           <a
@@ -24,8 +37,12 @@ import { capitalize } from 'es-toolkit';
             data-tooltip-placement="top"
             aria-label={capitalize(key)}
             target="_blank"
-           >
-            <Icon name={icon} class="inline-block size-6" />
+          >
+            {isLocal ? (
+              <img src={icon.startsWith('/') ? icon : `/${icon}`} alt={key} class="inline-block size-6" />
+            ) : (
+              <Icon name={icon} class="inline-block size-6" />
+            )}
             <span class="absolute inset-0 -z-10 -translate-x-full translate-y-full rounded-xl transition-transform duration-300 group-hover:translate-x-0 group-hover:translate-y-0" />
           </a>
         </div>

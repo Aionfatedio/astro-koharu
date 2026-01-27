@@ -20,7 +20,7 @@ export async function getStaticPaths() {
   });
 
   return Array.from(tags).map((tag) => ({
-    params: { tag: tagToSlug(tag) },
+    params: { tag },
     props: {
       posts: posts.filter((post) => post.data.tags?.some((t) => normalizeTag(t) === tag)),
       tag,
@@ -33,7 +33,7 @@ const { tag, posts } = Astro.props;
 
 <Layout title={`标签:${tag} | ${siteConfig.title}`} description={`标签 ${tag} 下的所有文章`}>
   <TwoColumnLayout>
-    <Cover slot="cover" title={`包含标签"${tag}"的文章`} />
+    <Cover slot="cover" title={`「${tag}」`} />
     <HomeSider slot="sider" />
     <div class={`shadow-box mx-0 flex w-full flex-col bg-gradient-start ${CONTENT_PADDING.standard}`}>
       <h2 class="shoka-decoration-circle has-children group relative h-19 px-6 py-5 text-2xl/9 font-bold">

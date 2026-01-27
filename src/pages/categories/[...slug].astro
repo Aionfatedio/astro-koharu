@@ -29,7 +29,7 @@ const displayCategories = category ? [category] : allCategories;
 
 <Layout title={`分类 - ${category?.name} | ${seoConfig.title}`}>
   <TwoColumnLayout>
-    <Cover slot="cover" title={`分类于"${category?.name}"的文章`} />
+    <Cover slot="cover" title={`『${category?.name}』`} />
     <HomeSider slot="sider" />
     <CategoryPostList rootCategory={category} categories={displayCategories} countMap={countMap} />
   </TwoColumnLayout>

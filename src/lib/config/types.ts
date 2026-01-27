@@ -39,6 +39,10 @@ export interface FeaturedSeriesLinks {
   rss?: string;
   chrome?: string;
   docs?: string;
+  pixiv?: string;
+  fanbox?: string;
+  patreon?: string;
+  southplus?: string;
 }
 
 /**

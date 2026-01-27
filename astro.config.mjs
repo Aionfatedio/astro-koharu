@@ -168,10 +168,24 @@ export default defineConfig({
     react(),
     icon({
       include: {
+        // 基础图标集
         gg: ['*'],
         'fa6-regular': ['*'],
         'fa6-solid': ['*'],
+        'fa7-regular': ['*'],
+        'fa7-solid': ['*'],
+        'fa7-brands': ['*'],
         ri: ['*'],
+        // 扩展图标集 - 可按需添加更多
+        // 完整图标集列表: https://icon-sets.iconify.design/
+        'simple-icons': ['*'],
+        proicons: ['*'],
+        lucide: ['*'],
+        'material-symbols': ['*'],
+        tabler: ['*'],
+        'line-md': ['*'],
+        ph: ['*'], // Phosphor Icons
+        mdi: ['*'], // Material Design Icons
       },
     }),
     // Umami analytics - configured via config/site.yaml
