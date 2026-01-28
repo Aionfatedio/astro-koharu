@@ -3,7 +3,14 @@ import ChristmasHat from '@components/christmas/ChristmasHat.astro';
 import ButtonLink from '@components/control/ButtonLink.astro';
 import type { HomeSiderType } from '@constants/enum';
 import { RESERVED_ROUTES, routers } from '@constants/router';
-import { christmasConfig, configuredSeriesSlugs, enabledSeriesSlugs, siteConfig } from '@constants/site-config';
+import {
+  buildArtistSocialConfig,
+  christmasConfig,
+  configuredSeriesSlugs,
+  enabledSeriesSlugs,
+  getArtistById,
+  siteConfig,
+} from '@constants/site-config';
 import { getAllTags, getCategoryList, getPostCount, getSortedPosts } from '@lib/content';
 import { getLqipStyle } from '@lib/lqip';
 import { cn, filterNavItems } from '@lib/utils';
@@ -16,6 +23,8 @@ interface Props {
   className?: string;
   isDrawer?: boolean;
   frontmatter?: BlogSchema;
+  /** Artist ID from post frontmatter for artist profile pages */
+  artistId?: string;
 }
 
 const postCount = await getPostCount();
@@ -27,28 +36,39 @@ const allTags = Object.entries(tags).map(([tag, count]) => ({ tag, count }));
 
 // 生成唯一 ID 前缀
 const uniqueId = `home-info-${Math.random().toString(36).substring(2, 11)}`;
-const { className } = Astro.props;
+const { className, artistId } = Astro.props;
+
+// Try to get artist info if artistId is provided
+const artist = artistId ? getArtistById(artistId) : null;
+
+// Determine display info: artist takes priority, fallback to site config
+const displayName = artist?.name ?? siteConfig.name;
+const displayAvatar = artist?.avatar ?? siteConfig.avatar ?? '/img/avatar.webp';
+const displayDescription = artist?.description ?? siteConfig.description;
+
+// Build social config: for artists, merge URLs with site config icon/color
+const artistSocialConfig = artist ? buildArtistSocialConfig(artist) : null;
 
 // Filter navigation items to exclude disabled series
 const filteredRouters = filterNavItems(routers, configuredSeriesSlugs, enabledSeriesSlugs, RESERVED_ROUTES);
 ---
 
 <div class={cn('flex flex-col items-center', className)} data-home-info-container={uniqueId}>
-  <div class="relative h-40 w-40 rounded-full" style={getLqipStyle(siteConfig.avatar ?? '/img/avatar.webp')}>
+  <div class="relative h-40 w-40 rounded-full" style={getLqipStyle(displayAvatar)}>
     <img
-      transition:persist="page-home-info-avatar"
+      transition:persist={artist ? undefined : 'page-home-info-avatar'}
       class="shadow-card-darker hover:animate-shake h-full w-full rounded-full transition"
-      src={siteConfig.avatar ?? '/img/avatar.webp'}
-      alt={`${siteConfig.name ?? ''} avatar`}
+      src={displayAvatar}
+      alt={`${displayName ?? ''} avatar`}
       loading="eager"
       fetchpriority="high"
     />
-    {christmasConfig.enabled && christmasConfig.features.christmasHat && <ChristmasHat />}
+    {!artist && christmasConfig.enabled && christmasConfig.features.christmasHat && <ChristmasHat />}
   </div>
 
-  <p class="mt-2">{siteConfig?.name}</p>
-  <p class="text-muted-foreground mt-3 text-center">{siteConfig?.description}</p>
-  <Social />
+  <p class="mt-2">{displayName}</p>
+  <p class="text-muted-foreground mt-3 text-center">{displayDescription}</p>
+  <Social customSocialConfig={artistSocialConfig} />
   <div
     class="text-muted-foreground mt-3 flex justify-center text-center text-sm/4 whitespace-nowrap select-none dark:text-white/80"
   >

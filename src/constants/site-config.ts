@@ -1,6 +1,7 @@
 // Import YAML config directly - processed by @rollup/plugin-yaml
 
-import type { CMSConfig, CommentConfig, FeaturedSeriesItem } from '@lib/config/types';
+import type { ArtistInfo, CMSConfig, CommentConfig, FeaturedSeriesItem } from '@lib/config/types';
+import artistsYaml from '../../config/artists.yaml';
 import rawCmsConfig from '../../config/cms.yaml';
 import yamlConfig from '../../config/site.yaml';
 import { isReservedSlug, RESERVED_ROUTES } from './router';
@@ -159,24 +160,9 @@ type SocialPlatform = {
   color: string;
 };
 
-type SocialConfig = {
-  github?: SocialPlatform;
-  google?: SocialPlatform;
-  twitter?: SocialPlatform;
-  zhihu?: SocialPlatform;
-  music?: SocialPlatform;
-  weibo?: SocialPlatform;
-  about?: SocialPlatform;
-  email?: SocialPlatform;
-  facebook?: SocialPlatform;
-  stackoverflow?: SocialPlatform;
-  youtube?: SocialPlatform;
-  instagram?: SocialPlatform;
-  skype?: SocialPlatform;
-  douban?: SocialPlatform;
-  bilibili?: SocialPlatform;
-  rss?: SocialPlatform;
-};
+// Use Record to allow dynamic social platforms from YAML
+// No longer restricted to predefined platforms
+type SocialConfig = Record<string, SocialPlatform>;
 
 // Map YAML config to existing types
 export const siteConfig: SiteConfig = {
@@ -197,6 +183,13 @@ export const siteConfig: SiteConfig = {
 };
 
 export const socialConfig: SocialConfig = yamlConfig.social ?? {};
+
+// Social platform templates (icon/color only, for artist pages)
+type SocialPlatformTemplate = {
+  icon: string;
+  color: string;
+};
+export const socialPlatformsConfig: Record<string, SocialPlatformTemplate> = yamlConfig.socialPlatforms ?? {};
 
 const { title, alternate, subtitle } = siteConfig;
 
@@ -285,3 +278,58 @@ export const configuredSeriesSlugs = new Set(siteConfig.featuredSeries.map((seri
 export const enabledSeriesSlugs = new Set(
   siteConfig.featuredSeries.filter((series) => series.enabled !== false).map((series) => series.slug.toLowerCase()),
 );
+
+// =============================================================================
+// Artists Configuration
+// =============================================================================
+
+/** All artists from config/artists.yaml */
+export const artistsConfig: ArtistInfo[] = artistsYaml?.artists ?? [];
+
+/**
+ * Get artist info by ID
+ * @param id Artist ID from frontmatter
+ * @returns Artist info or null if not found
+ */
+export function getArtistById(id: string): ArtistInfo | null {
+  if (!id) return null;
+  return artistsConfig.find((artist) => artist.id === id) ?? null;
+}
+
+/**
+ * Build artist social config by merging artist URLs with platform templates (icon/color)
+ * Priority: socialPlatformsConfig (templates) > socialConfig (admin's social links)
+ * @param artist Artist info
+ * @returns Social config with merged icon/color from platform templates
+ */
+export function buildArtistSocialConfig(artist: ArtistInfo): Record<string, { url: string; icon: string; color: string }> {
+  if (!artist.social) return {};
+
+  const result: Record<string, { url: string; icon: string; color: string }> = {};
+
+  for (const [platform, url] of Object.entries(artist.social)) {
+    // First try to get icon/color from platform templates (socialPlatforms)
+    const platformTemplate = socialPlatformsConfig[platform];
+    if (platformTemplate) {
+      result[platform] = {
+        url,
+        icon: platformTemplate.icon,
+        color: platformTemplate.color,
+      };
+      continue;
+    }
+
+    // Fallback to admin's social config if platform template not found
+    const sitePlatformConfig = socialConfig[platform];
+    if (sitePlatformConfig) {
+      result[platform] = {
+        url,
+        icon: sitePlatformConfig.icon,
+        color: sitePlatformConfig.color,
+      };
+    }
+    // If platform not in either config, skip it (no icon/color available)
+  }
+
+  return result;
+}

@@ -36,5 +36,4 @@ backups/
 
 # Test files
 log/
-public/img/comic/
-public/media/
+public/

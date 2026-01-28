@@ -181,6 +181,60 @@ social:
   #   color: '#e60026'
 
 # =============================================================================
+# Social Platform Templates (图标/颜色模板)
+# 社交平台模板 - 仅定义图标和颜色，不显示在管理员页面
+# =============================================================================
+# 用途：为画师博客提供社交平台的图标和颜色配置
+# 说明：
+#   - 这里定义的平台不会显示在管理员的社交链接中
+#   - 画师在 artists.yaml 中配置的社交链接会从这里获取图标和颜色
+#   - 如果画师使用了这里没有定义的平台，该链接将不会显示
+# -----------------------------------------------------------------------------
+socialPlatforms:
+  twitter:
+    icon: ri:twitter-x-fill
+    color: '#000000'
+  pixiv:
+    icon: simple-icons:pixiv
+    color: '#0096fa'
+  patreon:
+    icon: simple-icons:patreon
+    color: '#FF424D'
+  fanbox:
+    icon: /img/icon/fanbox.png
+    color: '#f7f7f7'
+  fantia:
+    icon: /img/icon/fantia.png
+    color: '#f2eacd'
+  bilibili:
+    icon: ri:bilibili-fill
+    color: '#da708a'
+  github:
+    icon: ri:github-fill
+    color: '#191717'
+  youtube:
+    icon: ri:youtube-fill
+    color: '#FF0000'
+  instagram:
+    icon: ri:instagram-fill
+    color: '#E4405F'
+  facebook:
+    icon: ri:facebook-fill
+    color: '#1877F2'
+  weibo:
+    icon: ri:weibo-fill
+    color: '#E6162D'
+  zhihu:
+    icon: ri:zhihu-fill
+    color: '#1e88e5'
+  email:
+    icon: ri:mail-line
+    color: '#55acd5'
+  rss:
+    icon: ri:rss-line
+    color: '#ff6600'
+
+# =============================================================================
 # Friends Links
 # 友情链接页面配置 - 展示友链列表和申请说明
 # =============================================================================

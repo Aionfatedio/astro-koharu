@@ -23,6 +23,8 @@ const blogCollection = defineCollection({
     tocNumbering: z.boolean().optional().default(true),
     // 排除 AI 摘要生成
     excludeFromSummary: z.boolean().optional(),
+    // 画师 ID，关联 config/artists.yaml
+    artist: z.string().optional(),
   }) satisfies z.ZodType<BlogSchema>,
 });
 

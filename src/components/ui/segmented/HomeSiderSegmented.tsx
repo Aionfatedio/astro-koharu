@@ -13,12 +13,14 @@ type HomeSiderSegmentedProps = {
   itemClass?: string;
   id?: string;
   value?: HomeSiderSegmentType; // 受控
+  /** Whether this is an artist profile page */
+  isArtistPage?: boolean;
 };
 
-export const HomeSiderSegmented = ({ className, ...props }: HomeSiderSegmentedProps) => {
+export const HomeSiderSegmented = ({ className, isArtistPage = false, ...props }: HomeSiderSegmentedProps) => {
   const options: OptionType<HomeSiderSegmentType>[] = [
     {
-      label: '站点概览',
+      label: isArtistPage ? '画师概览' : '站点概览',
       value: SegmentTypeEnum.INFO,
       icon: RiDashboard3Line,
     },

@@ -34,8 +34,10 @@
 
     /* Show gradient background via pseudo-element opacity */
     &::before {
-      @apply opacity-100;
+      @apply opacity-50;
     }
+
+    @apply backdrop-blur-md;
 
     button,
     a {

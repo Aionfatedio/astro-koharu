@@ -96,7 +96,7 @@ if (post.data.description) {
   <script is:inline slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   <TwoColumnLayout post={post}>
     <Cover slot="cover" data={post} />
-    <HomeSider slot="sider" type={HomeSiderType.POST} post={post} />
+    <HomeSider slot="sider" type={HomeSiderType.POST} post={post} artistId={post.data.artist} />
     <div class={`shadow-box bg-gradient-start flex flex-col gap-2 ${CONTENT_PADDING.standard}`}>
       <!-- Breadcrumb Navigation -->
       <nav class="text-muted-foreground flex items-center justify-between gap-2 text-sm">

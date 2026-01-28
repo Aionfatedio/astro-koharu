@@ -1,8 +1,18 @@
 ---
-import { socialConfig } from '@constants/site-config';
+import { socialConfig as defaultSocialConfig } from '@constants/site-config';
 import { cn } from '@lib/utils';
 import { Icon } from 'astro-icon/components';
 import { capitalize } from 'es-toolkit';
+
+interface Props {
+  /** Custom social config to override default site social config */
+  customSocialConfig?: Record<string, { url: string; icon: string; color: string }>;
+}
+
+const { customSocialConfig } = Astro.props;
+
+// Use custom config if provided, otherwise use default site config
+const socialConfig = customSocialConfig ?? defaultSocialConfig;
 
 // 判断是否为本地图标路径
 function isLocalIcon(icon: string): boolean {

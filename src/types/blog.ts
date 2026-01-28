@@ -19,6 +19,8 @@ export interface BlogSchema {
   tocNumbering?: boolean;
   /** Exclude this post from AI summary generation */
   excludeFromSummary?: boolean;
+  /** Artist ID for artist profile pages, references artists.yaml */
+  artist?: string;
 }
 
 /**

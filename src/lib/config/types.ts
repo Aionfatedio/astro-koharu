@@ -89,6 +89,27 @@ export interface SocialPlatform {
 export type SocialConfig = Record<string, SocialPlatform>;
 
 // =============================================================================
+// Artist Configuration
+// =============================================================================
+
+/**
+ * Artist information for artist profile pages
+ * Used when a blog post has an `artist` field in frontmatter
+ */
+export interface ArtistInfo {
+  /** Unique artist ID, matches frontmatter `artist` field */
+  id: string;
+  /** Artist display name */
+  name: string;
+  /** Artist avatar path (relative or absolute URL) */
+  avatar: string;
+  /** Artist description/bio */
+  description?: string;
+  /** Social links - only URLs, icon/color inherited from site.yaml social config */
+  social?: Record<string, string>;
+}
+
+// =============================================================================
 // Friends Configuration
 // =============================================================================
 

@@ -1,0 +1,45 @@
+# =============================================================================
+# Artists Database
+# 画师数据库 - 用于画师介绍文章的侧边栏显示
+# =============================================================================
+# 使用方法：
+#   1. 在此文件添加画师信息
+#   2. 在文章 frontmatter 中添加 artist: <画师ID>
+#   3. 侧边栏将显示对应画师的头像、名称、简介和社交链接
+#
+# 字段说明：
+#   id: 画师唯一标识（必填），对应文章 frontmatter 中的 artist 字段
+#   name: 画师名称（必填）
+#   avatar: 头像路径（必填），支持相对路径（如 /img/artist/xxx.png）或完整 URL
+#   description: 画师简介（可选）
+#   social: 社交链接（可选）
+#     - 只需填写平台名称和 URL
+#     - 图标和颜色自动复用 site.yaml 中的 social 配置
+#     - 如果 site.yaml 中没有该平台的配置，该链接将被忽略
+# -----------------------------------------------------------------------------
+# 示例：
+#   - id: example_artist
+#     name: 示例画师
+#     avatar: /img/artist/example.png
+#     description: 这是一位示例画师的简介
+#     social:
+#       pixiv: https://www.pixiv.net/users/123456
+#       twitter: https://twitter.com/example
+# =============================================================================
+
+artists:
+  - id: mankaikaika
+    name: 満開開花
+    avatar: /img/artist/mankaikaika.jpg
+    description:  R-18のオリジナルイラストやファンアートなど描く人です.
+    social:
+      pixiv: https://www.pixiv.net/users/49906039
+      fanbox: https://mankaikaika1.fanbox.cc
+      twitter: https://twitter.com/mankaikaika
+
+  # - id: peach_soda
+  #   name: 桃子汽水
+  #   avatar: /img/artist/peach_soda.png
+  #   description: 日系小清新插画师，专注于温暖治愈的生活碎片记录
+  #   social:
+  #     bilibili: https://space.bilibili.com/123456

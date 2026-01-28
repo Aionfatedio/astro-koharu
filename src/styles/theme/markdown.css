@@ -892,6 +892,12 @@
 
 .comic-card-container {
   margin: 1.5rem 0;
+  position: relative;
+  z-index: 1;
+}
+
+.comic-card-container:hover {
+  z-index: 2;
 }
 
 .comic-card {
