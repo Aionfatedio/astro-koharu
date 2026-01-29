@@ -268,6 +268,26 @@ pie title 博客内容分布
 > \
 > astro-koharu 让博客搭建变得简单而优雅。
 
+## Github Style
+
+:::note
+Highlights information that users should take into account, even when skimming.
+:::
+
+:::tip
+Optional information to help a user be more successful.
+:::
+
+:::note[MY CUSTOM TITLE]
+This is a note with a custom title.
+:::
+
+> [!NOTE]
+> The GitHub syntax is also supported.
+
+> [!TIP]
+> The GitHub syntax is also supported.
+
 ## 标题层级
 
 本文展示了 h2-h6 各级标题，它们都会自动生成锚点链接，方便分享和引用。

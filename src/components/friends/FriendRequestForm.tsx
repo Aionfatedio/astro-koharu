@@ -201,7 +201,7 @@ color: "${formData.color || '#ffc0cb'}"`;
             </div>
 
             <div className="mt-6 flex items-center gap-3 rounded-xl bg-pink-50 p-4 font-medium text-pink-600 text-xs dark:bg-pink-900/20 dark:text-pink-300">
-              提示: 复制上方代码并在下方评论区粘贴发送即可，我会收到的～
+              提示: 评论系统暂未开放，概不接受友链申请！
             </div>
           </div>
         </div>

@@ -30,7 +30,7 @@
 @utility with-background {
   &#site-header {
     color: currentColor;
-    @apply border-border text-foreground border-b;
+    @apply text-foreground;
 
     /* Show gradient background via pseudo-element opacity */
     &::before {
