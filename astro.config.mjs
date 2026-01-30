@@ -20,6 +20,7 @@ import svgr from 'vite-plugin-svgr';
 import YAML from 'yaml';
 import { rehypeImagePlaceholder } from './src/lib/markdown/rehype-image-placeholder.ts';
 import { remarkComic } from './src/lib/markdown/remark-comic.ts';
+import { remarkGitHubAlerts } from './src/lib/markdown/remark-github-alerts.ts';
 import { remarkLinkEmbed } from './src/lib/markdown/remark-link-embed.ts';
 import { remarkVideo } from './src/lib/markdown/remark-video.ts';
 import { normalizeUrl } from './src/lib/utils.ts';
@@ -128,6 +129,7 @@ export default defineConfig({
     // Configure remark plugins for link embedding
     remarkPlugins: [
       remarkDirective, // Must be first to enable directive syntax
+      remarkGitHubAlerts, // GitHub-style alerts (> [!NOTE] and :::note)
       [
         remarkLinkEmbed,
         {

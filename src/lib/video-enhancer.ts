@@ -177,12 +177,23 @@ async function initializePlayer(container: Element): Promise<void> {
           style: {
             padding: '0 8px',
             fontSize: '15px',
+            fontWeight: '500',
             color: 'rgba(255, 255, 255, 0.9)',
             cursor: 'default',
             userSelect: 'none',
           },
-          tooltip: `当前画质：${video.videoWidth}×${video.videoHeight}`,
+          tooltip: `当前画质: ${video.videoWidth}×${video.videoHeight}`,
+          // tooltip: ``,
         });
+
+        // 音量键移动到右侧：Move volume control from left to right (between quality-label and setting)
+        const $volume = player.query('.art-control-volume');
+        const $rightPanel = player.query('.art-controls-right');
+        const $setting = player.query('.art-control-setting');
+
+        if ($volume && $rightPanel && $setting) {
+          $rightPanel.insertBefore($volume, $setting);
+        }
       }
     });
 

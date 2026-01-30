@@ -260,33 +260,37 @@ pie title 博客内容分布
 
 * [链接文本](https://github.com/cosZone/astro-koharu)
 
+<details>
+  <summary>点击展开隐藏文字</summary>
+  <span style="background-color: #000; color: #000; transition: all 0.3s;" 
+    onmouseover="this.style.color='#d1d5dc'; this.style.backgroundColor='transparent'" 
+    onmouseout="this.style.color='#000'; this.style.backgroundColor='#000'">
+      这里是悬停显示的文字
+  </span>
+</details>
+
 ## 引用
 
 > 这是一段引用文本。\
-> \
-> \
-> \
-> astro-koharu 让博客搭建变得简单而优雅。
+> 混沌未启已真玄，太虚堪破吾为先，八荒六合任逍遥，谁人知我何处仙。
+    
 
 ## Github Style
 
-:::note
-Highlights information that users should take into account, even when skimming.
-:::
-
-:::tip
-Optional information to help a user be more successful.
-:::
-
-:::note[MY CUSTOM TITLE]
-This is a note with a custom title.
-:::
-
 > [!NOTE]
-> The GitHub syntax is also supported.
+> Highlights information that users should take into account, even when skimming.
 
 > [!TIP]
-> The GitHub syntax is also supported.
+> Optional information to help a user be more successful.
+
+> [!IMPORTANT]
+> Crucial information necessary for users to succeed.
+
+> [!WARNING]
+> Critical content demanding immediate user attention due to potential risks.
+
+> [!CAUTION]
+> Negative potential consequences of an action.
 
 ## 标题层级
 

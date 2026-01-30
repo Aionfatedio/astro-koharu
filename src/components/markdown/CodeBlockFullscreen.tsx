@@ -45,14 +45,8 @@ function CheckIcon({ className }: { className?: string }) {
           strokeLinejoin="round"
           strokeWidth="2"
         >
-          <path d="M2 13.5l4 4l10.75 -10.75">
+          <path d="M4.75 13.5l4 4l10.75 -10.75">
             <animate fill="freeze" attributeName="stroke-dashoffset" dur="0.4s" values="24;0" />
-          </path>
-          <path stroke="#000" strokeWidth="6" d="M7.5 13.5l4 4l10.75 -10.75">
-            <animate fill="freeze" attributeName="stroke-dashoffset" begin="0.4s" dur="0.4s" values="24;0" />
-          </path>
-          <path d="M7.5 13.5l4 4l10.75 -10.75">
-            <animate fill="freeze" attributeName="stroke-dashoffset" begin="0.4s" dur="0.4s" values="24;0" />
           </path>
         </g>
       </mask>
@@ -64,7 +58,7 @@ function CheckIcon({ className }: { className?: string }) {
 function CloseIcon({ className }: { className?: string }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
-      <title>Close</title>
+      <title>关闭</title>
       <path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z" />
     </svg>
   );
@@ -225,7 +219,7 @@ export default function CodeBlockFullscreen() {
 
                   {/* Code Content */}
                   <div className="scroll-feather-mask flex-1 overflow-auto">
-                    <pre className={cn(data.preClassName, 'p-4')} style={preStyles}>
+                    <pre className={cn(data.preClassName, 'p-4')} style={{ ...preStyles, border: 'none', boxShadow: 'none' }}>
                       {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Safe - codeHTML comes from Shiki syntax highlighter output only */}
                       <code className={data.codeClassName} dangerouslySetInnerHTML={{ __html: data.codeHTML }} />
                     </pre>

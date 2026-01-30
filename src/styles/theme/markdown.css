@@ -310,6 +310,194 @@
     margin: 0;
   }
 
+  /* ========== 折叠块样式 ========== */
+
+  details {
+    margin: 1.5rem 0;
+    padding: 0;
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.5rem;
+    background: hsl(var(--card) / 0.5);
+    overflow: hidden;
+    transition: border-color 0.2s ease;
+  }
+
+  details:hover {
+    border-color: hsl(var(--primary) / 0.5);
+  }
+
+  details[open] {
+    border-color: hsl(var(--primary) / 0.3);
+  }
+
+  details summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    background: hsl(var(--muted) / 0.3);
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
+  }
+
+  details summary::-webkit-details-marker {
+    display: none;
+  }
+
+  details summary::before {
+    content: "";
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+    background-color: hsl(var(--primary));
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor'%3E%3Cpath d='M13.1717 12.0007L8.22192 7.05093L9.63614 5.63672L16.0001 12.0007L9.63614 18.3646L8.22192 16.9504L13.1717 12.0007Z'/%3E%3C/svg%3E");
+    mask-repeat: no-repeat;
+    mask-size: contain;
+    transition: transform 0.2s ease;
+  }
+
+  details[open] summary::before {
+    transform: rotate(90deg);
+  }
+
+  details summary:hover {
+    background: hsl(var(--muted) / 0.5);
+    color: hsl(var(--primary));
+  }
+
+  details[open]::details-content {
+    padding: 20px;
+  }
+
+
+
+  /* ========== 引用块样式 ========== */
+
+  /* 普通引用块 - 非 admonition，使用伪元素实现圆润竖条 */
+  blockquote:not(.admonition) {
+    position: relative;
+    /* 移除原生边框，使用伪元素替代 */
+    border-inline-start: none;
+    /* 覆盖 Tailwind Typography 默认样式 */
+    font-style: normal;
+    padding: 0rem 1.25rem;
+    margin-top: 1.6em;
+    margin-bottom: 1.6em;
+  }
+
+  blockquote:not(.admonition)::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: 99px;
+    background-color: hsl(214, 62%, 58%);
+    transition: background-color 0.2s ease;
+  }
+
+  blockquote:not(.admonition):hover::before {
+    background-color: hsl(var(--primary));
+  }
+
+  blockquote {
+    quotes: none;
+  }
+
+  blockquote:not(.admonition) p {
+    margin: 0;
+  }
+
+  /* ========== Admonition / GitHub Alerts 样式 ========== */
+
+  .admonition {
+    position: relative;
+    margin: 1.5rem 0;
+    padding: 0rem 1.25rem;
+    /* 移除原生边框，使用伪元素替代 */
+    border-inline-start: none;
+    /* 覆盖 Tailwind Typography 默认样式 */
+    font-style: normal;
+  }
+
+  .admonition::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: 99px;
+    background-color: var(--bdm-color, hsl(210 40% 55%));
+    transition: background-color 0.2s ease;
+  }
+
+  .admonition:hover::before {
+    background-color: var(--bdm-color-secondary, hsl(210 60% 50%));
+  }
+
+  .admonition p {
+    margin: 0;
+  }
+
+  .admonition p + p {
+    margin-top: 0.5rem;
+  }
+
+  /* Admonition 标题 */
+  .bdm-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    color: var(--bdm-color);
+  }
+
+  .bdm-title svg {
+    flex-shrink: 0;
+  }
+
+  .bdm-title div {
+    text-transform: none;
+  }
+
+  /* 各类型颜色 */
+  .bdm-note {
+    --bdm-color: #4493f8;
+    --bdm-color-secondary: #197dff;
+  }
+
+  .bdm-tip {
+    --bdm-color: #3fb950;
+    --bdm-color-secondary: #238636;
+  }
+
+  .bdm-important {
+    --bdm-color: #a371f7;
+    --bdm-color-secondary: #8b5cf6;
+  }
+
+  .bdm-warning {
+    --bdm-color: #d29922;
+    --bdm-color-secondary: #ca8a04;
+  }
+
+  .bdm-caution {
+    --bdm-color: #f85149;
+    --bdm-color-secondary: #dc2626;
+  }
+}
+
   /* ========== 代码块 Mac 窗口样式 ========== */
 
   /* 代码块容器 - 覆盖 Typography 默认样式 */
@@ -350,7 +538,6 @@
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
-}
 
 /* 代码块 */
 .code-block-wrapper {
