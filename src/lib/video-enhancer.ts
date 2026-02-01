@@ -83,6 +83,16 @@ async function initializePlayer(container: Element): Promise<void> {
     // Dynamically import Artplayer to reduce initial bundle size
     const { default: ArtplayerClass } = await import('artplayer');
 
+    // Ensure ArtPlayer styles exist in the document
+    // View Transitions may remove dynamically injected <style> tags from <head>
+    const styleId = 'artplayer-style';
+    if (!document.getElementById(styleId) && ArtplayerClass.STYLE) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = ArtplayerClass.STYLE;
+      document.head.appendChild(style);
+    }
+
     const player = new ArtplayerClass({
       container: container as HTMLDivElement,
       url: src,
@@ -226,7 +236,7 @@ async function initializePlayer(container: Element): Promise<void> {
 function destroyPlayer(container: Element): void {
   const player = playerInstances.get(container);
   if (player) {
-    player.destroy(false);
+    player.destroy(true); // true = remove all generated HTML DOM
     playerInstances.delete(container);
   }
   initializedContainers.delete(container);

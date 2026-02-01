@@ -13,6 +13,9 @@ interface Props {
 
 const { series } = Astro.props;
 
+// Extract links for template type narrowing
+const links = series.links;
+
 // Convert Markdown description to HTML and sanitize for XSS protection
 const rawHtml = series.description ? await marked.parse(series.description) : '';
 const descriptionHtml = getSanitizeHtml(rawHtml);
@@ -45,11 +48,11 @@ const descriptionHtml = getSanitizeHtml(rawHtml);
 
     <!-- Link buttons -->
     {
-      series.links && (
+      links && (
         <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
-          {series.links.pixiv && (
+          {links?.pixiv && (
             <a
-              href={series.links.pixiv}
+              href={links?.pixiv}
               target="_blank"
               class="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm backdrop-blur-sm transition-all
           hover:scale-105 hover:bg-white/20"
@@ -58,20 +61,20 @@ const descriptionHtml = getSanitizeHtml(rawHtml);
               <span>Pixiv</span>
             </a>
           )}
-          {series.links.fanbox && (
+          {links?.fanbox && (
             <a
-              href={series.links.fanbox}
+              href={links?.fanbox}
               target="_blank"
               class="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm backdrop-blur-sm transition-all
           hover:scale-105 hover:bg-white/20"
             >
-              <img src="img/icon/fanbox.png" width="20" height="20"></img>
+              <img src="img/icon/fanbox.png" width="20" height="20" />
               <span>Fanbox</span>
             </a>
           )}
-          {series.links.patreon && (
+          {links?.patreon && (
             <a
-              href={series.links.patreon}
+              href={links?.patreon}
               target="_blank"
               class="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm backdrop-blur-sm transition-all hover:scale-105 hover:bg-white/20"
             >
@@ -79,20 +82,20 @@ const descriptionHtml = getSanitizeHtml(rawHtml);
               <span>Patreon</span>
             </a>
           )}
-          {series.links.southplus && (
+          {links?.southplus && (
             <a
-              href={series.links.southplus}
+              href={links?.southplus}
               target="_blank"
               class="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm backdrop-blur-sm transition-all
           hover:scale-105 hover:bg-white/20"
             >
-              <img src="img/icon/southplus.ico" width="20" height="20" style="border-radius: 5px;"></img>
+              <img src="img/icon/southplus.ico" width="20" height="20" style="border-radius: 5px;" />
               <span>Southplus</span>
             </a>
           )}
-          {series.links.github && (
+          {links?.github && (
             <a
-              href={series.links.github}
+              href={links?.github}
               target="_blank"
               class="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm backdrop-blur-sm transition-all hover:scale-105 hover:bg-white/20"
             >
@@ -100,9 +103,9 @@ const descriptionHtml = getSanitizeHtml(rawHtml);
               <span>GitHub</span>
             </a>
           )}
-          {series.links.rss && (
+          {links?.rss && (
             <a
-              href={series.links.rss}
+              href={links?.rss}
               target="_blank"
               data-astro-reload
               class="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm backdrop-blur-sm transition-all hover:scale-105 hover:bg-white/20"
@@ -111,9 +114,9 @@ const descriptionHtml = getSanitizeHtml(rawHtml);
               <span>RSS 订阅</span>
             </a>
           )}
-          {series.links.chrome && (
+          {links?.chrome && (
             <a
-              href={series.links.chrome}
+              href={links?.chrome}
               target="_blank"
               class="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm backdrop-blur-sm transition-all hover:scale-105 hover:bg-white/20"
             >
@@ -121,9 +124,9 @@ const descriptionHtml = getSanitizeHtml(rawHtml);
               <span>Chrome 插件</span>
             </a>
           )}
-          {series.links.docs && (
+          {links?.docs && (
             <a
-              href={series.links.docs}
+              href={links?.docs}
               target="_blank"
               class="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm backdrop-blur-sm transition-all hover:scale-105 hover:bg-white/20"
             >

@@ -47,7 +47,7 @@ const displayAvatar = artist?.avatar ?? siteConfig.avatar ?? '/img/avatar.webp';
 const displayDescription = artist?.description ?? siteConfig.description;
 
 // Build social config: for artists, merge URLs with site config icon/color
-const artistSocialConfig = artist ? buildArtistSocialConfig(artist) : null;
+const artistSocialConfig = artist ? buildArtistSocialConfig(artist) : undefined;
 
 // Filter navigation items to exclude disabled series
 const filteredRouters = filterNavItems(routers, configuredSeriesSlugs, enabledSeriesSlugs, RESERVED_ROUTES);

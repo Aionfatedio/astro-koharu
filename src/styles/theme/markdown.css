@@ -374,8 +374,6 @@
     padding: 20px;
   }
 
-
-
   /* ========== 引用块样式 ========== */
 
   /* 普通引用块 - 非 admonition，使用伪元素实现圆润竖条 */
@@ -498,46 +496,46 @@
   }
 }
 
-  /* ========== 代码块 Mac 窗口样式 ========== */
+/* ========== 代码块 Mac 窗口样式 ========== */
 
-  /* 代码块容器 - 覆盖 Typography 默认样式 */
-  pre {
-    position: relative;
-    border-radius: 0 0 0.75rem 0.75rem;
-    border: 1px solid hsl(var(--border));
-    /* 重置 Typography 默认 padding */
-    padding: 0;
-    padding-inline-end: 0;
-    overflow: hidden;
-    margin: 0;
-    /* 覆盖 Typography 背景色 */
-    background-color: hsl(var(--card));
-    /* 阴影 */
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  }
+/* 代码块容器 - 覆盖 Typography 默认样式 */
+pre {
+  position: relative;
+  border-radius: 0 0 0.75rem 0.75rem;
+  border: 1px solid hsl(var(--border));
+  /* 重置 Typography 默认 padding */
+  padding: 0;
+  padding-inline-end: 0;
+  overflow: hidden;
+  margin: 0;
+  /* 覆盖 Typography 背景色 */
+  background-color: hsl(var(--card));
+  /* 阴影 */
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
 
-  pre code {
-    display: block;
-    padding: 1rem 1.5rem;
-    overflow-x: auto;
-    font-size: 0.875rem;
-    line-height: 1.7;
-    /* 覆盖 Typography 默认值 */
-    background-color: transparent;
-    color: inherit;
-  }
+pre code {
+  display: block;
+  padding: 1rem 1.5rem;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  /* 覆盖 Typography 默认值 */
+  background-color: transparent;
+  color: inherit;
+}
 
-  /* 移除 pre code 的 Typography ::before/::after */
-  pre code::before,
-  pre code::after {
-    content: none;
-  }
+/* 移除 pre code 的 Typography ::before/::after */
+pre code::before,
+pre code::after {
+  content: none;
+}
 
-  table {
-    display: block;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
+table {
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 
 /* 代码块 */
 .code-block-wrapper {
@@ -1305,14 +1303,17 @@
 
 /* Hidden unnecessary elements */
 .art-contextmenu.art-contextmenu-version {
+  /* biome-ignore lint/complexity/noImportantStyles: Override Artplayer inline style */
   display: none !important;
 }
 
 .art-video-player .art-bottom {
+  /* biome-ignore lint/complexity/noImportantStyles: Override Artplayer z-index */
   z-index: 10 !important;
 }
 
 .art-video-player .art-mask {
+  /* biome-ignore lint/complexity/noImportantStyles: Override Artplayer z-index */
   z-index: 10 !important;
 }
 

@@ -10,12 +10,28 @@ import { createPortal } from 'react-dom';
 import { loadCache } from '@/lib/og-service';
 import { CodePenEmbed, LinkPreview, TweetEmbed } from './embed';
 
-interface EmbedTarget {
+interface TweetEmbedTarget {
   id: string;
-  type: 'tweet' | 'codepen' | 'link';
+  type: 'tweet';
   element: HTMLElement;
-  data: Record<string, string>;
+  data: { tweetId: string };
 }
+
+interface CodePenEmbedTarget {
+  id: string;
+  type: 'codepen';
+  element: HTMLElement;
+  data: { user: string; penId: string; url: string };
+}
+
+interface LinkEmbedTarget {
+  id: string;
+  type: 'link';
+  element: HTMLElement;
+  data: { url: string };
+}
+
+type EmbedTarget = TweetEmbedTarget | CodePenEmbedTarget | LinkEmbedTarget;
 
 interface EmbedHydratorProps {
   containerRef: React.RefObject<HTMLElement | null>;

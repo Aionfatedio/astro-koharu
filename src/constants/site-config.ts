@@ -1,8 +1,7 @@
 // Import YAML config directly - processed by @rollup/plugin-yaml
 
-import type { ArtistInfo, CMSConfig, CommentConfig, FeaturedSeriesItem } from '@lib/config/types';
+import type { ArtistInfo, CommentConfig, DevConfig, FeaturedSeriesItem } from '@lib/config/types';
 import artistsYaml from '../../config/artists.yaml';
-import rawCmsConfig from '../../config/cms.yaml';
 import yamlConfig from '../../config/site.yaml';
 import { isReservedSlug, RESERVED_ROUTES } from './router';
 
@@ -19,6 +18,8 @@ type SiteConfig = {
   startYear?: number;
   defaultOgImage?: string;
   keywords?: string[];
+  /** 面包屑导航中首页的显示名称 @default '首页' */
+  breadcrumbHome?: string;
   featuredCategories?: {
     link: string;
     image: string;
@@ -178,6 +179,7 @@ export const siteConfig: SiteConfig = {
   startYear: yamlConfig.site.startYear,
   defaultOgImage: yamlConfig.site.defaultOgImage,
   keywords: yamlConfig.site.keywords,
+  breadcrumbHome: yamlConfig.site.breadcrumbHome,
   featuredCategories: yamlConfig.featuredCategories,
   featuredSeries: normalizeFeaturedSeries(yamlConfig.featuredSeries),
 };
@@ -259,13 +261,14 @@ export const christmasConfig: ChristmasConfig = yamlConfig.christmas || {
   },
 };
 
-// Map YAML CMS config with defaults
-export const cmsConfig: CMSConfig = {
-  enabled: rawCmsConfig?.enabled ?? false,
-  localProjectPath: rawCmsConfig?.localProjectPath ?? '',
-  contentRelativePath: rawCmsConfig?.contentRelativePath ?? 'src/content/blog',
-  editors: rawCmsConfig?.editors ?? [],
-};
+// Map YAML dev config (v2.5.0 Development Tools)
+export const devConfig: DevConfig | null = yamlConfig.dev
+  ? {
+      localProjectPath: yamlConfig.dev.localProjectPath ?? '',
+      contentRelativePath: yamlConfig.dev.contentRelativePath ?? 'src/content/blog',
+      editors: yamlConfig.dev.editors ?? [],
+    }
+  : null;
 
 // =============================================================================
 // Series Slugs (Pre-computed for navigation filtering)
@@ -284,7 +287,7 @@ export const enabledSeriesSlugs = new Set(
 // =============================================================================
 
 /** All artists from config/artists.yaml */
-export const artistsConfig: ArtistInfo[] = artistsYaml?.artists ?? [];
+export const artistsConfig: ArtistInfo[] = (artistsYaml?.artists as ArtistInfo[]) ?? [];
 
 /**
  * Get artist info by ID

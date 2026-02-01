@@ -1,0 +1,27 @@
+---
+import { EmbedHydrator } from '@components/embed/EmbedHydrator';
+import type { ContentConfig } from '@constants/content-config';
+import { defaultContentConfig } from '@constants/content-config';
+import { christmasConfig } from '@/constants/site-config';
+
+interface Props {
+  config?: Partial<ContentConfig>;
+}
+
+const { config = {} } = Astro.props;
+const finalConfig = { ...defaultContentConfig, ...config };
+---
+
+<div
+  class:list={['custom-content', { 'relative z-5': christmasConfig.enabled && christmasConfig.features.snowfall }]}
+  data-config={JSON.stringify(finalConfig)}
+>
+  <slot />
+</div>
+
+{finalConfig.enableTweetEmbed && <EmbedHydrator client:load />}
+
+<script>
+  import { initContentEnhancer } from '@lib/content-enhancer';
+  initContentEnhancer();
+</script>
