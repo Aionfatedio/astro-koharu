@@ -9,6 +9,7 @@ import type { ContentConfig } from '@constants/content-config';
 import { enhanceAllCodeBlocks } from '@lib/code-block-enhancer';
 import { enhanceImages } from '@lib/image-enhancer';
 import { initInfographicEnhancer } from '@lib/infographic-enhancer';
+import { enhanceLinkPreviews } from '@lib/link-preview-enhancer';
 import { initMermaidEnhancer } from '@lib/mermaid-enhancer';
 import { cleanupVideos, enhanceVideos } from '@lib/video-enhancer';
 
@@ -119,6 +120,9 @@ export function enhanceContent(contentContainer: Element | null): void {
 
   // Enhance images with loading states
   enhanceImages(contentContainer);
+
+  // Enhance link preview images with error handling
+  enhanceLinkPreviews(contentContainer);
 
   // Enhance videos with Artplayer
   enhanceVideos(contentContainer);

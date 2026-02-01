@@ -7,6 +7,7 @@
 
 import { animation, zIndex } from '@constants/design-tokens';
 import { Icon } from '@iconify/react';
+import { displayDate } from '@lib/date';
 import { cn } from '@lib/utils';
 import { useStore } from '@nanostores/react';
 import {
@@ -17,8 +18,6 @@ import {
   markAsRead,
   readAnnouncementIds,
 } from '@store/announcement';
-import { format } from 'date-fns';
-import { zhCN } from 'date-fns/locale';
 import { AnimatePresence, motion } from 'motion/react';
 import type { Announcement } from '@/types/announcement';
 import { getAnnouncementColor, getAnnouncementIcon } from './AnnouncementToaster';
@@ -26,7 +25,7 @@ import { getAnnouncementColor, getAnnouncementIcon } from './AnnouncementToaster
 function formatDate(dateStr?: string): string {
   if (!dateStr) return '';
   try {
-    return format(new Date(dateStr), 'MM/dd', { locale: zhCN });
+    return displayDate.monthDay(dateStr);
   } catch {
     return '';
   }

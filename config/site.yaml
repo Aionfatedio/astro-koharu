@@ -29,6 +29,9 @@ site:
     - 漫画推荐
     - 漫画鉴赏
     # 请根据你的网站内容添加关键词
+  # 时区配置 (IANA 格式)，用于文章日期的正确解析和显示
+  # 参考: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  timezone: Asia/Shanghai
 
 # =============================================================================
 # Category Map

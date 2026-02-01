@@ -1,6 +1,7 @@
 // Import YAML config directly - processed by @rollup/plugin-yaml
 
 import type { ArtistInfo, CommentConfig, DevConfig, FeaturedSeriesItem } from '@lib/config/types';
+import { DEFAULT_TIMEZONE, isValidTimezone } from '@lib/timezone';
 import artistsYaml from '../../config/artists.yaml';
 import yamlConfig from '../../config/site.yaml';
 import { isReservedSlug, RESERVED_ROUTES } from './router';
@@ -269,6 +270,24 @@ export const devConfig: DevConfig | null = yamlConfig.dev
       editors: yamlConfig.dev.editors ?? [],
     }
   : null;
+
+// =============================================================================
+// Site Timezone
+// =============================================================================
+
+/**
+ * Site timezone in IANA format
+ * Falls back to 'Asia/Shanghai' if configured timezone is invalid
+ * @default 'Asia/Shanghai'
+ */
+export const siteTimezone: string = (() => {
+  const configuredTz = yamlConfig.site.timezone ?? DEFAULT_TIMEZONE;
+  if (!isValidTimezone(configuredTz)) {
+    console.warn(`[config] Invalid timezone "${configuredTz}", falling back to "${DEFAULT_TIMEZONE}"`);
+    return DEFAULT_TIMEZONE;
+  }
+  return configuredTz;
+})();
 
 // =============================================================================
 // Series Slugs (Pre-computed for navigation filtering)
