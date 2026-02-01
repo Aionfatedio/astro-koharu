@@ -182,8 +182,8 @@ async function initializePlayer(container: Element): Promise<void> {
             cursor: 'default',
             userSelect: 'none',
           },
-          tooltip: `当前画质: ${video.videoWidth}×${video.videoHeight}`,
-          // tooltip: ``,
+          // tooltip: `当前画质：${video.videoWidth}×${video.videoHeight}`,
+          tooltip: ``,
         });
 
         // 音量键移动到右侧：Move volume control from left to right (between quality-label and setting)

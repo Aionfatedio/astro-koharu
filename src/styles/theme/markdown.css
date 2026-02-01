@@ -326,8 +326,12 @@
     border-color: hsl(var(--primary) / 0.5);
   }
 
+  details[open]:hover {
+    border-color: hsl(var(--primary) / 0.5);
+  }
+
   details[open] {
-    border-color: hsl(var(--primary) / 0.3);
+    border-color: hsl(var(--border));
   }
 
   details summary {

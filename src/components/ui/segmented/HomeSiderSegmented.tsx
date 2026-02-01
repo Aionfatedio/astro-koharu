@@ -3,7 +3,7 @@ import type { HomeSiderSegmentType } from '@constants/enum';
 import { HomeSiderSegmentType as SegmentTypeEnum } from '@constants/enum';
 import { homeSiderSegmentType } from '@store/app';
 import React from 'react';
-import { RiArticleLine, RiDashboard3Line, RiListOrdered2 } from 'react-icons/ri';
+import { RiArticleLine, RiDashboard3Line, RiListOrdered2,RiUserLine } from 'react-icons/ri';
 import { cn } from '@/lib/utils';
 
 type HomeSiderSegmentedProps = {
@@ -22,7 +22,7 @@ export const HomeSiderSegmented = ({ className, isArtistPage = false, ...props }
     {
       label: isArtistPage ? '画师概览' : '站点概览',
       value: SegmentTypeEnum.INFO,
-      icon: RiDashboard3Line,
+      icon: RiUserLine,
     },
     {
       label: '文章目录',

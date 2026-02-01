@@ -107,6 +107,8 @@ draft: true
 
 ::comic{id="manga3" name="少年よ、私を抱け。" src="/img/comic/manga3/manifest.json" author="鳥居ヨシツナ"}
 
+::comic{id="manga4" name="エロ漫研とかにようこそ" src="/img/comic/manga4/manifest.json" author="きづかかずき"}
+
 ### 漫画指令语法
 
 ```markdown
@@ -269,10 +271,11 @@ pie title 博客内容分布
   </span>
 </details>
 
+
 ## 引用
 
-> 这是一段引用文本。\
-> 混沌未启已真玄，太虚堪破吾为先，八荒六合任逍遥，谁人知我何处仙。
+> 这是一段引用文本：\
+> <span style="font-family: simsun;">混沌未启已真玄，太虚堪破吾为先，八荒六合任逍遥，谁人知我何处仙。</span>
     
 
 ## Github Style

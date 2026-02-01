@@ -14,6 +14,20 @@ const { customSocialConfig } = Astro.props;
 // Use custom config if provided, otherwise use default site config
 const socialConfig = customSocialConfig ?? defaultSocialConfig;
 
+// 将社交链接按 3 个一组分割，以便最后一行根据剩余数量动态调整布局
+const entries = Object.entries(socialConfig);
+const rows: [string, { url: string; icon: string; color: string }][][] = [];
+for (let i = 0; i < entries.length; i += 3) {
+  rows.push(entries.slice(i, i + 3));
+}
+
+// 根据每行数量返回对应的 grid-cols 类名
+function getGridCols(count: number) {
+  if (count === 1) return 'grid-cols-1';
+  if (count === 2) return 'grid-cols-2';
+  return 'grid-cols-3';
+}
+
 // 判断是否为本地图标路径
 function isLocalIcon(icon: string): boolean {
   return (
@@ -28,36 +42,40 @@ function isLocalIcon(icon: string): boolean {
 ---
 
 <!-- TODO: use CSS squircle corner-shape replace the rounded-xl border-radius with a squircle corner-shape (https://www.squircle.style/) -->
-<div class="mt-2 grid grid-cols-3 gap-2">
+<div class="mt-2 flex flex-col gap-2">
   {
-    Object.entries(socialConfig).map(([key, config]) => {
-      const { url, icon, color } = config;
-      const isLocal = isLocalIcon(icon);
-      return (
-        <div>
-          <a
-            class={cn(
-              'social-link flex-center group relative overflow-hidden rounded-xl px-1.5 py-1 transition-all duration-300 group-hover:scale-105',
-            )}
-            style={color ? `--link-color: ${color}` : ''}
-            data-platform={key}
-            href={url}
-            title={capitalize(key)}
-            data-tooltip-interactive="false"
-            data-tooltip-placement="top"
-            aria-label={capitalize(key)}
-            target="_blank"
-          >
-            {isLocal ? (
-              <img src={icon.startsWith('/') ? icon : `/${icon}`} alt={key} class="inline-block size-6" />
-            ) : (
-              <Icon name={icon} class="inline-block size-6" />
-            )}
-            <span class="absolute inset-0 -z-10 -translate-x-full translate-y-full rounded-xl transition-transform duration-300 group-hover:translate-x-0 group-hover:translate-y-0" />
-          </a>
-        </div>
-      );
-    })
+    rows.map((row) => (
+      <div class={cn('grid gap-2', getGridCols(row.length))}>
+        {row.map(([key, config]) => {
+          const { url, icon, color } = config;
+          const isLocal = isLocalIcon(icon);
+          return (
+            <div>
+              <a
+                class={cn(
+                  'social-link flex-center group relative overflow-hidden rounded-xl px-1.5 py-1 transition-all duration-300 group-hover:scale-105',
+                )}
+                style={color ? `--link-color: ${color}` : ''}
+                data-platform={key}
+                href={url}
+                title={capitalize(key)}
+                data-tooltip-interactive="false"
+                data-tooltip-placement="top"
+                aria-label={capitalize(key)}
+                target="_blank"
+              >
+                {isLocal ? (
+                  <img src={icon.startsWith('/') ? icon : `/${icon}`} alt={key} class="inline-block size-6" />
+                ) : (
+                  <Icon name={icon} class="inline-block size-6" />
+                )}
+                <span class="absolute inset-0 -z-10 -translate-x-full translate-y-full rounded-xl transition-transform duration-300 group-hover:translate-x-0 group-hover:translate-y-0" />
+              </a>
+            </div>
+          );
+        })}
+      </div>
+    ))
   }
 </div>
 

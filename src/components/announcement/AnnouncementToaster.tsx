@@ -94,10 +94,10 @@ function AnnouncementToast({ announcement, toastId }: { announcement: Announceme
       <AnnouncementToastContent announcement={announcement} />
       <div className="mt-3 flex items-center justify-between border-border/50 border-t pt-2 text-muted-foreground text-xs">
         <button onClick={openAnnouncementList} className="text-primary hover:underline" type="button">
-          View all
+          查看全部
         </button>
         <button onClick={() => toast.dismiss(toastId)} className="opacity-70 hover:opacity-100" type="button">
-          Dismiss
+          已读
         </button>
       </div>
     </output>
