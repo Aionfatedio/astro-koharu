@@ -83,3 +83,15 @@
   font-size: 0.75rem;
   opacity: 0.7;
 }
+
+/* ============================================================================
+   Link Preview Favicon Error Handling
+   ============================================================================ */
+
+/* Favicon fallback wrapper - matches original img styling */
+.link-preview-favicon-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}

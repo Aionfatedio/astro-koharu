@@ -23,7 +23,7 @@ draft: true
 
 下面是一条独行的 X 链接，应该自动转换为 Tweet 组件：
 
-<https://x.com/_himehajime/status/2015042038044201091>
+<https://x.com/_himehajime/status/2000161785123635387>
 
 这是普通段落中的链接 [おののいもこ🐟魚介](https://x.com/_himehajime/status/2015042038044201091)，不应该被嵌入。
 
@@ -35,11 +35,9 @@ draft: true
 
 <https://ci-en.dlsite.com/creator/19471/article?mode=detail&page=1>
 
-<https://github.com/dimsemenov/photoswipe>
+<https://www.bilibili.com/video/BV1HrkFBCEmp>
 
-<https://github.com/zhw2590582/ArtPlayer>
-
-<https://github.com/hymbz/ComicReadScript>
+<https://www.youtube.com/watch?v=uBjvuKrdbAs>
 
 这是没有 OG 图的链接
 
