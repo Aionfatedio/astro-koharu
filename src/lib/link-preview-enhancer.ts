@@ -11,7 +11,7 @@ const DEFAULT_FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 
 
 // Static mapping of known domains to their SVG icons
 const DOMAIN_FAVICON_MAP: Record<string, string> = {
-  'bilibili.com': `<img src="https://icon.bqb.cool/?url=https://www.bilibili.com/" alt="" class="link-preview-favicon h-4 w-4 shrink-0" data-domain="bilibili.com" aria-hidden="true">`
+  'bilibili.com': `<img src="https://icon.bqb.cool/?url=https://www.bilibili.com/" alt="" class="link-preview-favicon h-4 w-4 shrink-0" data-domain="bilibili.com" aria-hidden="true">`,
 };
 
 /**

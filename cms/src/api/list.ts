@@ -7,7 +7,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { parse } from 'date-fns';
+import { isValid, parse, parseISO } from 'date-fns';
 import matter from 'gray-matter';
 import type { Context } from 'hono';
 import yaml from 'js-yaml';
@@ -59,14 +59,31 @@ function extractCategoryNames(categories?: string | string[] | string[][]): stri
 }
 
 /**
- * Parses a date string in "YYYY-MM-DD HH:mm:ss" format as local time
+ * Parses a date string in multiple formats as local time
+ * Supports "YYYY-MM-DD HH:mm:ss", ISO 8601, and "YYYY-MM-DD"
  */
 function parseLocalDate(dateStr: string | Date | undefined): string {
   if (!dateStr) return new Date().toISOString();
   if (dateStr instanceof Date) return dateStr.toISOString();
-  // Parse "2026-01-29 10:00:00" format as local time
-  const parsed = parse(dateStr, 'yyyy-MM-dd HH:mm:ss', new Date());
-  return parsed.toISOString();
+
+  // Try local time format first: "yyyy-MM-dd HH:mm:ss"
+  // Must be tried FIRST because new Date() would incorrectly parse this as UTC
+  const localDate = parse(dateStr, 'yyyy-MM-dd HH:mm:ss', new Date());
+  if (isValid(localDate)) return localDate.toISOString();
+
+  // Try ISO 8601 format (e.g., "2026-01-03T12:00:00.000Z")
+  if (dateStr.includes('T')) {
+    const isoDate = parseISO(dateStr);
+    if (isValid(isoDate)) return isoDate.toISOString();
+  }
+
+  // Try date-only format "yyyy-MM-dd"
+  const dateOnly = parse(dateStr, 'yyyy-MM-dd', new Date());
+  if (isValid(dateOnly)) return dateOnly.toISOString();
+
+  // Fallback: return current date
+  console.warn(`[CMS List API] Failed to parse date: "${dateStr}", using current date`);
+  return new Date().toISOString();
 }
 
 /**

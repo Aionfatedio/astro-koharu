@@ -397,7 +397,7 @@
     width: 4px;
     border-radius: 99px;
     background-color: hsl(214, 62%, 58%);
-    transition: background-color 0.2s ease;
+    transition: background-color 0.3s ease-in-out;
   }
 
   blockquote:not(.admonition):hover::before {

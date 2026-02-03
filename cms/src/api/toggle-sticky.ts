@@ -59,9 +59,16 @@ export async function toggleStickyHandler(c: Context) {
 
     const filePath = path.join(projectRoot, CONTENT_DIR, postId);
 
-    // Read the file
+    // Read the file with JSON_SCHEMA to prevent date auto-conversion to UTC
     const fileContent = await fs.readFile(filePath, 'utf-8');
-    const { data: frontmatter, content } = matter(fileContent);
+    const { data: frontmatter, content } = matter(fileContent, {
+      engines: {
+        yaml: {
+          parse: (str) => yaml.load(str, { schema: yaml.JSON_SCHEMA }) as object,
+          stringify: (obj) => yaml.dump(obj),
+        },
+      },
+    });
 
     // Toggle sticky status
     const currentSticky = frontmatter.sticky === true;

@@ -3,7 +3,7 @@ import type { HomeSiderSegmentType } from '@constants/enum';
 import { HomeSiderSegmentType as SegmentTypeEnum } from '@constants/enum';
 import { homeSiderSegmentType } from '@store/app';
 import React from 'react';
-import { RiArticleLine, RiUserLine, RiListOrdered2 } from 'react-icons/ri';
+import { RiArticleLine, RiListOrdered2, RiUserLine } from 'react-icons/ri';
 import { cn } from '@/lib/utils';
 
 type HomeSiderSegmentedProps = {

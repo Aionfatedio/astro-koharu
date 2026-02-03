@@ -5,7 +5,7 @@ date: 2025-01-03 01:01:33
 description: "关于我？"
 ---
 
-## 你好，这里是余弦
+## 你好，这里是执笔画江南
 
 ::video{src="/media/test.mp4"}
 
@@ -29,7 +29,3 @@ https://t.me/cosine_front_end
 Gitbook 前端学习记录
 
 https://book.cosine.ren/
-
-[![GitHub State](https://git-stats.cosine.ren/api?username=yusixian&theme=dark&show_icons=true&hide_border=true)](https://github.com/anuraghazra/github-readme-stats)
-
-[![GitHub Streak](https://github-readme-streak-stats-rust-tau.vercel.app?user=yusixian&theme=dark&date_format=%5BY%20%5DM%20&hide_border=true)](https://git.io/streak-stats)
