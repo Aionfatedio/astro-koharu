@@ -28,9 +28,17 @@ export function rehypeImagePlaceholder() {
           decoding: 'async',
         };
         return;
-      }
+      } 
 
-      // Get existing class (handle both string and array formats per HAST spec)
+      // Parse URL hash modifiers (e.g., #center)
+      const src = node.properties?.src as string | undefined;
+      let wrapperClass = 'markdown-image-wrapper';
+      if (src?.includes('#')) {
+        const hashIndex = src.lastIndexOf('#');
+        const hash = src.slice(hashIndex + 1);
+        node.properties.src = src.slice(0, hashIndex);
+        if (hash === 'center') wrapperClass += ' centered';
+      }
 
       // Add lazy loading attributes and class
       node.properties = {
@@ -44,7 +52,7 @@ export function rehypeImagePlaceholder() {
       const wrapper: Element = {
         type: 'element',
         tagName: 'figure',
-        properties: { class: 'markdown-image-wrapper' },
+        properties: { class: wrapperClass },
         children: [node],
       };
 

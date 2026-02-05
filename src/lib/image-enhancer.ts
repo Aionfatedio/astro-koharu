@@ -101,10 +101,12 @@ async function openPhotoSwipe(container: Element, clickedImg: HTMLImageElement):
       // === Zoom configuration ===
       // Allow secondary zoom (click to zoom in further)
       allowPanToNext: true,
+      // DisAllow loop
+      loop: false,
       // Initial zoom level: fit image to viewport
       initialZoomLevel: 'fit',
       // Secondary zoom level: 2x
-      secondaryZoomLevel: 2,
+      secondaryZoomLevel: 1.5,
       // Maximum zoom level: 4x original size
       maxZoomLevel: 4,
 

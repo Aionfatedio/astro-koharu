@@ -701,6 +701,17 @@ table {
   max-height: 60vh;
 }
 
+/* 居中图片 - 使用 #center 修饰符 */
+.prose .markdown-image-wrapper.centered {
+  margin-left: auto;
+  margin-right: auto;
+  display: block; 
+}
+
+.prose .markdown-image-wrapper.centered .markdown-image.loaded {
+  width: 100%;
+}
+
 /* 图片加载失败状态 - 隐藏损坏图片 */
 .prose .markdown-image.error {
   display: none;

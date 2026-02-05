@@ -63,6 +63,10 @@ draft: true
 
 ![示例图片](/img/cover/3.webp)
 
+![图片1](https://i.pximg.org/img-original/img/2023/02/10/10/56/19/105240329_p0.png)
+
+![图片2](https://i.pximg.org/img-original/img/2025/06/09/18/54/57/131365589_p0.png)
+
 ## 视频嵌入
 
 使用 `::video{}` 指令可以嵌入视频播放器：
