@@ -49,6 +49,8 @@ const blogCollection = defineCollection({
     // Shoka features per-post toggle
     math: z.boolean().optional(),
     quiz: z.boolean().optional(),
+    // 画师介绍文章：对应 artists.json 中的画师 ID
+    artist: z.string().optional(),
   }) satisfies z.ZodType<BlogSchema, z.ZodTypeDef, BlogSchemaInput>,
 });
 

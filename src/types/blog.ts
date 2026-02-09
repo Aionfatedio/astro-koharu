@@ -24,6 +24,8 @@ export interface BlogSchema {
   math?: boolean;
   /** Enable quiz interaction for this post */
   quiz?: boolean;
+  /** Artist ID for artist profile sidebar (matches artists.json) */
+  artist?: string;
 }
 
 /**

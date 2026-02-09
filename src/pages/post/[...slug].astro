@@ -16,6 +16,7 @@ import { getOgImageUrl } from '@lib/seo/og-image';
 import { Icon } from 'astro-icon/components';
 import { Comment } from '@/components/comment';
 import EditButton from '@/components/EditButton';
+import { getArtistById } from '@/lib/artists';
 import { extractTextFromMarkdown } from '@/lib/sanitize';
 
 export async function getStaticPaths() {
@@ -32,6 +33,10 @@ export async function getStaticPaths() {
 const { post, postId } = Astro.props;
 const { Content } = await post.render();
 const { title, categories = [], tags = [], date, math: postMath } = post?.data ?? {};
+
+// 画师概览：查找画师数据（匹配失败则回退为 null，显示站点概览）
+const artistProfile = post.data.artist ? getArtistById(post.data.artist) : null;
+
 // KaTeX CSS: only load when global enableMath is on AND post hasn't opted out.
 // When enableMath is false globally, rehype-katex is not in the pipeline, so no math is rendered.
 const hasMath = defaultContentConfig.enableMath !== false && postMath !== false;
@@ -132,13 +137,14 @@ if (post.data.description) {
   description={finalDescription}
   siderType={HomeSiderType.POST}
   post={post}
+  artistProfile={artistProfile}
 >
   <script is:inline slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   <script is:inline slot="head" type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} />
   {hasMath && <link slot="head" rel="stylesheet" href="/katex/katex.min.css" />}
   <TwoColumnLayout post={post}>
     <Cover slot="cover" data={post} />
-    <HomeSider slot="sider" type={HomeSiderType.POST} post={post} />
+    <HomeSider slot="sider" type={HomeSiderType.POST} post={post} artistProfile={artistProfile} />
     <div class={`shadow-box bg-gradient-start flex flex-col gap-2 ${CONTENT_PADDING.standard}`}>
       <!-- Breadcrumb Navigation -->
       <nav class="text-muted-foreground flex items-center justify-between gap-2 text-sm">

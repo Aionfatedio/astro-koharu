@@ -1,12 +1,14 @@
 ---
 import type { HomeSiderType } from '@constants/enum';
 import type { BlogPost } from 'types/blog';
+import type { ArtistProfile } from '@/types/artist';
 
 interface Props {
   title: string;
   description?: string;
   siderType?: HomeSiderType;
   post?: BlogPost;
+  artistProfile?: ArtistProfile | null;
 }
 
 import { ClientRouter } from 'astro:transitions';
@@ -29,7 +31,7 @@ import { Tooltips } from 'astro-tooltips';
 
 import '@styles/index.css';
 
-const { title = seoConfig.title, description = seoConfig.description, siderType, post } = Astro.props;
+const { title = seoConfig.title, description = seoConfig.description, siderType, post, artistProfile } = Astro.props;
 // TODO: siderType should be custom in router file, not in layout
 
 // Detect if current page is a post page for mobile header
@@ -306,7 +308,7 @@ const ogImage = getOgImageUrl(post?.data.cover, Astro.site);
         </div>
       )}
       <FloatingGroup client:only="react" />
-      <MobileDrawer type={siderType} post={post} />
+      <MobileDrawer type={siderType} post={post} artistProfile={artistProfile} />
       <SearchDialog client:idle />
       <SearchPortal />
       <CodeBlockFullscreen client:load />

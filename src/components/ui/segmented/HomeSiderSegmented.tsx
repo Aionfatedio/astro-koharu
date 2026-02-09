@@ -13,12 +13,13 @@ type HomeSiderSegmentedProps = {
   itemClass?: string;
   id?: string;
   value?: HomeSiderSegmentType; // 受控
+  infoLabel?: string; // 动态 label（画师概览 / 站点概览）
 };
 
-export const HomeSiderSegmented = ({ className, ...props }: HomeSiderSegmentedProps) => {
+export const HomeSiderSegmented = ({ className, infoLabel, ...props }: HomeSiderSegmentedProps) => {
   const options: OptionType<HomeSiderSegmentType>[] = [
     {
-      label: '站点概览',
+      label: infoLabel ?? '站点概览',
       value: SegmentTypeEnum.INFO,
       icon: RiDashboard3Line,
     },

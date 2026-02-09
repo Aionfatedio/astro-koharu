@@ -4,7 +4,12 @@ import { cn } from '@lib/utils';
 import { Icon } from 'astro-icon/components';
 import { capitalize } from 'es-toolkit';
 
-const items = Object.entries(socialConfig);
+interface Props {
+  socialOverride?: Record<string, { url: string; icon: string; color: string }>;
+}
+
+const { socialOverride } = Astro.props;
+const items = Object.entries(socialOverride ?? socialConfig);
 const total = items.length;
 const remainder = total % 3;
 const fullRowItems = remainder === 0 ? items : items.slice(0, total - remainder);

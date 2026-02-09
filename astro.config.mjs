@@ -193,7 +193,11 @@ export default defineConfig({
         gg: ['*'],
         'fa6-regular': ['*'],
         'fa6-solid': ['*'],
+        'fa7-regular': ['*'],
+        'fa7-solid': ['*'],
+        'fa7-brands': ['*'],
         ri: ['*'],
+        'simple-icons': ['*'],
       },
     }),
     // Umami analytics - configured via config/site.yaml

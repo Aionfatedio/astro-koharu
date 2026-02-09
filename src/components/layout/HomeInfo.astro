@@ -8,6 +8,7 @@ import { getAllTags, getCategoryList, getPostCount, getSortedPosts } from '@lib/
 import { getLqipStyle } from '@lib/lqip';
 import { cn, filterNavItems } from '@lib/utils';
 import { Icon } from 'astro-icon/components';
+import type { ArtistProfile } from '@/types/artist';
 import type { BlogSchema } from '@/types/blog';
 import Social from './Social.astro';
 
@@ -16,6 +17,7 @@ interface Props {
   className?: string;
   isDrawer?: boolean;
   frontmatter?: BlogSchema;
+  artistProfile?: ArtistProfile | null;
 }
 
 const postCount = await getPostCount();
@@ -27,28 +29,33 @@ const allTags = Object.entries(tags).map(([tag, count]) => ({ tag, count }));
 
 // 生成唯一 ID 前缀
 const uniqueId = `home-info-${Math.random().toString(36).substring(2, 11)}`;
-const { className } = Astro.props;
+const { className, artistProfile } = Astro.props;
+
+// 画师概览：优先使用画师数据，否则使用站点管理员数据
+const displayAvatar = artistProfile?.avatar ?? siteConfig.avatar ?? '/img/avatar.webp';
+const displayName = artistProfile?.name ?? siteConfig?.name;
+const displayDescription = artistProfile?.description ?? siteConfig?.description;
 
 // Filter navigation items to exclude disabled series
 const filteredRouters = filterNavItems(routers, configuredSeriesSlugs, enabledSeriesSlugs, RESERVED_ROUTES);
 ---
 
 <div class={cn('flex flex-col items-center', className)} data-home-info-container={uniqueId}>
-  <div class="relative h-40 w-40 rounded-full" style={getLqipStyle(siteConfig.avatar ?? '/img/avatar.webp')}>
+  <div class="relative h-40 w-40 rounded-full" style={getLqipStyle(displayAvatar)}>
     <img
-      transition:persist="page-home-info-avatar"
+      transition:name="page-home-info-avatar"
       class="shadow-card-darker hover:animate-shake h-full w-full rounded-full transition"
-      src={siteConfig.avatar ?? '/img/avatar.webp'}
-      alt={`${siteConfig.name ?? ''} avatar`}
+      src={displayAvatar}
+      alt={`${displayName ?? ''} avatar`}
       loading="eager"
       fetchpriority="high"
     />
-    {christmasConfig.enabled && christmasConfig.features.christmasHat && <ChristmasHat />}
+    {!artistProfile && christmasConfig.enabled && christmasConfig.features.christmasHat && <ChristmasHat />}
   </div>
 
-  <p class="mt-2">{siteConfig?.name}</p>
-  <p class="text-muted-foreground mt-3 text-center">{siteConfig?.description}</p>
-  <Social />
+  <p class="mt-2">{displayName}</p>
+  <p class="text-muted-foreground mt-3 text-center">{displayDescription}</p>
+  <Social socialOverride={artistProfile?.social} />
   <div
     class="text-muted-foreground mt-3 flex justify-center text-center text-sm/4 whitespace-nowrap select-none dark:text-white/80"
   >

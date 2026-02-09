@@ -1,0 +1,20 @@
+[
+  {
+    "id": "mankaikaika",
+    "name": "満開開花",
+    "description": "R-18のオリジナルイラストやファンアートなど描く人です。",
+    "avatar": "/img/artists/mankaikaika.jpg",
+    "social": {
+      "twitter": {
+        "url": "https://x.com/mankaikaika2",
+        "icon": "ri:twitter-x-fill",
+        "color": "#000000"
+      },
+      "pixiv": {
+        "url": "https://www.pixiv.net/users/49906039",
+        "icon": "simple-icons:pixiv",
+        "color": "#0096fa"
+      }
+    }
+  }
+]
