@@ -30,6 +30,7 @@ interface RemarkShokaPreprocessOptions {
   enableSuperSub?: boolean;
   enableMath?: boolean;
   enableEncryptedBlock?: boolean;
+  enableComicCard?: boolean;
 }
 
 export function remarkShokaPreprocess(options?: RemarkShokaPreprocessOptions) {
@@ -38,8 +39,8 @@ export function remarkShokaPreprocess(options?: RemarkShokaPreprocessOptions) {
   if (options?.enableMath !== false) {
     pipeline.use(remarkMath);
   }
-  if (options?.enableEncryptedBlock) {
-    // remarkDirective must be in re-parse pipeline so :::encrypted survives re-parsing
+  if (options?.enableEncryptedBlock || options?.enableComicCard) {
+    // remarkDirective must be in re-parse pipeline so ::comic / :::encrypted survive re-parsing
     pipeline.use(remarkDirective);
   }
 

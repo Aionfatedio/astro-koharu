@@ -22,6 +22,7 @@ import YAML from 'yaml';
 import { rehypeEncryptedBlock } from './src/lib/markdown/rehype-encrypted-block.ts';
 import { rehypeImagePlaceholder } from './src/lib/markdown/rehype-image-placeholder.ts';
 import { rehypeShokaAttrs } from './src/lib/markdown/rehype-shoka-attrs.ts';
+import { remarkComicDirective } from './src/lib/markdown/remark-comic-directive.ts';
 import { remarkEncryptedDirective } from './src/lib/markdown/remark-encrypted-directive.ts';
 import { remarkLinkEmbed } from './src/lib/markdown/remark-link-embed.ts';
 import { remarkIns, remarkMark } from './src/lib/markdown/remark-shoka-effects.ts';
@@ -105,6 +106,7 @@ const remarkPlugins = [];
         enableSuperSub: contentConfig.enableShokaEffects !== false,
         enableMath: contentConfig.enableMath !== false,
         enableEncryptedBlock: contentConfig.enableEncryptedBlock ?? false,
+        enableComicCard: contentConfig.enableComicCard ?? false,
       },
     ]);
   }
@@ -117,11 +119,17 @@ if (contentConfig.enableShokaRuby !== false) remarkPlugins.push(remarkShokaRuby)
 if (contentConfig.enableShokaEffects !== false) {
   remarkPlugins.push(remarkIns, remarkMark);
 }
-// Encrypted block: remarkDirective is registered in BOTH places —
+// Encrypted block & comic card: remarkDirective is registered in BOTH places —
 // here for the main Astro pipeline (when remarkShokaPreprocess skips re-parse),
 // and inside remarkShokaPreprocess's re-parse pipeline (when it does re-parse).
+if (contentConfig.enableEncryptedBlock || contentConfig.enableComicCard) {
+  remarkPlugins.push(remarkDirective);
+}
 if (contentConfig.enableEncryptedBlock) {
-  remarkPlugins.push(remarkDirective, remarkEncryptedDirective);
+  remarkPlugins.push(remarkEncryptedDirective);
+}
+if (contentConfig.enableComicCard) {
+  remarkPlugins.push(remarkComicDirective);
 }
 // Link embed is always on (existing feature)
 remarkPlugins.push([

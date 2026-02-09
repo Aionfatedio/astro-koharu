@@ -39,6 +39,8 @@ const finalConfig = { ...defaultContentConfig, ...config };
 <script>
   import { enhanceImages } from '@lib/image-enhancer';
   import { enhanceLinkPreviews } from '@lib/link-preview-enhancer';
+  import { enhanceVideos, cleanupVideos } from '@lib/video-enhancer';
+  import { enhanceComics, cleanupComics } from '@lib/comic-enhancer';
 
   let spoilerJsLoaded = false;
 
@@ -109,6 +111,12 @@ const finalConfig = { ...defaultContentConfig, ...config };
     // Enhance link preview images with error handling
     enhanceLinkPreviews(contentContainer);
 
+    // Enhance video players with Artplayer
+    enhanceVideos(contentContainer);
+
+    // Enhance comic card readers
+    enhanceComics(contentContainer);
+
     // Tab group switching logic
     const tabHeaders = contentContainer.querySelectorAll<HTMLElement>('.tab-header[role="tab"]');
     tabHeaders.forEach((header) => {
@@ -149,6 +157,15 @@ const finalConfig = { ...defaultContentConfig, ...config };
       contentContainer.removeAttribute('data-enhanced');
     }
     enhanceContent();
+  });
+
+  // Cleanup video players and comic readers before page swap to prevent memory leaks
+  document.addEventListener('astro:before-swap', () => {
+    const contentContainer = document.querySelector('.custom-content');
+    if (contentContainer) {
+      cleanupVideos(contentContainer);
+      cleanupComics(contentContainer);
+    }
   });
 
   // Run immediately if already loaded

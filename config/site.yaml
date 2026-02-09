@@ -11,25 +11,27 @@
 # Site Basic Information
 # =============================================================================
 site:
-  title: 余弦の博客 # 网站名称
-  alternate: cosine # 网站英文名称 用于页脚、Logo、@ handle 等
-  subtitle: WA 的一声就哭了 # 网站副标题
-  name: cos # 作者名称 - 请修改为你的名字
-  description: 一个基于 Astro 的现代化博客主题 # 网站描述
-  avatar: /img/avatar.webp # 网站头像
+  title: 执笔绘梦 # 网站名称
+  alternate: AionHub # 网站英文名称 用于页脚、Logo、@ handle 等
+  subtitle: 绝赞本子推荐站~ 只推好本 # 网站副标题
+  name: Aionfatedio # 作者名称 - 请修改为你的名字
+  description: ACGN Lover # 网站描述
+  avatar: /img/avatar.png # 网站头像
   showLogo: true # 是否显示 Logo
-  author: Author # 作者名称 - 请修改为你的名字
+  author: Aionfatedio # 作者名称 - 请修改为你的名字
   url: https://koharu.cosine.ren # 站点 URL 用于 RSS 和 SEO
-  defaultOgImage: /img/avatar.webp # 默认 Open Graph 图片
-  startYear: 2024 # 建站年份
-  timezone: Asia/Shanghai # 时区配置 (IANA 格式)，用于日期显示和处理
+  defaultOgImage: /img/avatar.png # 默认 Open Graph 图片
+  startYear: 2026 # 建站年份
   keywords: # SEO 关键词
     - 博客
-    - Astro
-    - 技术
-    - 前端
+    - 同人志
+    - 单行本
+    - 漫画推荐
+    - 漫画鉴赏
     # 请根据你的网站内容添加关键词
-  # breadcrumbHome: 首页  # 面包屑导航中首页的显示名称（默认: '首页'）
+  # 时区配置 (IANA 格式)，用于文章日期的正确解析和显示
+  # 参考: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  timezone: Asia/Shanghai
 
 # =============================================================================
 # Category Map
@@ -38,12 +40,12 @@ site:
 # =============================================================================
 categoryMap:
   # Primary categories
-  随笔: life
-  笔记: note
-  工具: tools
-  周刊: weekly
+  指南: guide
+  杂谈: sharing
+  画师: artists
+  # 周刊: weekly
   # Secondary categories (for nested paths)
-  前端: front-end
+  # 前端: front-end
   # Add more as needed:
   # 书摘: reading
   # 后端: back-end
@@ -61,22 +63,18 @@ categoryMap:
 #   description: 分类描述文字，显示在卡片上
 # -----------------------------------------------------------------------------
 featuredCategories:
-  - link: life # 对应 categoryMap 中 随笔: life
-    label: 随笔
-    image: /img/cover/2.webp
-    description: 生活记录、随想随笔
-  - link: note # 对应 categoryMap 中 笔记: note
-    label: 笔记
-    image: /img/cover/4.webp
-    description: 技术笔记、学习笔记
-  - link: note/front-end # 嵌套分类：笔记/前端
-    label: 前端
-    image: /img/cover/1.webp
-    description: 前端技术相关
-  - link: tools # 对应 categoryMap 中 工具: tools
-    label: 工具
-    image: /img/cover/11.webp
-    description: 工具使用、效率提升
+  - link: artists # 对应 categoryMap 中 画师: artists
+    label: 画师推荐
+    image: /img/cover/categories/artist.jpg
+    description: 看看画风绝顶的同人画师~
+  - link: sharing # 对应 categoryMap 中 杂谈: sharing
+    label: 杂谈
+    image: /img/cover/categories/sharing.jpg
+    description: 闲聊吹水、想啥聊啥
+  - link: guide # 对应 categoryMap 中 指南: guide
+    label: 指南
+    image: /img/cover/categories/guide.png
+    description: 技术向马虎实践
 
 # =============================================================================
 # Featured Series
@@ -96,20 +94,18 @@ featuredCategories:
 #   links: 相关链接配置（可选）
 # -----------------------------------------------------------------------------
 featuredSeries:
-  - slug: weekly # URL 路径: /weekly
-    categoryName: 周刊 # 必须与 categoryMap 中的分类名匹配
-    label: 我的周刊 # 简短名称
-    fullName: 我的技术周刊 # 完整名称
+  - slug: artists # URL 路径: /weekly
+    categoryName: 画师 # 必须与 categoryMap 中的分类名匹配
+    label: 画师推荐 # 简短名称
+    fullName: 神絵師一覧 # 完整名称
     description: | # 支持多行 Markdown
-      这是周刊/系列文章功能的示例配置。
-      你可以用它来发布定期更新的系列内容，如技术周刊、读书笔记系列等。
-      设置 enabled: false 可以关闭此功能。
+      叮咚！你的宝藏画师安利频道已到达~💖 
+      这里汇集了绝赞唯美的同人志&单行本涩涩画师，相信有你喜欢的画风！
     cover: /img/weekly_header.webp # 系列页面头图
     enabled: true # 启用此系列
-    icon: ri:newspaper-line # 导航图标
-    links: # 相关链接（可选）
-      github: https://github.com/your-username/your-repo # (可选) GitHub 仓库
-      rss: /rss.xml # (可选) RSS 订阅链接
+    icon: ri:bluesky-fill # proicons:color-palette # 导航图标
+    links: # 相关链接
+      rss: /rss.xml # RSS 订阅链接
       # chrome: https://chromewebstore.google.com/detail/your-extension-id # (可选) 浏览器插件
       # docs: https://your-docs-url # (可选) 文档链接
   # 示例：添加第二个系列（取消注释启用）
@@ -135,12 +131,12 @@ featuredSeries:
 # 添加新平台：复制现有配置块，修改键名和各字段值即可
 # -----------------------------------------------------------------------------
 social:
-  github:
-    url: https://github.com/your-username # 替换为你的 GitHub 链接
-    icon: ri:github-fill # Remix Icon 的 GitHub 图标
-    color: '#191717' # (可选) 图标颜色
+ # github:
+ #   url: https://github.com/Aionfatedio # 替换为你的 GitHub 链接
+ #   icon: ri:github-fill # Remix Icon 的 GitHub 图标
+ #   color: '#191717' # (可选) 图标颜色
   email:
-    url: mailto:your@email.com # 替换为你的邮箱，需加 mailto: 前缀
+    url: mailto:aionfatedio@email.com # 替换为你的邮箱，需加 mailto: 前缀
     icon: ri:mail-line
     color: '#55acd5'
   rss:
@@ -154,6 +150,22 @@ social:
   #   url: https://x.com/your-handle
   #   icon: ri:twitter-fill
   #   color: '#4b9ae4'
+  # pixiv:
+  #   url: https://pixiv.net/your-handle
+  #   icon: simple-icons:pixiv
+  #   color: '#0096fa'
+  # patreon:
+  #   url: https://www.patreon.com/your-handle
+  #   icon: simple-icons:patreon
+  #   color: '#020202'
+  # fanbox:
+  #   url: https://fanbox.cc/your-handle
+  #   icon: img/icon/fanbox.png
+  #   color: '#f7f7f7'
+  # fantia:
+  #   url: https://fantia.jp/your-handle
+  #   icon: img/icon/fantia.png
+  #   color: '#f2eacd'
   # bilibili:
   #   url: https://space.bilibili.com/your-id
   #   icon: ri:bilibili-fill
@@ -188,9 +200,9 @@ social:
 friends:
   intro:
     title: 友情链接 # 页面标题
-    subtitle: 欢迎交换友链！ # 页面副标题
-    applyTitle: 申请友链 # 申请区块标题
-    applyDesc: 请在本页留言，格式如下 # 申请说明
+    subtitle: 友链交换界面 # 页面副标题
+    applyTitle: 友链申请暂时关闭 # 申请区块标题
+    applyDesc: 请勿在本页留言，概不回复！ # 申请说明
     exampleYaml: | # 申请格式示例，会显示在页面上
       - site: 你的博客名称 # 站点名称
         url: https://your-blog.com/ # 站点网址
@@ -199,30 +211,30 @@ friends:
         image: https://your-blog.com/avatar.jpg # 头像链接
         color: "#ffc0cb" # 主题色（可选）
   data: # 友链列表
-    - site: 余弦の博客
-      url: https://blog.cosine.ren
-      owner: cos
-      desc: FE / ACG / 手工 / 深色模式强迫症 / INFP / 兴趣广泛养两只猫的老宅女 / remote
-      image: https://blog.cosine.ren/img/avatar.webp
-      color: '#ed788b'
-    - site: 示例博客 A
-      url: https://example-a.com
-      owner: Alice
-      desc: 一个热爱技术的开发者
-      image: https://api.dicebear.com/7.x/avataaars/svg?seed=Alice
-      color: '#BEDCFF'
-    - site: 示例博客 B
-      url: https://example-b.com
-      owner: Bob
-      desc: 分享生活与技术的小站
-      image: https://api.dicebear.com/7.x/avataaars/svg?seed=Bob
-      color: '#FBC1CC'
-    - site: 示例博客 C
-      url: https://example-c.com
-      owner: Carol
-      desc: 记录学习与成长的地方
-      image: https://api.dicebear.com/7.x/avataaars/svg?seed=Carol
-      color: '#ABDCFF'
+  #  - site: 余弦の博客
+  #    url: https://blog.cosine.ren
+  #    owner: cos
+  #    desc: FE / ACG / 手工 / 深色模式强迫症 / INFP / 兴趣广泛养两只猫的老宅女 / remote
+  #    image: https://blog.cosine.ren/img/avatar.webp
+  #    color: '#ed788b'
+  #  - site: 示例博客 A
+  #    url: https://example-a.com
+  #    owner: Alice
+  #    desc: 一个热爱技术的开发者
+  #    image: https://api.dicebear.com/7.x/avataaars/svg?seed=Alice
+  #    color: '#BEDCFF'
+  #  - site: 示例博客 B
+  #    url: https://example-b.com
+  #    owner: Bob
+  #    desc: 分享生活与技术的小站
+  #    image: https://api.dicebear.com/7.x/avataaars/svg?seed=Bob
+  #    color: '#FBC1CC'
+  #  - site: 示例博客 C
+  #    url: https://example-c.com
+  #    owner: Carol
+  #    desc: 记录学习与成长的地方
+  #    image: https://api.dicebear.com/7.x/avataaars/svg?seed=Carol
+  #    color: '#ABDCFF'
 
 # =============================================================================
 # Announcements
@@ -246,19 +258,19 @@ friends:
 # 取消下方注释即可启用公告示例：
 # -----------------------------------------------------------------------------
 announcements:
-  # - id: welcome-2026 # 唯一标识符
-  #   title: 2026 年新年快乐! # 公告标题
-  #   content: 新年快乐! 感谢大家一直以来的支持~ # 公告内容
-  #   type: success # 类型: info/success/warning/error
-  #   priority: 10 # 优先级，数值越大越靠前
-  #   color: '#FF6B6B' # (可选) 自定义颜色
-  #   publishDate: '2026-01-01' # 发布日期
-  #   startDate: '2025-12-31T00:00:00+08:00' # (可选) 开始显示时间
-  #   endDate: '2026-01-15T23:59:59+08:00' # (可选) 结束显示时间
-  #   link: # (可选) 相关链接
-  #     url: https://example.com
-  #     text: 了解更多
-  #     external: true # 新窗口打开
+   - id: welcome-2026 # 唯一标识符
+     title: 2026 年新年快乐! # 公告标题
+     content: 测试公告喵喵喵~ # 公告内容
+     type: success # 类型: info/success/warning/error
+     priority: 1 # 优先级，数值越大越靠前
+     color: '#FF6B6B' # (可选) 自定义颜色
+     publishDate: '2026-01-26' # 发布日期
+  #  startDate: '2025-12-31T00:00:00+08:00' # (可选) 开始显示时间
+  #  endDate: '2026-01-15T23:59:59+08:00' # (可选) 结束显示时间
+     link: # (可选) 相关链接
+       url: https://www.south-plus.net/
+       text: 南+ South Plus
+       external: true # 新窗口打开
   # - id: maintenance-notice
   #   title: 系统维护通知
   #   content: 计划于本周末进行系统维护，届时可能短暂无法访问。
@@ -315,6 +327,7 @@ content:
   enableCodeMeta: true          # 代码块增强 (title, mark, command)
   enableQuiz: true              # 练习题交互功能
   enableEncryptedBlock: true    # :::encrypted{password="..."} 加密内容块
+  enableComicCard: true         # ::comic{} 漫画卡片
 
 # =============================================================================
 # Navigation Routes
@@ -333,12 +346,12 @@ content:
 navigation:
   - name: 首页 # 菜单显示名称
     path: / # 链接路径
-    icon: ri:home-heart-fill # 图标
+    icon: ri:home-smile-fill # 图标
   # - name: 书摘
   #   path: /reading
-  - name: 周刊
-    path: /weekly
-    icon: ri:newspaper-line
+  - name: 画师
+    path: /artists
+    icon: ri:bluesky-fill # proicons:color-palette
   - name: 文章 # 有子菜单时，path 可省略
     icon: ri:quill-pen-ai-fill
     children: # 子菜单列表
@@ -351,15 +364,12 @@ navigation:
       - name: 归档
         path: /archives
         icon: ri:archive-2-fill
-  - name: 友链
-    path: /friends
-    icon: ri:links-line
+  #- name: 友链
+  #  path: /friends
+  #  icon: ri:links-line
   - name: 关于
     path: /about
     icon: fa6-regular:circle-user
-  - name: 歌单
-    path: /music
-    icon: ri:music-2-fill
 
 # =============================================================================
 # Christmas/Seasonal Features
@@ -502,7 +512,7 @@ comment:
 # -----------------------------------------------------------------------------
 analytics:
   umami:
-    enabled: true
+    enabled: false
     id: your-umami-id
     endpoint: https://stats.example.com
 
@@ -571,7 +581,7 @@ christmas:
 #     - urlTemplate: URL 模板，支持占位符 {path}（文件绝对路径）
 # -----------------------------------------------------------------------------
 dev:
-  localProjectPath: '/Users/yourname/path/to/astro-koharu' # 请修改为你的项目绝对路径
+  localProjectPath: '/Code/html code/astro-koharu' # 请修改为你的项目绝对路径
   contentRelativePath: 'src/content/blog'
   editors:
     - id: vscode

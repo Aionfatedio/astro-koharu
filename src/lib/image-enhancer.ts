@@ -1,25 +1,155 @@
 /**
  * Image loading enhancement
- * Adds loaded/error states, fullscreen button, and portrait image grouping.
- *
- * Lightbox functionality has been migrated to React (ImageLightbox.tsx).
- * This module dispatches 'open-image-lightbox' custom events instead.
+ * Adds loaded/error states and portrait image grouping
+ * Uses PhotoSwipe for lightbox functionality
  */
 
-// WeakSet to track enhanced images and avoid re-processing
+import type PhotoSwipe from 'photoswipe';
+import type { SlideData } from 'photoswipe';
+
+// Track enhanced images to avoid duplicate processing
 const enhancedImages = new WeakSet<HTMLImageElement>();
 
+// Track containers that have click listeners bound
+const boundContainers = new WeakSet<Element>();
+
+// PhotoSwipe instance management
+let photoSwipeInstance: PhotoSwipe | null = null;
+let isOpening = false; // Prevent double-click race condition
+
 /**
- * Create fullscreen button for images
+ * Collect all markdown images in container as PhotoSwipe slide data
  */
-function createFullscreenButton(): HTMLButtonElement {
-  const button = document.createElement('button');
-  button.className = 'markdown-image-fullscreen';
-  button.setAttribute('type', 'button');
-  button.setAttribute('aria-label', '全屏查看');
-  button.title = '全屏查看';
-  button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>`;
-  return button;
+function collectImageSlides(container: Element): SlideData[] {
+  const images = container.querySelectorAll<HTMLImageElement>('.markdown-image.loaded');
+  const slides: SlideData[] = [];
+
+  images.forEach((img) => {
+    if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+      slides.push({
+        src: img.src,
+        width: img.naturalWidth,
+        height: img.naturalHeight,
+        alt: img.alt || '',
+        // Use the same src as placeholder for smooth animation (image is already loaded)
+        msrc: img.src,
+        // Store reference to thumbnail element for zoom animation
+        element: img,
+      });
+    }
+  });
+
+  return slides;
+}
+
+/**
+ * Find index of clicked image in slides array
+ */
+function findImageIndex(slides: SlideData[], clickedImg: HTMLImageElement): number {
+  return slides.findIndex((slide) => slide.src === clickedImg.src);
+}
+
+/**
+ * Open PhotoSwipe lightbox
+ */
+async function openPhotoSwipe(container: Element, clickedImg: HTMLImageElement): Promise<void> {
+  // Prevent double-opening
+  if (isOpening || photoSwipeInstance) {
+    return;
+  }
+
+  isOpening = true;
+
+  try {
+    // Dynamically import PhotoSwipe
+    const { default: PhotoSwipe } = await import('photoswipe');
+
+    // Collect all loaded images as slides
+    const slides = collectImageSlides(container);
+    if (slides.length === 0) {
+      isOpening = false;
+      return;
+    }
+
+    // Find clicked image index
+    const index = findImageIndex(slides, clickedImg);
+    if (index === -1) {
+      isOpening = false;
+      return;
+    }
+
+    // Initialize PhotoSwipe
+    const pswp = new PhotoSwipe({
+      dataSource: slides,
+      index,
+      // Animation settings - zoom from thumbnail
+      showHideAnimationType: 'zoom',
+      // Background opacity
+      bgOpacity: 0.9,
+      // Padding around image
+      padding: { top: 20, bottom: 20, left: 20, right: 20 },
+      // Enable close on background click
+      bgClickAction: 'close',
+      // Keyboard bindings
+      escKey: true,
+      arrowKeys: true,
+      // Zoom settings
+      wheelToZoom: true,
+      // Preload adjacent slides
+      preload: [1, 2],
+
+      // === Zoom configuration ===
+      // Allow secondary zoom (click to zoom in further)
+      allowPanToNext: true,
+      // DisAllow loop
+      loop: false,
+      // Initial zoom level: fit image to viewport
+      initialZoomLevel: 'fit',
+      // Secondary zoom level: 2x
+      secondaryZoomLevel: 1.25,
+      // Maximum zoom level: 4x original size
+      maxZoomLevel: 4,
+
+      // === UI configuration ===
+      arrowPrev: false,
+      arrowNext: false,
+      // Show zoom button
+      zoom: false,
+      // Show close button
+      close: true,
+      counter: false,
+    });
+
+    // Store instance reference
+    photoSwipeInstance = pswp;
+
+    // Clean up on destroy
+    pswp.on('destroy', () => {
+      photoSwipeInstance = null;
+      isOpening = false;
+    });
+
+    // Initialize and open
+    pswp.init();
+  } catch (error) {
+    console.error('[Image Enhancer] Failed to open PhotoSwipe:', error);
+    isOpening = false;
+  }
+}
+
+/**
+ * Handle image click for lightbox (using event delegation)
+ */
+function handleImageClick(container: Element, e: Event): void {
+  const target = e.target as HTMLElement;
+
+  // Check if clicked on a loaded markdown image
+  if (target.classList.contains('markdown-image') && target.classList.contains('loaded')) {
+    const img = target as HTMLImageElement;
+    e.preventDefault();
+    e.stopPropagation();
+    openPhotoSwipe(container, img);
+  }
 }
 
 /**
@@ -31,10 +161,12 @@ function createErrorPlaceholder(img: HTMLImageElement): HTMLElement {
   placeholder.setAttribute('role', 'img');
   placeholder.setAttribute('aria-label', img.alt ? `图片加载失败: ${img.alt}` : '图片加载失败');
 
+  // Icon
   const icon = document.createElement('span');
   icon.className = 'markdown-image-error-icon';
   icon.setAttribute('aria-hidden', 'true');
 
+  // Text
   const text = document.createElement('span');
   text.className = 'markdown-image-error-text';
   text.textContent = '图片加载失败';
@@ -46,77 +178,50 @@ function createErrorPlaceholder(img: HTMLImageElement): HTMLElement {
 }
 
 /**
- * Open image in React lightbox via custom event
+ * Main enhancement function
  */
-function openImageLightbox(src: string, alt: string, images: { src: string; alt: string }[], currentIndex: number): void {
-  window.dispatchEvent(
-    new CustomEvent('open-image-lightbox', {
-      detail: { src, alt, images, currentIndex },
-    }),
-  );
-}
-
-/**
- * Handle image click for lightbox (using event delegation).
- * Collects all loaded images from the content container to enable navigation.
- */
-function handleImageClick(e: Event): void {
-  const target = e.target as HTMLElement;
-  let img: HTMLImageElement | null = null;
-
-  if (target.classList.contains('markdown-image')) {
-    img = target as HTMLImageElement;
-  } else if (target.closest('.markdown-image-fullscreen')) {
-    const wrapper = target.closest('.markdown-image-wrapper');
-    img = wrapper?.querySelector('.markdown-image') as HTMLImageElement | null;
-    if (img) e.stopPropagation();
-  }
-
-  if (!img) return;
-
-  // Collect all loaded images from the nearest content container
-  const container = img.closest('.custom-content') ?? document.body;
-  const allImages = Array.from(container.querySelectorAll<HTMLImageElement>('.markdown-image.loaded'));
-  const images = allImages.map((i) => ({ src: i.src, alt: i.alt || '图片' }));
-  const currentIndex = Math.max(0, allImages.indexOf(img));
-
-  openImageLightbox(img.src, img.alt || '图片', images, currentIndex);
-}
-
 export function enhanceImages(container: Element): void {
   const images = container.querySelectorAll<HTMLImageElement>('.markdown-image');
   let loadedCount = 0;
   const totalImages = images.length;
 
-  // Event delegation for clicks
-  container.addEventListener('click', handleImageClick);
+  // Only bind click listener once per container
+  if (!boundContainers.has(container)) {
+    container.addEventListener('click', (e) => handleImageClick(container, e));
+    boundContainers.add(container);
+  }
 
   const checkAllLoaded = () => {
     loadedCount++;
     if (loadedCount >= totalImages) {
+      // All images processed, group portrait images
       groupPortraitImages(container);
     }
   };
 
   images.forEach((img) => {
+    // Skip if already enhanced (using WeakSet for SPA compatibility)
     if (enhancedImages.has(img)) {
       checkAllLoaded();
       return;
     }
     enhancedImages.add(img);
 
+    // Check if already loaded (cached images)
     if (img.complete && img.naturalWidth > 0) {
       handleImageLoaded(img);
       checkAllLoaded();
       return;
     }
 
+    // Check if already errored (broken image)
     if (img.complete && img.naturalWidth === 0) {
       handleImageError(img);
       checkAllLoaded();
       return;
     }
 
+    // Handle load event
     img.addEventListener(
       'load',
       () => {
@@ -126,6 +231,7 @@ export function enhanceImages(container: Element): void {
       { once: true },
     );
 
+    // Handle error event
     img.addEventListener(
       'error',
       () => {
@@ -136,6 +242,7 @@ export function enhanceImages(container: Element): void {
     );
   });
 
+  // If no images, still run grouping (in case of pre-marked portraits)
   if (totalImages === 0) {
     groupPortraitImages(container);
   }
@@ -144,23 +251,20 @@ export function enhanceImages(container: Element): void {
 function handleImageLoaded(img: HTMLImageElement): void {
   img.classList.add('loaded');
 
+  // Mark portrait images (height > width * 1.2 to ensure clearly portrait)
   const isPortrait = img.naturalHeight > img.naturalWidth * 1.2;
   if (isPortrait) {
     img.closest('.markdown-image-wrapper')?.classList.add('portrait');
   }
 
-  const wrapper = img.closest('.markdown-image-wrapper');
-  if (!wrapper || wrapper.querySelector('.markdown-image-fullscreen')) return;
-
-  const fullscreenBtn = createFullscreenButton();
-  wrapper.appendChild(fullscreenBtn);
-
+  // Set cursor style to indicate clickable
   img.style.cursor = 'zoom-in';
 }
 
 function handleImageError(img: HTMLImageElement): void {
   img.classList.add('error');
 
+  // Add accessible error placeholder
   const wrapper = img.closest('.markdown-image-wrapper');
   if (wrapper && !wrapper.querySelector('.markdown-image-error')) {
     const placeholder = createErrorPlaceholder(img);
@@ -178,11 +282,14 @@ function groupPortraitImages(container: Element): void {
 
   const flushGroup = () => {
     if (currentGroup.length >= 2) {
+      // Create a row container
       const row = document.createElement('div');
       row.className = 'markdown-image-row';
 
+      // Insert row before first image in group
       currentGroup[0].parentNode?.insertBefore(row, currentGroup[0]);
 
+      // Use DocumentFragment for batch DOM operations
       const fragment = document.createDocumentFragment();
       currentGroup.forEach((wrapper) => {
         fragment.appendChild(wrapper);
@@ -194,11 +301,13 @@ function groupPortraitImages(container: Element): void {
 
   allWrappers.forEach((wrapper, index) => {
     const isPortrait = wrapper.classList.contains('portrait');
+    // Skip if already in a row
     if (wrapper.parentElement?.classList.contains('markdown-image-row')) return;
 
     if (isPortrait) {
       const prevWrapper = allWrappers[index - 1];
 
+      // Check if this wrapper is immediately after the previous portrait
       if (
         currentGroup.length > 0 &&
         prevWrapper &&
@@ -224,6 +333,7 @@ function groupPortraitImages(container: Element): void {
 function isConsecutiveSibling(el1: Element, el2: Element): boolean {
   let next = el1.nextSibling;
   while (next) {
+    // Skip empty text nodes
     if (next.nodeType === Node.TEXT_NODE && next.textContent?.trim() === '') {
       next = next.nextSibling;
       continue;

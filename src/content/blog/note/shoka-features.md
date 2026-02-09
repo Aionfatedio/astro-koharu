@@ -2,7 +2,7 @@
 title: Shoka 主题 Markdown 语法演示
 date: 2026-02-07 12:00:00
 categories:
-  - 笔记
+  - 指南
 tags:
   - Shoka
   - Markdown
@@ -415,10 +415,8 @@ $$
 ```
 
 {% media video %}
-- name: "测试 1"
-  url: https://cdn.kastatic.org/ka-youtube-converted/O_nY1TM2RZM.mp4/O_nY1TM2RZM.mp4#t=0
-- name: "测试 2"
-  url: https://cdn.kastatic.org/ka-youtube-converted/O_nY1TM2RZM.mp4/O_nY1TM2RZM.mp4#t=0
+- name: "测试视频"
+  url: "https://cdn.kastatic.org/ka-youtube-converted/O_nY1TM2RZM.mp4/O_nY1TM2RZM.mp4#t=0"
 {% endmedia %}
 
 ## 练习题

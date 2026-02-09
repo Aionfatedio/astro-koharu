@@ -14,6 +14,12 @@ export function rehypeImagePlaceholder() {
       // Skip if already wrapped (e.g., in a figure or custom component)
       if (parent.type === 'element' && parent.tagName === 'figure') return;
 
+      // Skip images inside comic cards (cover preview floats are not markdown content images)
+      const imgClass = Array.isArray(node.properties?.class)
+        ? node.properties.class.join(' ')
+        : String(node.properties?.class ?? '');
+      if (imgClass.includes('comic-card-cover-preview')) return;
+
       // Skip wrapping if image is inside a link (e.g., [![alt](img)](url))
       // Only add lazy loading attributes, don't wrap with figure
       if (parent.type === 'element' && parent.tagName === 'a') {

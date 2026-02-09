@@ -3,35 +3,63 @@ import { socialConfig } from '@constants/site-config';
 import { cn } from '@lib/utils';
 import { Icon } from 'astro-icon/components';
 import { capitalize } from 'es-toolkit';
+
+const items = Object.entries(socialConfig);
+const total = items.length;
+const remainder = total % 3;
+const fullRowItems = remainder === 0 ? items : items.slice(0, total - remainder);
+const lastRowItems = remainder === 0 ? [] : items.slice(total - remainder);
+
+const linkClass =
+  'social-link flex-center group relative overflow-hidden rounded-xl px-1.5 py-1 transition-all duration-300 group-hover:scale-105';
 ---
 
 <!-- TODO: use CSS squircle corner-shape replace the rounded-xl border-radius with a squircle corner-shape (https://www.squircle.style/) -->
-<div class="mt-2 grid grid-cols-3 gap-2">
-  {
-    Object.entries(socialConfig).map(([key, config]) => {
-      const { url, icon, color } = config;
-      return (
+<div class="mt-2 flex flex-col gap-2">
+  {fullRowItems.length > 0 && (
+    <div class="grid grid-cols-3 gap-2">
+      {fullRowItems.map(([key, config]) => (
         <div>
           <a
-            class={cn(
-              'social-link flex-center group relative overflow-hidden rounded-xl px-1.5 py-1 transition-all duration-300 group-hover:scale-105',
-            )}
-            style={color ? `--link-color: ${color}` : ''}
+            class={cn(linkClass)}
+            style={config.color ? `--link-color: ${config.color}` : ''}
             data-platform={key}
-            href={url}
+            href={config.url}
             title={capitalize(key)}
             data-tooltip-interactive="false"
             data-tooltip-placement="top"
             aria-label={capitalize(key)}
             target="_blank"
-           >
-            <Icon name={icon} class="inline-block size-6" />
+          >
+            <Icon name={config.icon} class="inline-block size-6" />
             <span class="absolute inset-0 -z-10 -translate-x-full translate-y-full rounded-xl transition-transform duration-300 group-hover:translate-x-0 group-hover:translate-y-0" />
           </a>
         </div>
-      );
-    })
-  }
+      ))}
+    </div>
+  )}
+  {lastRowItems.length > 0 && (
+    <div class="flex justify-center gap-2">
+      {lastRowItems.map(([key, config]) => (
+        <div>
+          <a
+            class={cn(linkClass)}
+            style={config.color ? `--link-color: ${config.color}` : ''}
+            data-platform={key}
+            href={config.url}
+            title={capitalize(key)}
+            data-tooltip-interactive="false"
+            data-tooltip-placement="top"
+            aria-label={capitalize(key)}
+            target="_blank"
+          >
+            <Icon name={config.icon} class="inline-block size-6" />
+            <span class="absolute inset-0 -z-10 -translate-x-full translate-y-full rounded-xl transition-transform duration-300 group-hover:translate-x-0 group-hover:translate-y-0" />
+          </a>
+        </div>
+      ))}
+    </div>
+  )}
 </div>
 
 <style>

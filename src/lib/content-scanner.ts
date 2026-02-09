@@ -10,7 +10,7 @@ import { extractLanguage, isInfographicBlock, wrapElement } from './content-enha
 
 export interface ToolbarEntry {
   id: string;
-  type: 'code' | 'mermaid' | 'infographic' | 'quiz' | 'friend-links' | 'audio' | 'video' | 'note' | 'encrypted';
+  type: 'code' | 'mermaid' | 'infographic' | 'quiz' | 'friend-links' | 'audio' | 'encrypted';
   mountPoint: HTMLElement;
   preElement: HTMLElement;
 }
@@ -121,40 +121,6 @@ export function scanAudioPlayers(container: Element): ToolbarEntry[] {
     el.appendChild(mount);
     el.dataset.reactEnhanced = 'true';
     entries.push({ id: `audio-${aIndex}`, type: 'audio', mountPoint: mount, preElement: el });
-  });
-
-  return entries;
-}
-
-/** Scan video player elements */
-export function scanVideoPlayers(container: Element): ToolbarEntry[] {
-  const entries: ToolbarEntry[] = [];
-  const videoPlayers = container.querySelectorAll<HTMLElement>('[data-video-player]');
-
-  videoPlayers.forEach((el, vIndex) => {
-    if (el.dataset.reactEnhanced === 'true') return;
-    const mount = document.createElement('div');
-    mount.className = 'video-player-mount';
-    el.appendChild(mount);
-    el.dataset.reactEnhanced = 'true';
-    entries.push({ id: `video-${vIndex}`, type: 'video', mountPoint: mount, preElement: el });
-  });
-
-  return entries;
-}
-
-/** Scan note blocks for icon injection */
-export function scanNoteBlocks(container: Element): ToolbarEntry[] {
-  const entries: ToolbarEntry[] = [];
-  const noteBlocks = container.querySelectorAll<HTMLElement>('.note-block:not(.no-icon)');
-
-  noteBlocks.forEach((noteBlock, nIndex) => {
-    if (noteBlock.dataset.reactEnhanced === 'true') return;
-    const mount = document.createElement('span');
-    mount.className = 'note-icon-mount';
-    noteBlock.insertBefore(mount, noteBlock.firstChild);
-    noteBlock.dataset.reactEnhanced = 'true';
-    entries.push({ id: `note-${nIndex}`, type: 'note', mountPoint: mount, preElement: noteBlock });
   });
 
   return entries;

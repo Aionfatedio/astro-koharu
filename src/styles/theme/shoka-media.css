@@ -1,6 +1,7 @@
 /* =============================================================================
- * Shoka Media — {% media audio/video %} base + video player styles
+ * Shoka Media — {% media audio/video %} base styles
  * Audio player styles are in shoka-audio-player.css
+ * Video player uses Artplayer (initialized by video-enhancer.ts)
  * ============================================================================= */
 
 .media-group {
@@ -13,68 +14,35 @@
 }
 
 /* =============================================================================
- * Custom Video Player
- *
- * Controls and playlist reuse .audio-player-* classes from shoka-audio-player.css.
- * Only the video screen area needs video-specific styles.
+ * Artplayer Container
  * ============================================================================= */
 
-/* Video screen area */
-.video-player-screen {
-  position: relative;
-  background: #000;
-  border-radius: 24px 24px 0 0;
-  overflow: hidden;
-}
-
-.video-player-screen video {
+.artplayer-container {
   width: 100%;
-  display: block;
-  cursor: pointer;
-  border-radius: 24px 24px 0 0;
-  aspect-ratio: 16 / 9; /* Placeholder size before video loads */
-  object-fit: contain;
-  background: #000;
+  aspect-ratio: 16 / 9;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  margin: 1rem 0;
 }
 
-/* Shrink play button inside video player to avoid overflow */
-.video-player .audio-player-btn-play {
-  width: 40px;
-  height: 40px;
+/* Override Tailwind Typography's default video margins */
+.prose .artplayer-container video {
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
-.video-player .audio-player-btn-play svg {
-  width: 20px;
-  height: 20px;
+/* Hidden unnecessary elements */
+.art-contextmenu.art-contextmenu-version {
+  /* biome-ignore lint/complexity/noImportantStyles: Override Artplayer inline style */
+  display: none !important;
 }
 
-/* Add top padding to video controls so buttons don't clip */
-.video-player .audio-player-controls {
-  padding-top: 0.75em;
+.art-video-player .art-bottom {
+  /* biome-ignore lint/complexity/noImportantStyles: Override Artplayer z-index */
+  z-index: 10 !important;
 }
 
-/* Source/author tag at bottom-right of video */
-.video-player-source {
-  position: absolute;
-  bottom: 8px;
-  right: 12px;
-  font-size: 0.75em;
-  color: rgba(255, 255, 255, 0.7);
-  background: rgba(0, 0, 0, 0.5);
-  padding: 2px 8px;
-  border-radius: 4px;
-  pointer-events: none;
-  backdrop-filter: blur(4px);
-}
-
-/* Mobile */
-@media (max-width: 600px) {
-  .video-player {
-    border-radius: 16px;
-  }
-
-  .video-player-screen,
-  .video-player-screen video {
-    border-radius: 16px 16px 0 0;
-  }
+.art-video-player .art-mask {
+  /* biome-ignore lint/complexity/noImportantStyles: Override Artplayer z-index */
+  z-index: 10 !important;
 }

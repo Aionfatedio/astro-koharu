@@ -73,11 +73,13 @@ export function renderAudioMedia(items: MediaItem[]): string {
 }
 
 export function renderVideoMedia(items: MediaItem[]): string {
-  const tracks = items
-    .filter((item): item is MediaItem & { url: string } => !!item.url)
-    .map((item) => ({ name: item.name || '', url: item.url }));
+  const videos = items.filter((item): item is MediaItem & { url: string } => !!item.url);
+  if (videos.length === 0) return '';
 
-  if (tracks.length === 0) return '';
-  const dataSrc = escapeHtml(JSON.stringify(tracks));
-  return `<div data-video-player data-src="${dataSrc}"></div>`;
+  return videos
+    .map((item) => {
+      const src = escapeHtml(item.url);
+      return `<div class="artplayer-container" data-video-src="${src}"></div>`;
+    })
+    .join('\n');
 }

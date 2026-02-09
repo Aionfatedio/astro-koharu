@@ -6,11 +6,15 @@ date: 2025-01-03 01:01:33
 description: "关于我？"
 ---
 
-## 你好，这里是余弦
+## 你好，这里是执笔画江南 
+![随机图片](https://pixiv.aionfatedio.top)
+感觉不行？<a href="javascript:(function(){var imgs = document.querySelectorAll('img[src*=\'pixiv.aionfatedio.top\']');imgs.forEach(function(img) {var baseUrl = img.src.split('?')[0];img.src = baseUrl + '?' + new Date().getTime();});})()">换一张？</a>
 
-[![github badge](https://img.shields.io/badge/dynamic/json?color=blue&label=Github&query=%24.data.totalSubs&url=https%3A%2F%2Fapi.spencerwoo.com%2Fsubstats%2F%3Fsource%3Dgithub%26queryKey%3Dyusixian)](https://github.com/yusixian)
+{% media video %}
+- name: "测试视频"
+  url: /media/test.mp4
+{% endmedia %}
 
-cosine = 余弦 = cos
 
 愿热情永存，愿热爱不灭，愿生活无憾
 

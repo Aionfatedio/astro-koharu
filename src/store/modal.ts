@@ -34,21 +34,11 @@ export interface DiagramFullscreenData {
   source: string;
 }
 
-/**
- * Image lightbox data
- */
-export interface ImageLightboxData {
-  src: string;
-  alt: string;
-  images: { src: string; alt: string }[];
-  currentIndex: number;
-}
-
-export type ModalType = 'drawer' | 'search' | 'codeFullscreen' | 'diagramFullscreen' | 'imageLightbox' | null;
+export type ModalType = 'drawer' | 'search' | 'codeFullscreen' | 'diagramFullscreen' | null;
 
 export interface ModalState {
   type: ModalType;
-  data?: CodeBlockData | DiagramFullscreenData | ImageLightboxData | null;
+  data?: CodeBlockData | DiagramFullscreenData | null;
 }
 
 /**
@@ -65,9 +55,6 @@ export const $codeFullscreenData = computed($activeModal, (m) =>
 export const $diagramFullscreenData = computed($activeModal, (m) =>
   m.type === 'diagramFullscreen' ? (m.data as DiagramFullscreenData) : null,
 );
-export const $imageLightboxData = computed($activeModal, (m) =>
-  m.type === 'imageLightbox' ? (m.data as ImageLightboxData) : null,
-);
 export const $isAnyModalOpen = computed($activeModal, (m) => m.type !== null);
 
 /**
@@ -75,13 +62,7 @@ export const $isAnyModalOpen = computed($activeModal, (m) => m.type !== null);
  */
 export function openModal<T extends ModalType>(
   type: T,
-  data?: T extends 'codeFullscreen'
-    ? CodeBlockData
-    : T extends 'diagramFullscreen'
-      ? DiagramFullscreenData
-      : T extends 'imageLightbox'
-        ? ImageLightboxData
-        : never,
+  data?: T extends 'codeFullscreen' ? CodeBlockData : T extends 'diagramFullscreen' ? DiagramFullscreenData : never,
 ): void {
   $activeModal.set({ type, data });
   if (type && typeof document !== 'undefined') {
@@ -121,21 +102,3 @@ export const toggleSearch = () => toggleModal('search');
 
 export const openCodeFullscreen = (data: CodeBlockData) => openModal('codeFullscreen', data);
 export const closeCodeFullscreen = () => closeModal();
-
-/**
- * Navigate between images in the lightbox without re-triggering scroll lock.
- * Directly mutates the atom to avoid openModal/closeModal side effects.
- */
-export function navigateImage(direction: 1 | -1): boolean {
-  const modal = $activeModal.get();
-  if (modal.type !== 'imageLightbox') return false;
-  const data = modal.data as ImageLightboxData;
-  const newIndex = data.currentIndex + direction;
-  if (newIndex < 0 || newIndex >= data.images.length) return false;
-  const target = data.images[newIndex];
-  $activeModal.set({
-    type: 'imageLightbox',
-    data: { ...data, src: target.src, alt: target.alt, currentIndex: newIndex },
-  });
-  return true;
-}

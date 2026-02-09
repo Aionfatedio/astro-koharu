@@ -1,99 +1,135 @@
 /* =============================================================================
- * Shoka Containers — Note blocks (:::) + Collapse blocks (+++)
+ * Shoka Containers — Admonition blocks (:::) + Collapse blocks (+++)
  * ============================================================================= */
 
-/* --- Note blocks (:::style) --- */
-.note-block {
+/* --- Admonition blocks (GitHub Alerts style) --- */
+.admonition {
+  position: relative;
+  margin: 1.5rem 0;
+  padding: 0rem 1.25rem;
+  /* 移除原生边框，使用伪元素替代 */
+  border-inline-start: none;
+  /* 覆盖 Tailwind Typography 默认样式 */
+  font-style: normal;
+}
+
+.admonition::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 99px;
+  background-color: var(--bdm-color, hsl(210 40% 55%));
+  transition: background-color 0.2s ease;
+}
+
+.admonition:hover::before {
+  background-color: var(--bdm-color-secondary, hsl(210 60% 50%));
+}
+
+.admonition p {
+  margin: 0;
+}
+
+.admonition p + p {
+  margin-top: 0.5rem;
+}
+
+/* Admonition 标题 */
+.bdm-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  color: var(--bdm-color);
+}
+
+.bdm-title svg {
+  flex-shrink: 0;
+}
+
+.bdm-title div {
+  text-transform: none;
+}
+
+/* 各类型颜色 */
+.bdm-quote {
+  --bdm-color: #4493f8;
+  --bdm-color-secondary: #197dff;
+}
+
+.bdm-note {
+  --bdm-color: #4493f8;
+  --bdm-color-secondary: #197dff;
+}
+
+.bdm-tip {
+  --bdm-color: #3fb950;
+  --bdm-color-secondary: #238636;
+}
+
+.bdm-important {
+  --bdm-color: #a371f7;
+  --bdm-color-secondary: #8b5cf6;
+}
+
+.bdm-warning {
+  --bdm-color: #d29922;
+  --bdm-color-secondary: #ca8a04;
+}
+
+.bdm-caution {
+  --bdm-color: #f85149;
+  --bdm-color-secondary: #dc2626;
+}
+
+/* --- Legacy note blocks (no-icon only) --- */
+.note-block.no-icon {
   position: relative;
   margin: 1.5em 0;
-  padding: 1em 1em 1em 2.5em;
+  padding: 1em;
   border-left: 4px solid hsl(var(--shoka-default));
   border-radius: 0 8px 8px 0;
   background: hsl(var(--shoka-default) / 0.06);
 }
 
-.note-block::before {
-  position: absolute;
-  left: 0.6em;
-  top: 1em;
-  font-size: 1.1em;
-  line-height: 1;
-}
-
-/* Icon content for each style */
-.note-block.note-default::before {
-  content: "💬";
-}
-.note-block.note-primary::before {
-  content: "💡";
-}
-.note-block.note-info::before {
-  content: "ℹ️";
-}
-.note-block.note-success::before {
-  content: "✅";
-}
-.note-block.note-warning::before {
-  content: "⚠️";
-}
-.note-block.note-danger::before {
-  content: "🚫";
-}
-
-/* Style variants */
-.note-block.note-primary {
-  border-left-color: hsl(var(--primary));
-  background: hsl(var(--primary) / 0.06);
-}
-.note-block.note-info {
-  border-left-color: hsl(var(--shoka-info));
-  background: hsl(var(--shoka-info) / 0.06);
-}
-.note-block.note-success {
-  border-left-color: hsl(var(--shoka-success));
-  background: hsl(var(--shoka-success) / 0.06);
-}
-.note-block.note-warning {
-  border-left-color: hsl(var(--shoka-warning));
-  background: hsl(var(--shoka-warning) / 0.06);
-}
-.note-block.note-danger {
-  border-left-color: hsl(var(--shoka-danger));
-  background: hsl(var(--shoka-danger) / 0.06);
-}
-
-/* React enhanced — hide emoji fallback */
-.note-block[data-react-enhanced="true"]::before {
-  display: none;
-}
-
-/* React icon mount point (matches original ::before position) */
-.note-icon-mount {
-  position: absolute;
-  left: 0.35em;
-  top: 0.7em;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5em;
-}
-
-/* no-icon variant */
-.note-block.no-icon {
-  padding-left: 1em;
-}
 .note-block.no-icon::before {
   display: none;
 }
 
-/* Title styling inside note blocks */
-.note-block > :first-child,
-.note-block > .note-icon-mount + * {
+.note-block.no-icon > :first-child {
   margin-top: 0;
 }
-.note-block > :last-child {
+.note-block.no-icon > :last-child {
   margin-bottom: 0;
+}
+
+/* Style variants for no-icon */
+.note-block.no-icon.note-primary {
+  border-left-color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.06);
+}
+.note-block.no-icon.note-info {
+  border-left-color: hsl(var(--shoka-info));
+  background: hsl(var(--shoka-info) / 0.06);
+}
+.note-block.no-icon.note-success {
+  border-left-color: hsl(var(--shoka-success));
+  background: hsl(var(--shoka-success) / 0.06);
+}
+.note-block.no-icon.note-warning {
+  border-left-color: hsl(var(--shoka-warning));
+  background: hsl(var(--shoka-warning) / 0.06);
+}
+.note-block.no-icon.note-danger {
+  border-left-color: hsl(var(--shoka-danger));
+  background: hsl(var(--shoka-danger) / 0.06);
 }
 
 /* --- Collapse blocks (+++style Title) --- */

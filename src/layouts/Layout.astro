@@ -20,7 +20,6 @@ import SearchDialog from '@components/layout/SearchDialog';
 import SearchPortal from '@components/layout/SearchPortal.astro';
 import CodeBlockFullscreen from '@components/markdown/CodeBlockFullscreen';
 import DiagramFullscreen from '@components/markdown/DiagramFullscreen';
-import ImageLightbox from '@components/markdown/ImageLightbox';
 import { Toaster } from '@components/ui/sonner';
 import { bgmConfig, christmasConfig, seoConfig, siteConfig } from '@constants/site-config';
 import { getOgImageUrl } from '@lib/seo/og-image';
@@ -312,7 +311,6 @@ const ogImage = getOgImageUrl(post?.data.cover, Astro.site);
       <SearchPortal />
       <CodeBlockFullscreen client:load />
       <DiagramFullscreen client:idle />
-      <ImageLightbox client:idle />
       <Toaster client:load />
       <AnnouncementProvider />
     </div>

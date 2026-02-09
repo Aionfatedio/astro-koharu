@@ -164,6 +164,7 @@ export interface ContentConfig {
   enableCodeMeta?: boolean;
   enableQuiz?: boolean;
   enableEncryptedBlock?: boolean;
+  enableComicCard?: boolean;
 }
 
 // =============================================================================

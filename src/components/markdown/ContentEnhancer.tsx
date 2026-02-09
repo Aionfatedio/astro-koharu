@@ -12,10 +12,8 @@ import {
   scanAudioPlayers,
   scanEncryptedBlocks,
   scanFriendLinks,
-  scanNoteBlocks,
   scanPreElements,
   scanQuizElements,
-  scanVideoPlayers,
   type ToolbarEntry,
 } from '@lib/content-scanner';
 import { useEffect, useState } from 'react';
@@ -26,9 +24,7 @@ import { EncryptedBlock } from './EncryptedBlock';
 import { FriendLinksGrid } from './FriendLinksGrid';
 import { InfographicToolbar } from './InfographicToolbar';
 import { MermaidToolbar } from './MermaidToolbar';
-import { extractNoteType, NoteBlockIcon } from './NoteBlockIcon';
 import { QuizBlock } from './QuizBlock';
-import { VideoPlayer } from './VideoPlayer';
 
 interface ContentEnhancerProps {
   enableCopy?: boolean;
@@ -55,8 +51,6 @@ export default function ContentEnhancer({
         ...(enableQuiz ? scanQuizElements(container) : []),
         ...scanFriendLinks(container),
         ...scanAudioPlayers(container),
-        ...scanVideoPlayers(container),
-        ...scanNoteBlocks(container),
         ...(enableEncryptedBlock ? scanEncryptedBlocks(container) : []),
       ];
 
@@ -110,13 +104,6 @@ export default function ContentEnhancer({
             return createPortal(<FriendLinksGrid key={entry.id} gridElement={entry.preElement} />, entry.mountPoint);
           case 'audio':
             return createPortal(<AudioPlayer key={entry.id} element={entry.preElement} />, entry.mountPoint);
-          case 'video':
-            return createPortal(<VideoPlayer key={entry.id} element={entry.preElement} />, entry.mountPoint);
-          case 'note':
-            return createPortal(
-              <NoteBlockIcon key={entry.id} noteType={extractNoteType(entry.preElement)} />,
-              entry.mountPoint,
-            );
           case 'encrypted':
             return createPortal(<EncryptedBlock key={entry.id} element={entry.preElement} />, entry.mountPoint);
           default:

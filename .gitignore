@@ -37,3 +37,7 @@ pnpm-debug.log*
 
 # Backup files
 backups/
+
+# Test files
+public/
+example/

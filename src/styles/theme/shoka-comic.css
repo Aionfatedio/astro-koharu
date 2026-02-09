@@ -1,0 +1,197 @@
+/* =============================================================================
+ * Comic Card Styles — ::comic{} directive
+ * ============================================================================= */
+
+.comic-card-container {
+  margin: 1.5rem 0;
+  position: relative;
+  z-index: 1;
+}
+
+.comic-card-container:hover {
+  z-index: 2;
+}
+
+.comic-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+  box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1);
+}
+
+.comic-card:hover {
+  border-color: hsl(var(--primary) / 0.3);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  transform: translateY(-2px);
+}
+
+.comic-card:active {
+  transform: translateY(0);
+}
+
+/* Comic icon — always show SVG placeholder */
+.comic-card-icon {
+  position: relative;
+  flex-shrink: 0;
+  width: 3.5rem;
+  height: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: hsl(var(--primary) / 0.1);
+  border-radius: 0.5rem;
+  color: hsl(var(--primary));
+  transition: all 0.2s ease;
+}
+
+.comic-card-icon-svg {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+/* Hover cover preview — floating near icon */
+.comic-card-cover-preview {
+  position: absolute;
+  left: calc(100% + 0.75rem);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 200px;
+  height: auto;
+  max-width: 9999px;
+  max-height: 9999px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  box-shadow: 0 8px 24px -4px rgb(0 0 0 / 0.3);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease,
+    transform 0.2s ease;
+  z-index: 100;
+}
+
+.comic-card-icon:hover .comic-card-cover-preview {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) scale(1.02);
+}
+
+/* Adjust preview position on small screens */
+@media (max-width: 640px) {
+  .comic-card-cover-preview {
+    left: 50%;
+    top: auto;
+    bottom: calc(100% + 0.5rem);
+    transform: translateX(-50%);
+    width: 100px;
+    max-height: 150px;
+  }
+
+  .comic-card-icon:hover .comic-card-cover-preview {
+    transform: translateX(-50%) scale(1.02);
+  }
+}
+
+/* Comic info */
+.comic-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.comic-card-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comic-card-author {
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  margin-top: 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Read button */
+.comic-card-read-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease;
+}
+
+.comic-card-read-btn:hover {
+  background: hsl(var(--primary) / 0.9);
+}
+
+.comic-card-read-btn:active {
+  transform: scale(0.97);
+}
+
+.comic-card-arrow {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.comic-card:hover .comic-card-arrow {
+  transform: translateX(2px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .comic-card {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .comic-card-info {
+    flex: 1 1 calc(100% - 4.5rem);
+  }
+
+  .comic-card-read-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Dark mode adjustments */
+.dark .comic-card {
+  box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.3);
+}
+
+.dark .comic-card:hover {
+  box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.4);
+}
+
+.dark .comic-card-cover-preview {
+  box-shadow: 0 8px 24px -4px rgb(0 0 0 / 0.5);
+}
