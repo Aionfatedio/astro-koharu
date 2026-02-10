@@ -22,4 +22,3 @@ R-18のオリジナルイラストやファンアートなど描く人です。
 
 <https://www.dlsite.com/maniax/circle/profile/=/maker_id/RG52974.html>
 
-<https://x.com/mankaikaika2>
