@@ -15,27 +15,13 @@ draft: true
 ---
 本文展示目前支持的所有 Markdown 增强功能。(Mod version: v1.9)
 
+:::encrypted{password="aionfatedio"}
 
+[百度网盘](https://pan.baidu.com/s/175ijWFpRZ8musMjj8c5TeQ)
 
-<div style="width: 100%; height: 600px; overflow: hidden; position: relative;overflow: hidden; border-radius: 1rem;">
-  
-  <iframe 
-    src="https://zh-hans.react.dev/" 
-    width="100%" 
-    style="
-      border: none; 
-      position: absolute; 
-      top: 0; 
-      left: 0; 
-      height: 6300px; 
-      margin-top: -5720px; 
-    "
-    scrolling="yes"
-  >
-  </iframe>
-
-</div>
-
+提取码：`aion`
+解压密码:`aionfatedio`
+:::
 
 ## 链接嵌入
 

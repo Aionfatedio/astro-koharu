@@ -1,36 +1,114 @@
-/* Encrypted block container */
+/* ============================================================================
+   Encrypted Block — modern themed container
+   ============================================================================ */
+
+/* Outer container: theme-aware card with subtle border */
 .encrypted-block {
-  @apply my-4 rounded-lg border border-dashed border-gray-300 bg-gray-50/50 dark:border-gray-600 dark:bg-gray-800/50;
+  @apply my-6 overflow-hidden;
+  border-radius: var(--radius);
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
 }
 
-/* Locked state layout */
+/* ── Locked state ── */
+
 .encrypted-block-locked {
-  @apply flex flex-col items-center gap-3 px-6 py-8;
+  @apply relative flex flex-col items-center gap-4 px-6 py-10;
 }
 
+/* Lock icon — muted, scales up slightly on hover */
 .encrypted-block-icon {
-  @apply text-3xl text-gray-400 transition-colors dark:text-gray-500;
+  @apply text-4xl transition-all duration-200;
+  color: hsl(var(--muted-foreground));
 }
 
 .encrypted-block-icon-error {
-  @apply text-red-500 dark:text-red-400;
+  color: hsl(var(--destructive));
 }
 
+/* Hint text below the icon — with fade transition for error swap */
+.encrypted-block-hint {
+  @apply text-center text-sm leading-relaxed;
+  color: hsl(var(--muted-foreground));
+  transition:
+    opacity 0.12s ease,
+    color 0.12s ease;
+}
+.encrypted-hint-faded {
+  opacity: 0;
+}
+.encrypted-hint-error {
+  color: hsl(var(--destructive));
+}
+
+/* Input row */
 .encrypted-block-input-group {
   @apply flex items-center gap-2;
+  transition: gap 0.3s ease;
 }
 
+/* Collapsed state: input hidden, button centered */
+.encrypted-input-collapsed {
+  gap: 0;
+}
+.encrypted-input-collapsed .encrypted-block-input {
+  width: 0;
+  padding: 0;
+  border-width: 0;
+  opacity: 0;
+}
+
+/* Password input — theme border + primary focus ring + expand transition */
 .encrypted-block-input {
-  @apply h-9 w-48 rounded-md border border-gray-300 bg-white px-3 text-sm outline-none transition-colors focus:border-blue-400 focus:ring-1 focus:ring-blue-400 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:focus:border-blue-500 dark:focus:ring-blue-500;
+  @apply h-9 text-sm outline-none;
+  width: 13rem;
+  padding: 0 0.75rem;
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  transition:
+    width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    padding 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s ease 0.05s,
+    border-width 0.25s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.encrypted-block-input::placeholder {
+  color: hsl(var(--muted-foreground) / 0.6);
+}
+.encrypted-block-input:focus {
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.15);
 }
 
+/* Unlock button — ghost style, primary on hover */
 .encrypted-block-btn {
-  @apply flex h-9 w-9 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600;
+  @apply flex h-9 w-9 items-center justify-center transition-all duration-200 disabled:opacity-50;
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--background));
+  color: hsl(var(--muted-foreground));
+}
+.encrypted-block-btn:hover:not(:disabled) {
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.06);
 }
 
-/* Unlocked content area */
+/* ── Unlocked content ── */
+
 .encrypted-block-content {
-  @apply p-4;
+  @apply p-5;
+  border-top: 1px solid hsl(var(--border));
+}
+
+/* ── Error state ── */
+
+.encrypted-block-error {
+  @apply px-4 py-3 text-center text-sm;
+  color: hsl(var(--destructive));
 }
 
 /* Shake animation for wrong password */
@@ -55,5 +133,62 @@
 }
 
 .encrypted-shake {
-  animation: shake 0.6s ease-in-out;
+  animation: shake 0.5s ease-in-out;
+}
+
+/* ── Success state ── */
+
+/* Fade out all locked UI children when success overlay is active */
+.encrypted-block-success .encrypted-block-icon,
+.encrypted-block-success .encrypted-block-input-group {
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+/* Centered overlay for spinner → checkmark */
+.encrypted-success-overlay {
+  @apply absolute inset-0 flex items-center justify-center;
+  color: hsl(var(--primary));
+}
+.encrypted-success-overlay > * {
+  animation: encrypted-pop-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Checkmark stroke draw animation */
+.encrypted-check-path {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: encrypted-check-draw 0.35s ease forwards;
+}
+
+@keyframes encrypted-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes encrypted-check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ── Unlocked content entrance ── */
+
+.encrypted-content-enter {
+  animation: encrypted-fade-in 0.3s ease;
+}
+
+@keyframes encrypted-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

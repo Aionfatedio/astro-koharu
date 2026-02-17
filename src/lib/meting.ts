@@ -2,7 +2,7 @@
  * Meting API client — resolves music platform URLs to playable audio streams.
  *
  * Ported from Shoka player.js URL parsing + Meting API integration.
- * Supports NetEase Cloud Music and QQ Music.
+ * Supports NetEase Cloud Music, QQ Music, and local music playlists.
  */
 
 const DEFAULT_API = 'https://api.injahow.cn/meting/';
@@ -103,10 +103,41 @@ export async function fetchMeting(server: string, type: string, id: string, apiU
   return songs;
 }
 
+// --------- Local Music Playlist Support ---------
+
+/** Check if a URL is a local music playlist path (e.g. "/music/my-playlist") */
+function isLocalMusicPath(url: string): boolean {
+  return /^\/music\/[\w-]+\/?$/.test(url);
+}
+
+interface LocalManifest {
+  tracks?: MetingSong[];
+}
+
+/** Fetch local playlist by loading its manifest.json */
+async function fetchLocalPlaylist(basePath: string): Promise<MetingSong[]> {
+  const normalizedPath = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;
+  const manifestUrl = `${normalizedPath}/manifest.json`;
+
+  try {
+    const response = await fetch(manifestUrl);
+    if (!response.ok) return [];
+    const manifest: LocalManifest = await response.json();
+    if (!Array.isArray(manifest.tracks)) return [];
+    return manifest.tracks.filter(isMetingSong);
+  } catch {
+    return [];
+  }
+}
+
 /** Resolve multiple music URLs into a flat song list. */
 export async function resolvePlaylist(urls: string[], apiUrl?: string): Promise<MetingSong[]> {
   const results = await Promise.allSettled(
     urls.map((url) => {
+      // Local music playlist: /music/<playlist-name>
+      if (isLocalMusicPath(url)) return fetchLocalPlaylist(url);
+
+      // Network music platform URL
       const parsed = parseMusicUrl(url);
       if (!parsed) return Promise.resolve([]);
       return fetchMeting(parsed.server, parsed.type, parsed.id, apiUrl);

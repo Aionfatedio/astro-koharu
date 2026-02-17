@@ -548,6 +548,9 @@ bgm:
     - title: Love MMD
       list:
         - https://y.qq.com/n/ryqq/playlist/9456006219
+    - title: 本地音乐
+      list:
+        - /music/playlist
 
 christmas:
   enabled: false # 总开关

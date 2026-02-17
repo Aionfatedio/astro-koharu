@@ -1,5 +1,9 @@
 /**
  * PlayerPreview — vinyl disc with tonearm (left) + song info + centered lyrics (right).
+ *
+ * Supports both line-by-line and word-by-word lyrics:
+ * - Line-by-line: original scroll + highlight (unchanged)
+ * - Word-by-word: same scroll + per-word gradient fill via WordLrcRenderer
  */
 
 import { usePlaybackLrcIndex } from '@hooks/usePlaybackTime';
@@ -7,7 +11,8 @@ import type { MetingSong } from '@lib/meting';
 import type { PlaybackTimeStore } from '@lib/playback-time-store';
 import { cn } from '@lib/utils';
 import { memo, useEffect, useMemo, useState } from 'react';
-import { parseLrc } from './LrcParser';
+import { detectLrcType, parseLrc, parseWordLrc } from './LrcParser';
+import { WordLrcRenderer } from './WordLrcRenderer';
 
 interface PlayerPreviewProps {
   track: MetingSong | null;
@@ -33,7 +38,7 @@ function useLrcText(lrcSource: string | undefined): string {
       return;
     }
 
-    if (lrcSource.startsWith('http')) {
+    if (lrcSource.startsWith('http') || lrcSource.startsWith('/')) {
       let cancelled = false;
       fetch(lrcSource)
         .then((r) => r.text())
@@ -62,8 +67,15 @@ export const PlayerPreview = memo(function PlayerPreview({
   lrcContainerHeight = DEFAULT_LRC_CONTAINER_HEIGHT,
 }: PlayerPreviewProps) {
   const lrcText = useLrcText(track?.lrc);
+
+  // Detect lyrics type and parse accordingly
+  const lrcType = useMemo(() => detectLrcType(lrcText), [lrcText]);
   const lrcLines = useMemo(() => parseLrc(lrcText), [lrcText]);
-  const currentLrcIndex = usePlaybackLrcIndex(timeStore, lrcLines);
+  const wordLrcLines = useMemo(() => (lrcType === 'word' ? parseWordLrc(lrcText) : null), [lrcText, lrcType]);
+
+  // Line index — works for both modes since WordLrcLine extends LrcLine
+  const activeLrcLines = wordLrcLines ?? lrcLines;
+  const currentLrcIndex = usePlaybackLrcIndex(timeStore, activeLrcLines);
 
   const lrcCenterOffset = (lrcContainerHeight - lrcLineHeight) / 2;
 
@@ -94,8 +106,19 @@ export const PlayerPreview = memo(function PlayerPreview({
           {track?.artist || ''}
         </div>
 
-        {/* Lyrics area — current line centered vertically */}
-        {lrcLines.length > 0 && (
+        {/* Word-by-word lyrics */}
+        {wordLrcLines && wordLrcLines.length > 0 && (
+          <WordLrcRenderer
+            lines={wordLrcLines}
+            currentIndex={currentLrcIndex}
+            timeStore={timeStore}
+            lrcLineHeight={lrcLineHeight}
+            lrcContainerHeight={lrcContainerHeight}
+          />
+        )}
+
+        {/* Line-by-line lyrics (original, unchanged) */}
+        {!wordLrcLines && lrcLines.length > 0 && (
           <div className="audio-player-lrc">
             <div
               className="audio-player-lrc-inner"

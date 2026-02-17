@@ -13,6 +13,7 @@ import { PlayerPreview } from '@components/markdown/audio-player/PlayerPreview';
 import { MediaControls } from '@components/markdown/shared/MediaControls';
 import { FloatingFocusManager, FloatingPortal, useDismiss, useFloating, useInteractions, useRole } from '@floating-ui/react';
 import { useAudioPlayer } from '@hooks/useAudioPlayer';
+import { useEnhancedTracks } from '@hooks/useEnhancedTracks';
 import { useMediaQuery } from '@hooks/useMediaQuery';
 import { Icon } from '@iconify/react';
 import type { BgmAudioGroup } from '@lib/config/types';
@@ -83,9 +84,12 @@ export default function GlobalBGMPlayer({ audioGroups }: GlobalBGMPlayerProps) {
     };
   }, [panelOpen, audioGroups, retryKey]);
 
+  // Enhance local tracks with ID3 metadata (lazy, non-blocking)
+  const enhancedTracks = useEnhancedTracks(tracks);
+
   // Audio hook at top level — Audio element persists across panel open/close
-  const player = useAudioPlayer(tracks);
-  const currentTrack = tracks[player.state.currentIndex] ?? null;
+  const player = useAudioPlayer(enhancedTracks);
+  const currentTrack = enhancedTracks[player.state.currentIndex] ?? null;
 
   // Hide panel when drawer is open
   const isHidden = isDrawerOpen || isAnyModalOpen;
@@ -129,7 +133,7 @@ export default function GlobalBGMPlayer({ audioGroups }: GlobalBGMPlayerProps) {
       );
     }
 
-    if (tracks.length === 0) {
+    if (enhancedTracks.length === 0) {
       return (
         <div className="audio-player audio-player-empty bgm-panel-player">
           <span>暂无曲目</span>
@@ -162,7 +166,7 @@ export default function GlobalBGMPlayer({ audioGroups }: GlobalBGMPlayerProps) {
           onToggleMute={player.toggleMute}
         />
         <PlayerPlaylist
-          tracks={tracks}
+          tracks={enhancedTracks}
           groups={groups}
           currentIndex={player.state.currentIndex}
           timeStore={player.timeStore}

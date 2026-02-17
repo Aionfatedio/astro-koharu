@@ -42,6 +42,38 @@
 }
 
 /* ============================================================================
+   Iframe Web Page Embed Container
+   Usage:  <div class="iframe-embed" style="height: 600px">
+             <iframe src="https://example.com"></iframe>
+           </div>
+   Note: Only for web page embeds. Video embeds (YouTube/Bilibili) are excluded.
+   ============================================================================ */
+
+.iframe-embed {
+  @apply relative my-6 w-full overflow-hidden;
+  height: 500px;
+  border-radius: var(--radius);
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+}
+
+.iframe-embed iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Hide scrollbar inside the container (cross-browser) */
+.iframe-embed.no-scrollbar {
+  /* The iframe content scrollbar is controlled by the embedded page,
+     so we clip it by making container slightly wider than visible area */
+}
+.iframe-embed.no-scrollbar iframe {
+  width: calc(100% + 20px); /* push native scrollbar outside visible area */
+}
+
+/* ============================================================================
    Link Preview Image Error Handling
    ============================================================================ */
 
