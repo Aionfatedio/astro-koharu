@@ -159,6 +159,11 @@ const finalConfig = { ...defaultContentConfig, ...config };
     enhanceContent();
   });
 
+  // Re-enhance after encrypted post is decrypted and its HTML injected into the DOM
+  document.addEventListener('content:decrypted', () => {
+    enhanceContent();
+  });
+
   // Cleanup video players and comic readers before page swap to prevent memory leaks
   document.addEventListener('astro:before-swap', () => {
     const contentContainer = document.querySelector('.custom-content');

@@ -24,9 +24,11 @@ interface FloatingButtonProps {
   title: string;
   children: React.ReactNode;
   className?: string;
+  /** Optional data attribute for identifying BGM toggle button */
+  dataBgmToggle?: boolean;
 }
 
-function FloatingButton({ onClick, ariaLabel, title, children, className }: FloatingButtonProps) {
+function FloatingButton({ onClick, ariaLabel, title, children, className, dataBgmToggle }: FloatingButtonProps) {
   const isMounted = useIsMounted();
 
   return (
@@ -39,6 +41,7 @@ function FloatingButton({ onClick, ariaLabel, title, children, className }: Floa
       )}
       aria-label={ariaLabel}
       title={isMounted ? title : undefined}
+      data-bgm-toggle={dataBgmToggle || undefined}
     >
       {children}
     </button>
@@ -98,7 +101,7 @@ export default function FloatingGroup() {
               </FloatingButton>
             )}
             {bgmConfig.enabled && bgmConfig.audio.length > 0 && (
-              <FloatingButton onClick={toggleBgmPanel} ariaLabel="背景音乐" title="背景音乐">
+              <FloatingButton onClick={toggleBgmPanel} ariaLabel="背景音乐" title="背景音乐" dataBgmToggle>
                 <Icon icon={isBgmPanelOpen ? 'ri:music-2-fill' : 'ri:music-2-line'} className="h-5 w-5" />
               </FloatingButton>
             )}

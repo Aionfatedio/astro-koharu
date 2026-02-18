@@ -11,9 +11,8 @@
 import { PlayerPlaylist, type PlaylistGroup } from '@components/markdown/audio-player/PlayerPlaylist';
 import { PlayerPreview } from '@components/markdown/audio-player/PlayerPreview';
 import { MediaControls } from '@components/markdown/shared/MediaControls';
-import { FloatingFocusManager, FloatingPortal, useDismiss, useFloating, useInteractions, useRole } from '@floating-ui/react';
+import { FloatingFocusManager, useDismiss, useFloating, useInteractions, useRole } from '@floating-ui/react';
 import { useAudioPlayer } from '@hooks/useAudioPlayer';
-import { useEnhancedTracks } from '@hooks/useEnhancedTracks';
 import { useMediaQuery } from '@hooks/useMediaQuery';
 import { Icon } from '@iconify/react';
 import type { BgmAudioGroup } from '@lib/config/types';
@@ -84,12 +83,9 @@ export default function GlobalBGMPlayer({ audioGroups }: GlobalBGMPlayerProps) {
     };
   }, [panelOpen, audioGroups, retryKey]);
 
-  // Enhance local tracks with ID3 metadata (lazy, non-blocking)
-  const enhancedTracks = useEnhancedTracks(tracks);
-
   // Audio hook at top level — Audio element persists across panel open/close
-  const player = useAudioPlayer(enhancedTracks);
-  const currentTrack = enhancedTracks[player.state.currentIndex] ?? null;
+  const player = useAudioPlayer(tracks);
+  const currentTrack = tracks[player.state.currentIndex] ?? null;
 
   // Hide panel when drawer is open
   const isHidden = isDrawerOpen || isAnyModalOpen;
@@ -106,7 +102,7 @@ export default function GlobalBGMPlayer({ audioGroups }: GlobalBGMPlayerProps) {
     // Exclude the BGM toggle button in FloatingGroup to prevent toggle/dismiss race
     outsidePress: (event) => {
       const target = event.target as HTMLElement;
-      return !target.closest('[aria-label="背景音乐"]');
+      return !target.closest('[data-bgm-toggle]');
     },
   });
   const role = useRole(context, { role: 'dialog' });
@@ -133,7 +129,7 @@ export default function GlobalBGMPlayer({ audioGroups }: GlobalBGMPlayerProps) {
       );
     }
 
-    if (enhancedTracks.length === 0) {
+    if (tracks.length === 0) {
       return (
         <div className="audio-player audio-player-empty bgm-panel-player">
           <span>暂无曲目</span>
@@ -166,7 +162,7 @@ export default function GlobalBGMPlayer({ audioGroups }: GlobalBGMPlayerProps) {
           onToggleMute={player.toggleMute}
         />
         <PlayerPlaylist
-          tracks={enhancedTracks}
+          tracks={tracks}
           groups={groups}
           currentIndex={player.state.currentIndex}
           timeStore={player.timeStore}
@@ -180,35 +176,33 @@ export default function GlobalBGMPlayer({ audioGroups }: GlobalBGMPlayerProps) {
   };
 
   return (
-    <FloatingPortal>
-      <AnimatePresence>
-        {panelOpen && !isHidden && (
-          <FloatingFocusManager context={context} modal={false}>
-            <motion.div
-              ref={refs.setFloating}
-              {...getFloatingProps()}
-              className="fixed right-16 bottom-20 z-40 w-[460px] max-w-[calc(100vw-5rem)]"
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-            >
-              <div className="bgm-panel max-h-[85vh] overflow-y-auto rounded-2xl shadow-xl sm:max-h-[70vh] sm:overflow-hidden">
-                {/* Close button */}
-                <button
-                  type="button"
-                  className="absolute top-2 right-2 z-10 rounded-full bg-background/80 p-1.5 text-muted-foreground backdrop-blur-sm transition-colors hover:bg-background hover:text-foreground"
-                  onClick={closeBgmPanel}
-                  aria-label="关闭面板"
-                >
-                  <Icon icon="ri:close-line" className="h-4 w-4" />
-                </button>
-                {renderPanelContent()}
-              </div>
-            </motion.div>
-          </FloatingFocusManager>
-        )}
-      </AnimatePresence>
-    </FloatingPortal>
+    <AnimatePresence>
+      {panelOpen && !isHidden && (
+        <FloatingFocusManager context={context} modal={false}>
+          <motion.div
+            ref={refs.setFloating}
+            {...getFloatingProps()}
+            className="fixed right-16 bottom-20 z-40 w-[460px] max-w-[calc(100vw-5rem)]"
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+          >
+            <div className="bgm-panel max-h-[85vh] overflow-y-auto overscroll-none rounded-2xl shadow-xl sm:max-h-[70vh] sm:overflow-hidden">
+              {/* Close button */}
+              <button
+                type="button"
+                className="absolute top-2 right-2 z-10 rounded-full bg-background/80 p-1.5 text-muted-foreground backdrop-blur-sm transition-colors hover:bg-background hover:text-foreground"
+                onClick={closeBgmPanel}
+                aria-label="关闭面板"
+              >
+                <Icon icon="ri:close-line" className="h-4 w-4" />
+              </button>
+              {renderPanelContent()}
+            </div>
+          </motion.div>
+        </FloatingFocusManager>
+      )}
+    </AnimatePresence>
   );
 }

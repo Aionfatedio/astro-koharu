@@ -6,7 +6,6 @@
  */
 
 import { useAudioPlayer } from '@hooks/useAudioPlayer';
-import { useEnhancedTracks } from '@hooks/useEnhancedTracks';
 import type { MetingSong } from '@lib/meting';
 import { resolvePlaylist } from '@lib/meting';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -91,11 +90,8 @@ export function AudioPlayer({ element }: AudioPlayerProps) {
     };
   }, [audioGroups, apiUrl, retryCount]);
 
-  // Enhance local tracks with ID3 metadata (lazy, non-blocking)
-  const enhancedTracks = useEnhancedTracks(tracks);
-
-  const player = useAudioPlayer(enhancedTracks);
-  const currentTrack = enhancedTracks[player.state.currentIndex] ?? null;
+  const player = useAudioPlayer(tracks);
+  const currentTrack = tracks[player.state.currentIndex] ?? null;
 
   const handleTrackSelect = useCallback(
     (index: number) => {
@@ -124,7 +120,7 @@ export function AudioPlayer({ element }: AudioPlayerProps) {
     );
   }
 
-  if (enhancedTracks.length === 0) {
+  if (tracks.length === 0) {
     return (
       <div className="audio-player audio-player-empty">
         <span>暂无曲目</span>
@@ -151,7 +147,7 @@ export function AudioPlayer({ element }: AudioPlayerProps) {
         onToggleMute={player.toggleMute}
       />
       <PlayerPlaylist
-        tracks={enhancedTracks}
+        tracks={tracks}
         groups={groups}
         currentIndex={player.state.currentIndex}
         timeStore={player.timeStore}

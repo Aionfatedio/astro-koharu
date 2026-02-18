@@ -23,7 +23,7 @@
 }
 
 .encrypted-block-icon-error {
-  color: hsl(var(--destructive));
+  color: var(--color-red);
 }
 
 /* Hint text below the icon — with fade transition for error swap */
@@ -38,7 +38,7 @@
   opacity: 0;
 }
 .encrypted-hint-error {
-  color: hsl(var(--destructive));
+  color: var(--color-red);
 }
 
 /* Input row */
@@ -108,7 +108,7 @@
 
 .encrypted-block-error {
   @apply px-4 py-3 text-center text-sm;
-  color: hsl(var(--destructive));
+  color: hsl(var(--primary));
 }
 
 /* Shake animation for wrong password */
@@ -140,7 +140,8 @@
 
 /* Fade out all locked UI children when success overlay is active */
 .encrypted-block-success .encrypted-block-icon,
-.encrypted-block-success .encrypted-block-input-group {
+.encrypted-block-success .encrypted-block-input-group,
+.encrypted-block-success .encrypted-post-title {
   opacity: 0;
   transition: opacity 0.25s ease;
 }
@@ -191,4 +192,25 @@
   to {
     opacity: 1;
   }
+}
+
+/* ============================================================================
+   Encrypted Post — full-page encryption layout
+   Reuses all .encrypted-block-* UI classes above; adds only layout overrides.
+   ============================================================================ */
+
+/* Container: no outer card border, occupies full article area */
+.encrypted-post {
+  @apply my-6;
+}
+
+/* Full-page locked state: extra vertical padding for prominence */
+.encrypted-post-locked {
+  @apply py-16;
+}
+
+/* Title text shown only for full-page encryption */
+.encrypted-post-title {
+  @apply text-lg font-semibold;
+  color: hsl(var(--foreground));
 }

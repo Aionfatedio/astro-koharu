@@ -450,7 +450,7 @@ navigation:
 #     turnstileKey: Cloudflare Turnstile Key (可选)
 #     locale: 自定义语言显示 (可选)
 comment:
-  provider: none  # 'remark42' | 'giscus' | 'waline' | 'none'
+  provider: none  # 'remark42' | 'giscus' | 'waline' | 'twikoo' | 'none'
   # remark42:
   #   host: https://comment.example.com/
   #   siteId: your-site-id
@@ -502,6 +502,11 @@ comment:
   #   # turnstileKey: ''               # Cloudflare Turnstile Key (可选)
   #   # locale:                        # 自定义语言显示 (可选)
   #   #   placeholder: '请留言...'      # 自定义输入框占位文本
+
+  # twikoo:
+  #   envId: your-env-id              # 腾讯云环境 ID 或 Vercel 地址 (必填)
+  #   region: ap-shanghai              # 环境地域 (腾讯云填写，Vercel 不填)
+  #   lang: zh-CN                      # 评论区语言
 
 # =============================================================================
 # Analytics (Umami)

@@ -11,16 +11,18 @@ import { setupCollapseAnimations } from '@lib/collapse-animation';
 import {
   scanAudioPlayers,
   scanEncryptedBlocks,
+  scanEncryptedPosts,
   scanFriendLinks,
   scanPreElements,
   scanQuizElements,
   type ToolbarEntry,
 } from '@lib/content-scanner';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AudioPlayer } from './AudioPlayer';
 import { CodeBlockToolbar } from './CodeBlockToolbar';
 import { EncryptedBlock } from './EncryptedBlock';
+import { EncryptedPost } from './EncryptedPost';
 import { FriendLinksGrid } from './FriendLinksGrid';
 import { InfographicToolbar } from './InfographicToolbar';
 import { MermaidToolbar } from './MermaidToolbar';
@@ -41,26 +43,27 @@ export default function ContentEnhancer({
 }: ContentEnhancerProps) {
   const [entries, setEntries] = useState<ToolbarEntry[]>([]);
 
-  useEffect(() => {
-    function scan() {
-      const container = document.querySelector('.custom-content');
-      if (!container) return;
+  const scan = useCallback(() => {
+    const container = document.querySelector('.custom-content');
+    if (!container) return;
 
-      const newEntries: ToolbarEntry[] = [
-        ...scanPreElements(container),
-        ...(enableQuiz ? scanQuizElements(container) : []),
-        ...scanFriendLinks(container),
-        ...scanAudioPlayers(container),
-        ...(enableEncryptedBlock ? scanEncryptedBlocks(container) : []),
-      ];
+    const newEntries: ToolbarEntry[] = [
+      ...scanPreElements(container),
+      ...(enableQuiz ? scanQuizElements(container) : []),
+      ...scanFriendLinks(container),
+      ...scanAudioPlayers(container),
+      ...(enableEncryptedBlock ? scanEncryptedBlocks(container) : []),
+      ...(enableEncryptedBlock ? scanEncryptedPosts(container) : []),
+    ];
 
-      setupCollapseAnimations(container);
+    setupCollapseAnimations(container);
 
-      if (newEntries.length > 0) {
-        setEntries((prev) => [...prev, ...newEntries]);
-      }
+    if (newEntries.length > 0) {
+      setEntries((prev) => [...prev, ...newEntries]);
     }
+  }, [enableQuiz, enableEncryptedBlock]);
 
+  useEffect(() => {
     scan();
 
     // Re-scan on Astro page transitions (skip first fire which overlaps with initial scan)
@@ -76,9 +79,20 @@ export default function ContentEnhancer({
       });
     };
 
+    // Re-scan after encrypted post is decrypted and its HTML injected into the DOM
+    const handleDecrypted = () => {
+      requestAnimationFrame(() => {
+        scan();
+      });
+    };
+
     document.addEventListener('astro:page-load', handlePageLoad);
-    return () => document.removeEventListener('astro:page-load', handlePageLoad);
-  }, [enableQuiz, enableEncryptedBlock]);
+    document.addEventListener('content:decrypted', handleDecrypted);
+    return () => {
+      document.removeEventListener('astro:page-load', handlePageLoad);
+      document.removeEventListener('content:decrypted', handleDecrypted);
+    };
+  }, [scan]);
 
   return (
     <>
@@ -106,6 +120,8 @@ export default function ContentEnhancer({
             return createPortal(<AudioPlayer key={entry.id} element={entry.preElement} />, entry.mountPoint);
           case 'encrypted':
             return createPortal(<EncryptedBlock key={entry.id} element={entry.preElement} />, entry.mountPoint);
+          case 'encrypted-post':
+            return createPortal(<EncryptedPost key={entry.id} element={entry.preElement} />, entry.mountPoint);
           default:
             return null;
         }

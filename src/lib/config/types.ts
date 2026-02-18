@@ -182,7 +182,7 @@ export interface RouterItem {
 // Comment Configuration
 // =============================================================================
 
-export type CommentProvider = 'remark42' | 'giscus' | 'waline' | 'none';
+export type CommentProvider = 'remark42' | 'giscus' | 'waline' | 'twikoo' | 'none';
 
 export interface Remark42Config {
   host: string;
@@ -390,11 +390,39 @@ export interface WalineConfig {
   locale?: Record<string, string>;
 }
 
+export interface TwikooConfig {
+  /**
+   * Twikoo 环境 ID (腾讯云) 或 Vercel 环境地址 (必填)
+   * Twikoo environment ID (Tencent Cloud) or Vercel environment address (required)
+   */
+  envId: string;
+
+  /**
+   * 环境地域，默认为 ap-shanghai
+   * Environment region, default is ap-shanghai
+   * 腾讯云环境填 ap-shanghai 或 ap-guangzhou；Vercel 环境不填
+   */
+  region?: string;
+
+  /**
+   * 用于区分不同文章的自定义 js 路径
+   * Custom js path to distinguish different articles
+   */
+  path?: string;
+
+  /**
+   * 用于手动设定评论区语言
+   * Manually set comment area language
+   */
+  lang?: string;
+}
+
 export interface CommentConfig {
   provider?: CommentProvider;
   remark42?: Remark42Config;
   giscus?: GiscusConfig;
   waline?: WalineConfig;
+  twikoo?: TwikooConfig;
 }
 
 // =============================================================================

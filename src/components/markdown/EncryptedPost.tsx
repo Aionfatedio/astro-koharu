@@ -1,9 +1,22 @@
+/**
+ * EncryptedPost - Full-page post encryption UI.
+ *
+ * Unlike EncryptedBlock (which renders decrypted HTML via dangerouslySetInnerHTML),
+ * this component injects decrypted HTML directly into the DOM and dispatches
+ * 'content:decrypted' to trigger ContentEnhancer re-scan, TOC rebuild, etc.
+ *
+ * Uses the same custom styles and animations as EncryptedBlock:
+ * - Input expand animation (collapsed → expanded)
+ * - Hint text crossfade (locked → error → locked)
+ * - Success spinner → checkmark animation
+ * - Shake animation on wrong password
+ */
 import { Icon } from '@iconify/react';
 import { decryptContent } from '@lib/crypto/decrypt';
 import { cn } from '@lib/utils';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-interface EncryptedBlockProps {
+interface EncryptedPostProps {
   element: HTMLElement;
 }
 
@@ -54,16 +67,15 @@ function SuccessCheck() {
   );
 }
 
-export function EncryptedBlock({ element }: EncryptedBlockProps) {
+export function EncryptedPost({ element }: EncryptedPostProps) {
   const [state, setState] = useState<DecryptState>('locked');
-  const [html, setHtml] = useState('');
   const [expanded, setExpanded] = useState(false);
   const [hintFaded, setHintFaded] = useState(false);
-  const [hintText, setHintText] = useState('此内容已加密，请输入密码查看');
+  const [hintText, setHintText] = useState('此文章已加密，请输入密码查看');
   const [showCheck, setShowCheck] = useState(false);
+  const decryptedRef = useRef('');
   const inputRef = useRef<HTMLInputElement>(null);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const startHeightRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
@@ -71,41 +83,22 @@ export function EncryptedBlock({ element }: EncryptedBlockProps) {
     };
   }, []);
 
-  // After unlocked content is rendered, trigger content enhancers (images, videos, etc.)
+  // Inject decrypted HTML after success animation completes
   useEffect(() => {
-    if (state !== 'unlocked') return;
+    if (state !== 'unlocked' || !decryptedRef.current) return;
+
+    element.innerHTML = decryptedRef.current;
+    decryptedRef.current = '';
+    element.classList.remove('encrypted-post');
+    element.removeAttribute('data-cipher');
+    element.removeAttribute('data-iv');
+    element.removeAttribute('data-salt');
+    element.removeAttribute('data-react-enhanced');
 
     requestAnimationFrame(() => {
       const container = document.querySelector('.custom-content');
       if (container) container.removeAttribute('data-enhanced');
       document.dispatchEvent(new CustomEvent('content:decrypted'));
-    });
-  }, [state]);
-
-  // Smooth height transition: success → unlocked
-  useLayoutEffect(() => {
-    if (state !== 'unlocked' || startHeightRef.current === null) return;
-
-    const startHeight = startHeightRef.current;
-    startHeightRef.current = null;
-
-    // DOM now has unlocked content — measure its natural height before paint
-    const endHeight = element.offsetHeight;
-
-    // Lock to old height (user never sees the natural height)
-    element.style.height = `${startHeight}px`;
-
-    requestAnimationFrame(() => {
-      element.style.transition = 'height 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-      element.style.height = `${endHeight}px`;
-
-      const cleanup = () => {
-        element.style.height = '';
-        element.style.transition = '';
-      };
-      element.addEventListener('transitionend', cleanup, { once: true });
-      // Fallback in case transitionend doesn't fire
-      setTimeout(cleanup, 500);
     });
   }, [state, element]);
 
@@ -126,16 +119,13 @@ export function EncryptedBlock({ element }: EncryptedBlockProps) {
     const result = await decryptContent(cipher, iv, salt, password);
 
     if (result) {
-      setHtml(result);
+      decryptedRef.current = result;
       setState('success');
       setShowCheck(false);
       // Phase 1: spinner → checkmark
       schedule(() => setShowCheck(true), 400);
-      // Phase 2: capture height → reveal content
-      schedule(() => {
-        startHeightRef.current = element.offsetHeight;
-        setState('unlocked');
-      }, 800);
+      // Phase 2: inject HTML into DOM
+      schedule(() => setState('unlocked'), 800);
     } else {
       setState('error');
 
@@ -146,7 +136,7 @@ export function EncryptedBlock({ element }: EncryptedBlockProps) {
       }, 120);
       schedule(() => setHintFaded(true), 1120);
       schedule(() => {
-        setHintText('此内容已加密，请输入密码查看');
+        setHintText('此文章已加密，请输入密码查看');
         setHintFaded(false);
         setState('locked');
       }, 1240);
@@ -175,22 +165,17 @@ export function EncryptedBlock({ element }: EncryptedBlockProps) {
     return <div className="encrypted-block-error">Error: Missing encryption data</div>;
   }
 
-  if (state === 'unlocked') {
-    return (
-      <div className="encrypted-block-content encrypted-content-enter prose dark:prose-invert max-w-none">
-        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: content is from our own build-time markdown pipeline */}
-        <div dangerouslySetInnerHTML={{ __html: html }} />
-      </div>
-    );
-  }
+  // After unlock, the useEffect injects HTML — component renders nothing
+  if (state === 'unlocked') return null;
 
   return (
-    <div className={cn('encrypted-block-locked', state === 'success' && 'encrypted-block-success')}>
+    <div className={cn('encrypted-block-locked encrypted-post-locked', state === 'success' && 'encrypted-block-success')}>
       <Icon
         icon="ri:lock-2-line"
         className={cn('encrypted-block-icon', state === 'error' && 'encrypted-block-icon-error')}
-        aria-label="Locked content"
+        aria-label="内容已加密"
       />
+      <p className="encrypted-post-title">此文章已加密</p>
       <p
         className={cn(
           'encrypted-block-hint',
@@ -217,7 +202,7 @@ export function EncryptedBlock({ element }: EncryptedBlockProps) {
           disabled={busy}
           tabIndex={expanded ? 0 : -1}
         />
-        <button type="button" className="encrypted-block-btn" onClick={handleBtnClick} disabled={busy} aria-label="Unlock">
+        <button type="button" className="encrypted-block-btn" onClick={handleBtnClick} disabled={busy} aria-label="解锁">
           {state === 'decrypting' ? (
             <Icon icon="ri:loader-4-line" className="animate-spin" />
           ) : (

@@ -134,7 +134,11 @@ export function useHeadingTree(): Heading[] {
     // Build tree on mount and page navigation
     buildTree();
     document.addEventListener('astro:page-load', buildTree);
-    return () => document.removeEventListener('astro:page-load', buildTree);
+    document.addEventListener('content:decrypted', buildTree);
+    return () => {
+      document.removeEventListener('astro:page-load', buildTree);
+      document.removeEventListener('content:decrypted', buildTree);
+    };
   }, []);
 
   return headings;

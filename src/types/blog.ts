@@ -26,6 +26,8 @@ export interface BlogSchema {
   quiz?: boolean;
   /** Artist ID for artist profile sidebar (matches artists.json) */
   artist?: string;
+  /** Password for full-post encryption */
+  password?: string;
 }
 
 /**

@@ -11,7 +11,6 @@ import Layout from '@layouts/Layout.astro';
 import TwoColumnLayout from '@layouts/TwoColumnLayout.astro';
 import { buildCategoryPath, getCategoryArr, getPostDescription, getPostSummary, getSortedPosts } from '@lib/content';
 import { formatForSeo } from '@lib/date';
-import { encodeSlug } from '@lib/route';
 import { getOgImageUrl } from '@lib/seo/og-image';
 import { Icon } from 'astro-icon/components';
 import { Comment } from '@/components/comment';
@@ -41,8 +40,8 @@ const artistProfile = post.data.artist ? getArtistById(post.data.artist) : null;
 // When enableMath is false globally, rehype-katex is not in the pipeline, so no math is rendered.
 const hasMath = defaultContentConfig.enableMath !== false && postMath !== false;
 
-// 使用统一的工具函数获取文章描述
-const finalDescription = getPostDescription(post);
+// 使用统一的工具函数获取文章描述（加密文章使用通用描述）
+const finalDescription = post.data.password ? '此文章已加密' : getPostDescription(post);
 
 // OGP image for BlogPosting schema (uses same fallback chain as Layout)
 const ogImage = getOgImageUrl(post?.data.cover, Astro.site);
@@ -175,7 +174,7 @@ if (post.data.description) {
         {import.meta.env.DEV && <EditButton client:only="react" postId={postId} />}
       </nav>
       {
-        summaryText && summarySource && (
+        !post.data.password && summaryText && summarySource && (
           <SummaryPanel client:visible summary={summaryText} source={summarySource} className="mt-2" />
         )
       }
