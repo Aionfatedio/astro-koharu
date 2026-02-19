@@ -25,6 +25,7 @@ import { rehypeImagePlaceholder } from './src/lib/markdown/rehype-image-placehol
 import { rehypeShokaAttrs } from './src/lib/markdown/rehype-shoka-attrs.ts';
 import { remarkComicDirective } from './src/lib/markdown/remark-comic-directive.ts';
 import { remarkEncryptedDirective } from './src/lib/markdown/remark-encrypted-directive.ts';
+import { remarkIconifyInline } from './src/lib/markdown/remark-iconify-inline.ts';
 import { remarkLinkEmbed } from './src/lib/markdown/remark-link-embed.ts';
 import { remarkIns, remarkMark } from './src/lib/markdown/remark-shoka-effects.ts';
 import { remarkShokaPreprocess } from './src/lib/markdown/remark-shoka-preprocess.ts';
@@ -119,6 +120,10 @@ if (contentConfig.enableShokaSpoiler !== false) remarkPlugins.push(remarkShokaSp
 if (contentConfig.enableShokaRuby !== false) remarkPlugins.push(remarkShokaRuby);
 if (contentConfig.enableShokaEffects !== false) {
   remarkPlugins.push(remarkIns, remarkMark);
+}
+// Inline Iconify icons: %prefix/icon-name% → inline <svg>
+if (contentConfig.enableIconifyInline !== false) {
+  remarkPlugins.push(remarkIconifyInline);
 }
 // Encrypted block & comic card: remarkDirective is registered in BOTH places —
 // here for the main Astro pipeline (when remarkShokaPreprocess skips re-parse),

@@ -14,15 +14,7 @@ updated: 2026-01-27 14:26:27
 draft: true
 ---
 本文展示目前支持的所有 Markdown 增强功能。(Mod version: v1.9)
-
-:::encrypted{password="test"}
-
-<https://pan.baidu.com/s/175ijWFpRZ8musMjj8c5TeQ>
-
-提取码：`aion`
-解压密码:`aionfatedio`
-
-:::
+   
 
 ## 链接嵌入
 

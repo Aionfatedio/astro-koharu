@@ -165,6 +165,7 @@ export interface ContentConfig {
   enableQuiz?: boolean;
   enableEncryptedBlock?: boolean;
   enableComicCard?: boolean;
+  enableIconifyInline?: boolean;
 }
 
 // =============================================================================

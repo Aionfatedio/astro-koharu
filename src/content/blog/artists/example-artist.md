@@ -8,8 +8,18 @@ tags:
   - 示例
 categories:
   - 画师
-password: test
 ---
+[剧情指数]{.label .info}
+
+%fa7-solid/star #ffd306%%fa7-solid/star #ffd306%%fa7-solid/star #ffd306%%fa7-solid/star%%fa7-solid/star% %fa7-solid/b #8b5cf6%
+
+[画风指数]{.label .primary}
+
+%fa7-solid/star #ffd306%%fa7-solid/star #ffd306%%fa7-solid/star #ffd306%%fa7-solid/star #ffd306%%/img/icon/half-star.svg% %fa7-solid/s #fbbf24%
+
+[实用指数]{.label .warning}
+
+%fa7-solid/star #ffd306%%fa7-solid/star #ffd306%%fa7-solid/star #ffd306%%fa7-solid/star #ffd306%%fa7-solid/star% 	%fa7-solid/a #ff5f56%
 
 R-18のオリジナルイラストやファンアートなど描く人です。
 

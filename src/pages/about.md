@@ -19,10 +19,23 @@ description: "关于我？"
 ![随机图片](https://pixiv.aionfatedio.top)
 感觉不行？<a href="javascript:(function(){var imgs = document.querySelectorAll('img[src*=\'pixiv.aionfatedio.top\']');imgs.forEach(function(img) {var baseUrl = img.src.split('?')[0];img.src = baseUrl + '?' + new Date().getTime();});})()">换一张</a>
 
-{% media video %}
-- name: "测试视频"
-  url: /media/test.mp4
-{% endmedia %}
+
+|  品质  |           描述           |           对应颜色           |
+| :----: | :----------------------: | :--------------------------: |
+|  普通  |        [D]{.grey}        |        [灰色]{.grey}         |
+|  精品  |       [C]{.green}        |        [绿色]{.green}        |
+|  稀有  |        [B]{.blue}        |        [蓝色]{.blue}         |
+|  必看  |       [A]{.purple}       |       [紫色]{.purple}        |
+| 顶中顶 | [S]{.orange} | [橙色]{.orange} |
+
++++warning 隐藏品质
+|  品质  |           描述           |           对应颜色           |
+| :----: | :----------------------: | :--------------------------: |
+|  极佳  |        [SR]{.red}        |        [红色]{.red}         |
+|  神作  |       [SSR]{.pink}       |       [粉色]{.pink}        |
+| 典藏 | [UR]{.rainbow} | [彩色]{.rainbow} |
++++
+
 
 
 愿热情永存，愿热爱不灭，愿生活无憾
@@ -32,16 +45,20 @@ description: "关于我？"
 > 像花一样 肆意绽放 \
 > 不去管 有没有人欣赏
 
-### 找到我
+### 我的网站
 
-个人 Telegram 前端频道：日常碎碎念，偶尔掉落优质前端博文推荐、学习资源等
+用于管理浏览器收藏网站的网页：
 
-https://t.me/cosine_front_end
+<https://favorite-page.pages.dev>
 
-Gitbook 前端学习记录
+用于阅读电子书的网页：
 
-https://book.cosine.ren/
+<https://reader.aionfatedio.top>
 
-[![GitHub State](https://git-stats.cosine.ren/api?username=yusixian&theme=dark&show_icons=true&hide_border=true)](https://github.com/anuraghazra/github-readme-stats)
+随机跳转P站图片(~~涩图~~)的网页：
 
-[![GitHub Streak](https://github-readme-streak-stats-rust-tau.vercel.app?user=yusixian&theme=dark&date_format=%5BY%20%5DM%20&hide_border=true)](https://git.io/streak-stats)
+<https://pixiv.aionfatedio.top>
+
+随机跳转P站涩图的网页：
+
+<https://pixiv-nsfw.aionfatedio.top>

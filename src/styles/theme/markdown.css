@@ -659,3 +659,12 @@
 .pswp__img:not(.pswp__img--placeholder) {
   border-radius: 0.5rem;
 }
+
+/* ========== Inline Iconify icons ========== */
+.iconify-inline {
+  display: inline-block;
+  vertical-align: -0.125em;
+  padding: 0 0.1em;
+  flex-shrink: 0;
+  fill: currentColor;
+}
