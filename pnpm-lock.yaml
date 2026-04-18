@@ -105,8 +105,8 @@ importers:
         specifier: 0.0.4
         version: 0.0.4(astro@5.16.6(@netlify/blobs@10.5.0)(@types/node@24.10.1)(@vercel/functions@2.2.13)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.53.3)(terser@5.37.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2))
       artplayer:
-        specifier: ^5.3.0
-        version: 5.3.0
+        specifier: ^5.4.0
+        version: 5.4.0
       astro:
         specifier: ^5.16.6
         version: 5.16.6(@netlify/blobs@10.5.0)(@types/node@24.10.1)(@vercel/functions@2.2.13)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.53.3)(terser@5.37.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
@@ -345,9 +345,6 @@ importers:
       mdast-util-directive:
         specifier: ^3.1.0
         version: 3.1.0
-      pinyin-pro:
-        specifier: ^3.28.0
-        version: 3.28.0
       remark:
         specifier: ^15.0.1
         version: 15.0.1
@@ -363,6 +360,9 @@ importers:
       strip-markdown:
         specifier: ^6.0.0
         version: 6.0.0
+      transliteration:
+        specifier: ^2.6.1
+        version: 2.6.1
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -3789,8 +3789,8 @@ packages:
     resolution: {integrity: sha512-BNoCY6SXXPQ7gF2opIP4GBE+Xw7U+pHMYKuzjgCN3GwiaIR09UUeKfheyIry77QtrCBlC0KK0q5/TER/tYh3PQ==}
     engines: {node: '>= 0.4'}
 
-  artplayer@5.3.0:
-    resolution: {integrity: sha512-yExO39MpEg4P+bxgChxx1eJfiUPE4q1QQRLCmqGhlsj+ANuaoEkR8hF93LdI5ZyrAcIbJkuEndxEiUoKobifDw==}
+  artplayer@5.4.0:
+    resolution: {integrity: sha512-2B+plbx8N2yNsjK4nJU3+EOG8TULm1LRZk/QPkWRAMEX2Ee/MSnZG/WJYz8kcoZxZuLKcQ3uXifqLuPxZOH29A==}
 
   ast-module-types@6.0.1:
     resolution: {integrity: sha512-WHw67kLXYbZuHTmcdbIrVArCq5wxo6NEuj3hiYAWr8mwJeC+C2mMCIBIWCiDoCye/OF/xelc+teJ1ERoWmnEIA==}
@@ -7417,9 +7417,6 @@ packages:
     engines: {node: '>=0.10'}
     hasBin: true
 
-  pinyin-pro@3.28.0:
-    resolution: {integrity: sha512-mMRty6RisoyYNphJrTo3pnvp3w8OMZBrXm9YSWkxhAfxKj1KZk2y8T2PDIZlDDRsvZ0No+Hz6FI4sZpA6Ey25g==}
-
   piscina@3.2.0:
     resolution: {integrity: sha512-yn/jMdHRw+q2ZJhFhyqsmANcbF6V2QwmD84c6xRau+QpQOmtrBCoRGdvTfeuFDYXB5W2m6MfLkjkvQa9lUSmIA==}
 
@@ -8530,6 +8527,11 @@ packages:
   tr46@6.0.0:
     resolution: {integrity: sha512-bLVMLPtstlZ4iMQHpFHTR7GAGj2jxi8Dg0s2h2MafAE4uSWF98FC/3MomU51iQAMf8/qDUbKWf5GxuvvVcXEhw==}
     engines: {node: '>=20'}
+
+  transliteration@2.6.1:
+    resolution: {integrity: sha512-hJ9BhrQAOnNTbpOr1MxsNjZISkn7ppvF5TKUeFmTE1mG4ZPD/XVxF0L0LUoIUCWmQyxH0gJpVtfYLAWf298U9w==}
+    engines: {node: '>=20.0.0'}
+    hasBin: true
 
   trim-lines@3.0.1:
     resolution: {integrity: sha512-kRj8B+YHZCc9kQYdWfJB2/oUl9rA99qbowYYBtr4ui4mZyAQ2JpvVBd/6U2YloATfqBhBTSMhTpgBHtU0Mf3Rg==}
@@ -13144,7 +13146,7 @@ snapshots:
       get-intrinsic: 1.3.0
       is-array-buffer: 3.0.5
 
-  artplayer@5.3.0:
+  artplayer@5.4.0:
     dependencies:
       option-validator: 2.0.6
 
@@ -17767,8 +17769,6 @@ snapshots:
 
   pidtree@0.6.0: {}
 
-  pinyin-pro@3.28.0: {}
-
   piscina@3.2.0:
     dependencies:
       eventemitter-asyncresource: 1.0.0
@@ -19175,6 +19175,8 @@ snapshots:
   tr46@6.0.0:
     dependencies:
       punycode: 2.3.1
+
+  transliteration@2.6.1: {}
 
   trim-lines@3.0.1: {}
 

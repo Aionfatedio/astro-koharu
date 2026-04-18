@@ -13,7 +13,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { env, type FeatureExtractionPipeline, pipeline } from '@huggingface/transformers';
+import { type DeviceType, env, type FeatureExtractionPipeline, pipeline } from '@huggingface/transformers';
 import chalk from 'chalk';
 import { glob } from 'glob';
 import matter from 'gray-matter';
@@ -40,6 +40,42 @@ const SUMMARIES_FILE = 'src/assets/summaries.json';
 
 // Cache models locally
 env.cacheDir = './.cache/transformers';
+
+// --------- Device Configuration ---------
+const VALID_DEVICES: readonly DeviceType[] = [
+  'auto',
+  'gpu',
+  'cpu',
+  'wasm',
+  'webgpu',
+  'cuda',
+  'dml',
+  'webnn',
+  'webnn-npu',
+  'webnn-gpu',
+  'webnn-cpu',
+] as const;
+const DEFAULT_DEVICE: DeviceType = 'cpu';
+
+function isDeviceType(value: string): value is DeviceType {
+  return (VALID_DEVICES as readonly string[]).includes(value);
+}
+
+function parseArgs(): { device: DeviceType } {
+  const args = process.argv.slice(2);
+  let device: DeviceType = DEFAULT_DEVICE;
+  const deviceIdx = args.indexOf('--device');
+  if (deviceIdx !== -1 && args[deviceIdx + 1]) {
+    const val = args[deviceIdx + 1];
+    if (isDeviceType(val)) {
+      device = val;
+    } else {
+      console.warn(chalk.yellow(`Invalid device "${val}", using default "${DEFAULT_DEVICE}"`));
+      console.warn(chalk.gray(`Valid devices: ${VALID_DEVICES.join(', ')}`));
+    }
+  }
+  return { device };
+}
 
 // --------- Type Definitions ---------
 interface PostData {
@@ -278,7 +314,10 @@ async function main() {
   try {
     console.log(chalk.cyan('=== Semantic Similarity Generator ===\n'));
     console.log(chalk.gray(`Mode: ${INCLUDE_BODY ? 'title + description + body' : 'title + description only'}`));
-    console.log(chalk.gray(`AI Summary: ${USE_AI_SUMMARY ? 'enabled' : 'disabled'}\n`));
+    console.log(chalk.gray(`AI Summary: ${USE_AI_SUMMARY ? 'enabled' : 'disabled'}`));
+
+    const { device } = parseArgs();
+    console.log(chalk.gray(`Device: ${device}\n`));
 
     // 1. Load AI summaries if enabled
     const summaries = await loadSummaries();
@@ -288,7 +327,7 @@ async function main() {
 
     // 2. Load the embedding model
     console.log(chalk.blue(`Loading model: ${MODEL_NAME}...`));
-    const extractor = await pipeline('feature-extraction', MODEL_NAME);
+    const extractor = await pipeline('feature-extraction', MODEL_NAME, { device });
     console.log(chalk.green('Model loaded!\n'));
 
     // 3. Find all markdown files

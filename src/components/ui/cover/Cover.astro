@@ -1,10 +1,13 @@
 ---
-import { siteConfig } from '@constants/site-config';
+import { Routes } from '@constants/router';
+import { createArticleStatsConfig, siteConfig } from '@constants/site-config';
+import { getPostReadingTime } from '@lib/content/posts';
 import { displayDate } from '@lib/date';
 import { getLqipStyle } from '@lib/lqip';
+import { routeBuilder } from '@lib/route';
 import { Icon } from 'astro-icon/components';
-import readingTime from 'reading-time';
 import type { BlogPost } from 'types/blog';
+import UmamiPVSpan from '@/components/umami/UmamiPVSpan';
 import { MAX_WIDTH } from '@/constants/layout';
 import WaveSvg from './wave';
 
@@ -17,11 +20,14 @@ const { data, title } = Astro.props as CoverProps;
 
 const { date, updated, title: dataTitle, draft } = data?.data ?? {};
 
-const readState = readingTime(data?.body ?? '');
+const readState = data ? getPostReadingTime(data) : null;
 const isDraft = import.meta.env.DEV && draft === true;
 
 // 获取横幅图片的 LQIP 样式
 const bannerLqipStyle = getLqipStyle('/img/site_header_1920.webp');
+
+const href = data && routeBuilder(Routes.Post, data);
+const pageStatsConfig = href ? createArticleStatsConfig(href) : null;
 ---
 
 <div class="relative flex h-[60dvh] z-0 max-h-200 overflow-hidden">
@@ -72,6 +78,13 @@ const bannerLqipStyle = getLqipStyle('/img/site_header_1920.webp');
                 <Icon name="fa6-solid:clock" />
                 {readState?.text}
               </span>
+              {pageStatsConfig && (
+                <span class="flex items-center gap-1">
+                  <Icon name="ri:eye-line" class="h-4 w-4" />
+                  <UmamiPVSpan client:idle statsConfig={pageStatsConfig} />
+                  访问
+                </span>
+              )}
             </p>
           )}
         </>

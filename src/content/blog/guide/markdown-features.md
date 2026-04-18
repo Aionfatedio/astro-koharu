@@ -11,10 +11,10 @@ tags:
 categories:
   - 指南
 updated: 2026-01-27 14:26:27
-draft: true
+draft: false
 ---
 本文展示目前支持的所有 Markdown 增强功能。(Mod version: v1.9)
-   
+
 
 ## 链接嵌入
 
@@ -62,9 +62,7 @@ draft: true
 
 图片会自动应用 LQIP（低质量图片占位符）效果：
 
-![图片1](https://i.pximg.org/img-original/img/2023/02/10/10/56/19/105240329_p0.png)
-
-![图片2](https://i.pximg.org/img-original/img/2025/06/09/18/54/57/131365589_p0.png)
+![图片1](https://timg.cloudtown.me/1YcEDsD0C2Y_2jI3IFX2Lw8.jpg?sign=d0c79a480c948263d7fe303635936e3f352b258aa6dc50e89f42b00d3d502bcd)
 
 +++primary 随机图片 
 <a href="javascript:(function(){
@@ -78,6 +76,13 @@ draft: true
 ![随机图片](https://pixiv.aionfatedio.top)
 +++
 
+<div class="iframe-embed no-scrollbar" style="height: 600px">
+  <iframe
+    src="https://wallpaper.aionfatedio.top"
+    scrolling="yes"
+  ></iframe>
+</div>
+
 ## 视频嵌入
 
 使用 `{% media video %}` 指令可以嵌入视频播放器：
@@ -85,7 +90,7 @@ draft: true
 {% media video %}
 - name: "测试视频"
   url: /media/test.mp4
-{% endmedia %}
+  {% endmedia %}
 
 ### 视频指令语法
 
@@ -95,6 +100,12 @@ draft: true
   url: https://cdn.kastatic.org/ka-youtube-converted/O_nY1TM2RZM.mp4/O_nY1TM2RZM.mp4#t=0
 - name: "测试 2"
   url: https://cdn.kastatic.org/ka-youtube-converted/O_nY1TM2RZM.mp4/O_nY1TM2RZM.mp4#t=0
+{% endmedia %}
+
+{% media video %}
+- name: "受保护视频"
+  url: mmd
+  protected: true
 {% endmedia %}
 ```
 
@@ -285,7 +296,7 @@ pie title 博客内容分布
 
 > 这是一段引用文本。\
 > 混沌未启已真玄，太虚堪破吾为先，八荒六合任逍遥，谁人知我何处仙。
-    
+
 
 ## Github Style
 

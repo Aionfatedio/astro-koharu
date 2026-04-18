@@ -73,6 +73,52 @@
   width: calc(100% + 20px); /* push native scrollbar outside visible area */
 }
 
+/* Open-in-new-tab button — matches .markdown-image-fullscreen visual spec.
+   Reveals on hover over the wrapper. Uses <a target="_blank"> for native
+   middle-click / right-click "open in new tab" support.
+   Selector includes element + class (a.iframe-embed-open) plus .prose scoping
+   so it outranks `.prose a` which otherwise paints it in the primary color. */
+a.iframe-embed-open,
+.prose a.iframe-embed-open {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.375rem;
+  background: rgb(0 0 0 / 0.5);
+  color: white;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  text-decoration: none;
+  transition:
+    opacity 0.2s ease,
+    background-color 0.2s ease;
+  z-index: 5;
+}
+
+.iframe-embed:hover a.iframe-embed-open {
+  opacity: 1;
+}
+
+a.iframe-embed-open:hover,
+.prose a.iframe-embed-open:hover {
+  background: rgb(0 0 0 / 0.7);
+  color: white;
+  text-decoration: none;
+}
+
+/* Restore stroke-only rendering: global reset.css sets `svg { fill: currentColor }`,
+   which overrides the Lucide SVG's fill="none" presentation attribute and turns
+   the outlined icon into a solid silhouette. */
+a.iframe-embed-open svg {
+  fill: none;
+}
+
 /* ============================================================================
    Link Preview Image Error Handling
    ============================================================================ */

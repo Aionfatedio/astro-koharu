@@ -177,6 +177,10 @@ if (contentConfig.enableCodeMeta !== false) shikiTransformers.push(shokaMetaTran
 export default defineConfig({
   site: yamlConfig.site.url,
   compressHTML: true,
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: 'viewport',
+  },
   markdown: {
     // Enable GitHub Flavored Markdown
     gfm: true,

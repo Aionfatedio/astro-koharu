@@ -14,24 +14,18 @@ export default function Waline() {
   useEffect(() => {
     if (!config || !containerRef.current) return;
 
-    // Initialize Waline
+    // Initialize Waline: project defaults → user config → runtime overrides
     walineInstanceRef.current = init({
+      // Project defaults
+      requiredMeta: ['nick'],
+      imageUploader: false,
+      // User config from site.yaml (spreads all fields including emoji, pageview, etc.)
+      ...config,
+      // Runtime overrides (must not be overridden by user config)
       el: containerRef.current,
-      serverURL: config.serverURL,
+      path: window.location.pathname,
       lang: config.lang ?? 'zh-CN',
-      dark: config.dark ?? 'html.dark', // CSS selector to auto-follow theme
-      meta: config.meta ?? ['nick', 'mail', 'link'],
-      requiredMeta: config.requiredMeta ?? ['nick'],
-      login: config.login ?? 'enable',
-      wordLimit: config.wordLimit ?? 0,
-      pageSize: config.pageSize ?? 10,
-      imageUploader: config.imageUploader ?? false,
-      highlighter: config.highlighter ?? true,
-      texRenderer: config.texRenderer ?? false,
-      search: config.search ?? false,
-      reaction: config.reaction ?? false,
-      recaptchaV3Key: config.recaptchaV3Key,
-      turnstileKey: config.turnstileKey,
+      dark: config.dark ?? 'html.dark',
     });
 
     // Handle Astro page transitions - update path when navigating

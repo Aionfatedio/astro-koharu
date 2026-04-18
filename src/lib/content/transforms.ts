@@ -5,9 +5,9 @@
  * Uses a flexible pick-based API that allows selecting specific fields on demand
  */
 
-import readingTime from 'reading-time';
 import type { BlogPost } from '@/types/blog';
-import { getPostDescriptionWithSummary, getPostLastCategory } from './posts';
+import { getPostSlug } from '../route';
+import { getPostDescriptionWithSummary, getPostLastCategory, getPostReadingTime } from './posts';
 
 /**
  * BlogPost 可提取的字段映射
@@ -37,7 +37,7 @@ export type PostFieldMap = {
  */
 const fieldExtractors: { [K in keyof PostFieldMap]: (post: BlogPost) => PostFieldMap[K] } = {
   // 直接字段
-  slug: (p) => p.slug,
+  slug: (p) => getPostSlug(p),
   link: (p) => p.data?.link,
   title: (p) => p.data.title,
   date: (p) => p.data.date,
@@ -48,8 +48,8 @@ const fieldExtractors: { [K in keyof PostFieldMap]: (post: BlogPost) => PostFiel
   // 计算字段
   categoryName: (p) => getPostLastCategory(p).name || undefined,
   description: (p) => getPostDescriptionWithSummary(p),
-  wordCount: (p) => readingTime(p.body ?? '').words,
-  readingTime: (p) => readingTime(p.body ?? '').text,
+  wordCount: (p) => getPostReadingTime(p).words,
+  readingTime: (p) => getPostReadingTime(p).text,
 };
 
 /**

@@ -1,6 +1,6 @@
 /**
  * Image loading enhancement
- * Adds loaded/error states and portrait image grouping
+ * Adds loaded/error states, fullscreen button, and portrait image grouping
  * Uses PhotoSwipe for lightbox functionality
  */
 
@@ -9,9 +9,6 @@ import type { SlideData } from 'photoswipe';
 
 // Track enhanced images to avoid duplicate processing
 const enhancedImages = new WeakSet<HTMLImageElement>();
-
-// Track containers that have click listeners bound
-const boundContainers = new WeakSet<Element>();
 
 // PhotoSwipe instance management
 let photoSwipeInstance: PhotoSwipe | null = null;
@@ -99,23 +96,16 @@ async function openPhotoSwipe(container: Element, clickedImg: HTMLImageElement):
       preload: [1, 2],
 
       // === Zoom configuration ===
-      // Allow secondary zoom (click to zoom in further)
       allowPanToNext: true,
-      // DisAllow loop
       loop: false,
-      // Initial zoom level: fit image to viewport
       initialZoomLevel: 'fit',
-      // Secondary zoom level: 2x
       secondaryZoomLevel: 1.25,
-      // Maximum zoom level: 4x original size
       maxZoomLevel: 4,
 
       // === UI configuration ===
       arrowPrev: false,
       arrowNext: false,
-      // Show zoom button
       zoom: false,
-      // Show close button
       close: true,
       counter: false,
     });
@@ -138,18 +128,16 @@ async function openPhotoSwipe(container: Element, clickedImg: HTMLImageElement):
 }
 
 /**
- * Handle image click for lightbox (using event delegation)
+ * Create fullscreen button for images
  */
-function handleImageClick(container: Element, e: Event): void {
-  const target = e.target as HTMLElement;
-
-  // Check if clicked on a loaded markdown image
-  if (target.classList.contains('markdown-image') && target.classList.contains('loaded')) {
-    const img = target as HTMLImageElement;
-    e.preventDefault();
-    e.stopPropagation();
-    openPhotoSwipe(container, img);
-  }
+function createFullscreenButton(): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.className = 'markdown-image-fullscreen';
+  button.setAttribute('type', 'button');
+  button.setAttribute('aria-label', '全屏查看');
+  button.title = '全屏查看';
+  button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>`;
+  return button;
 }
 
 /**
@@ -178,74 +166,89 @@ function createErrorPlaceholder(img: HTMLImageElement): HTMLElement {
 }
 
 /**
+ * Handle image click for lightbox (using event delegation).
+ * Module-level function — same reference ensures addEventListener deduplicates automatically.
+ */
+function handleImageClick(e: Event): void {
+  const target = e.target as HTMLElement;
+  let img: HTMLImageElement | null = null;
+
+  // Click on image itself
+  if (target.classList.contains('markdown-image') && target.classList.contains('loaded')) {
+    img = target as HTMLImageElement;
+  }
+
+  // Click on fullscreen button
+  if (!img && target.closest('.markdown-image-fullscreen')) {
+    const wrapper = target.closest('.markdown-image-wrapper');
+    img = wrapper?.querySelector('.markdown-image.loaded') as HTMLImageElement | null;
+    if (img) e.stopPropagation();
+  }
+
+  if (!img) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  // Find the nearest content container for collecting all images
+  const container = img.closest('.custom-content') ?? img.closest('.prose') ?? document.body;
+  openPhotoSwipe(container, img);
+}
+
+/**
  * Main enhancement function
  */
 export function enhanceImages(container: Element): void {
   const images = container.querySelectorAll<HTMLImageElement>('.markdown-image');
-  let loadedCount = 0;
-  const totalImages = images.length;
 
-  // Only bind click listener once per container
-  if (!boundContainers.has(container)) {
-    container.addEventListener('click', (e) => handleImageClick(container, e));
-    boundContainers.add(container);
-  }
+  // Event delegation — module-level handleImageClick is a stable reference,
+  // so duplicate addEventListener calls are automatically ignored by the browser.
+  container.addEventListener('click', handleImageClick);
 
-  const checkAllLoaded = () => {
-    loadedCount++;
-    if (loadedCount >= totalImages) {
-      // All images processed, group portrait images
-      groupPortraitImages(container);
-    }
+  // Debounced grouping so lazy-loaded images get grouped as they load,
+  // instead of waiting for every image on the page to finish.
+  let groupTimer: ReturnType<typeof setTimeout> | undefined;
+  const scheduleGrouping = () => {
+    clearTimeout(groupTimer);
+    groupTimer = setTimeout(() => groupPortraitImages(container), 100);
   };
 
   images.forEach((img) => {
-    // Skip if already enhanced (using WeakSet for SPA compatibility)
     if (enhancedImages.has(img)) {
-      checkAllLoaded();
       return;
     }
     enhancedImages.add(img);
 
-    // Check if already loaded (cached images)
     if (img.complete && img.naturalWidth > 0) {
       handleImageLoaded(img);
-      checkAllLoaded();
       return;
     }
 
-    // Check if already errored (broken image)
     if (img.complete && img.naturalWidth === 0) {
       handleImageError(img);
-      checkAllLoaded();
       return;
     }
 
-    // Handle load event
     img.addEventListener(
       'load',
       () => {
         handleImageLoaded(img);
-        checkAllLoaded();
+        scheduleGrouping();
       },
       { once: true },
     );
 
-    // Handle error event
     img.addEventListener(
       'error',
       () => {
         handleImageError(img);
-        checkAllLoaded();
       },
       { once: true },
     );
   });
 
-  // If no images, still run grouping (in case of pre-marked portraits)
-  if (totalImages === 0) {
-    groupPortraitImages(container);
-  }
+  // Initial grouping for already-loaded images
+  scheduleGrouping();
 }
 
 function handleImageLoaded(img: HTMLImageElement): void {
@@ -253,9 +256,21 @@ function handleImageLoaded(img: HTMLImageElement): void {
 
   // Mark portrait images (height > width * 1.2 to ensure clearly portrait)
   const isPortrait = img.naturalHeight > img.naturalWidth * 1.2;
+  const wrapper = img.closest('.markdown-image-wrapper');
   if (isPortrait) {
-    img.closest('.markdown-image-wrapper')?.classList.add('portrait');
+    wrapper?.classList.add('portrait');
   }
+
+  // Store aspect ratio for flex distribution in groupPortraitImages
+  if (wrapper && img.naturalWidth && img.naturalHeight) {
+    (wrapper as HTMLElement).dataset.aspectRatio = String(img.naturalWidth / img.naturalHeight);
+  }
+
+  if (!wrapper || wrapper.querySelector('.markdown-image-fullscreen')) return;
+
+  // Add fullscreen button
+  const fullscreenBtn = createFullscreenButton();
+  wrapper.appendChild(fullscreenBtn);
 
   // Set cursor style to indicate clickable
   img.style.cursor = 'zoom-in';
@@ -292,6 +307,12 @@ function groupPortraitImages(container: Element): void {
       // Use DocumentFragment for batch DOM operations
       const fragment = document.createDocumentFragment();
       currentGroup.forEach((wrapper) => {
+        const el = wrapper as HTMLElement;
+        // Proportional flex so all images in the row share the same rendered height
+        const ratio = el.dataset.aspectRatio;
+        if (ratio) {
+          el.style.flex = ratio;
+        }
         fragment.appendChild(wrapper);
       });
       row.appendChild(fragment);

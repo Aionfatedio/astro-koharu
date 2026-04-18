@@ -40,7 +40,7 @@ const displayDescription = artistProfile?.description ?? siteConfig?.description
 const filteredRouters = filterNavItems(routers, configuredSeriesSlugs, enabledSeriesSlugs, RESERVED_ROUTES);
 ---
 
-<div class={cn('flex flex-col items-center', className)} data-home-info-container={uniqueId}>
+<div class={cn('flex flex-col items-center md:py-2', className)} data-home-info-container={uniqueId}>
   <div class="relative h-40 w-40 rounded-full" style={getLqipStyle(displayAvatar)}>
     <img
       transition:name="page-home-info-avatar"

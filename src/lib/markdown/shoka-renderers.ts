@@ -32,6 +32,7 @@ export interface MediaItem {
   url?: string;
   title?: string;
   list?: string[];
+  protected?: boolean;
 }
 
 interface AudioGroup {
@@ -79,6 +80,9 @@ export function renderVideoMedia(items: MediaItem[]): string {
   return videos
     .map((item) => {
       const src = escapeHtml(item.url);
+      if (item.protected) {
+        return `<div class="artplayer-container" data-video-src="${src}" data-video-protected="true"></div>`;
+      }
       return `<div class="artplayer-container" data-video-src="${src}"></div>`;
     })
     .join('\n');

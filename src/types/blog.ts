@@ -28,6 +28,8 @@ export interface BlogSchema {
   artist?: string;
   /** Password for full-post encryption */
   password?: string;
+  /** Keywords for SEO */
+  keywords?: string[];
 }
 
 /**

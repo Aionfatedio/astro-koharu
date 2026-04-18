@@ -31,7 +31,7 @@ export async function getStaticPaths() {
 }
 const { post, postId } = Astro.props;
 const { Content } = await post.render();
-const { title, categories = [], tags = [], date, math: postMath } = post?.data ?? {};
+const { title, categories = [], tags = [], date, math: postMath, keywords: postKeywords = [] } = post?.data ?? {};
 
 // 画师概览：查找画师数据（匹配失败则回退为 null，显示站点概览）
 const artistProfile = post.data.artist ? getArtistById(post.data.artist) : null;
@@ -46,12 +46,15 @@ const finalDescription = post.data.password ? '此文章已加密' : getPostDesc
 // OGP image for BlogPosting schema (uses same fallback chain as Layout)
 const ogImage = getOgImageUrl(post?.data.cover, Astro.site);
 
+const categoryKeywords = categories?.length ? categories.flat() : [];
+const postKw = postKeywords?.length ? postKeywords : [...tags, ...categoryKeywords];
+const keywords = [...new Set([...postKw, ...(siteConfig.keywords ?? [])])] as string[];
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'BlogPosting',
   headline: title,
   description: finalDescription,
-  keywords: categories?.length ? tags.concat(categories[0]) : tags,
+  keywords,
   author: {
     '@type': 'Person',
     name: siteConfig.author ?? siteConfig.name,
@@ -137,6 +140,7 @@ if (post.data.description) {
   siderType={HomeSiderType.POST}
   post={post}
   artistProfile={artistProfile}
+  keywords={keywords}
 >
   <script is:inline slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   <script is:inline slot="head" type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} />
@@ -178,7 +182,7 @@ if (post.data.description) {
           <SummaryPanel client:visible summary={summaryText} source={summarySource} className="mt-2" />
         )
       }
-      <article class="prose md:prose-sm dark:prose-invert">
+      <article class="prose md:prose-sm dark:prose-invert" data-pagefind-body>
         <CustomContent Content={Content} />
       </article>
       <Comment />

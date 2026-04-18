@@ -43,10 +43,10 @@ function getQualityLabel(width: number, height: number): string {
     return '4K UHD';
   }
   if (maxDimension >= 2560 || minDimension >= 1440) {
-    return '2K QHD';
+    return '2K FHD';
   }
   if (maxDimension >= 1920 || minDimension >= 1080) {
-    return '1080P FHD';
+    return '1080P HD';
   }
   if (maxDimension >= 1280 || minDimension >= 720) {
     return '720P HD';
@@ -61,16 +61,38 @@ function getQualityLabel(width: number, height: number): string {
 }
 
 /**
+ * Resolve the actual video URL.
+ * For protected resources, fetches a signed URL from the content backend.
+ * For regular resources, returns the src as-is.
+ */
+async function resolveVideoUrl(container: Element): Promise<string | null> {
+  const src = container.getAttribute('data-video-src');
+  if (!src) return null;
+
+  const isProtected = container.getAttribute('data-video-protected') === 'true';
+  if (!isProtected) return src;
+
+  try {
+    const { getSignedUrl } = await import('./content-api');
+    return await getSignedUrl(src);
+  } catch (error) {
+    console.error('[Video Enhancer] Failed to resolve protected video URL:', error);
+    return null;
+  }
+}
+
+/**
  * Initialize a single Artplayer instance
  */
 async function initializePlayer(container: Element): Promise<void> {
   if (initializedContainers.has(container)) return;
   initializedContainers.add(container);
 
-  // Get video options from data attributes
-  const src = container.getAttribute('data-video-src');
+  // Resolve the actual video URL (handles both public and protected resources)
+  const src = await resolveVideoUrl(container);
   if (!src) {
-    console.warn('[Video Enhancer] Container missing data-video-src attribute');
+    console.warn('[Video Enhancer] Could not resolve video URL for container');
+    initializedContainers.delete(container);
     return;
   }
 

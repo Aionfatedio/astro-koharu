@@ -26,9 +26,10 @@ import { $bgmPanelOpen, closeBgmPanel } from '@/store/bgm';
 
 interface GlobalBGMPlayerProps {
   audioGroups: BgmAudioGroup[];
+  metingApi?: string;
 }
 
-export default function GlobalBGMPlayer({ audioGroups }: GlobalBGMPlayerProps) {
+export default function GlobalBGMPlayer({ audioGroups, metingApi }: GlobalBGMPlayerProps) {
   const panelOpen = useStore($bgmPanelOpen);
   const isDrawerOpen = useStore($isDrawerOpen);
   const isAnyModalOpen = useStore($isAnyModalOpen);
@@ -55,7 +56,7 @@ export default function GlobalBGMPlayer({ audioGroups }: GlobalBGMPlayerProps) {
 
     async function resolve() {
       try {
-        const results = await Promise.all(audioGroups.map((group) => resolvePlaylist(group.list)));
+        const results = await Promise.all(audioGroups.map((group) => resolvePlaylist(group.list, metingApi)));
 
         if (!cancelled) {
           const allTracks: MetingSong[] = [];
@@ -81,7 +82,7 @@ export default function GlobalBGMPlayer({ audioGroups }: GlobalBGMPlayerProps) {
     return () => {
       cancelled = true;
     };
-  }, [panelOpen, audioGroups, retryKey]);
+  }, [panelOpen, audioGroups, retryKey, metingApi]);
 
   // Audio hook at top level — Audio element persists across panel open/close
   const player = useAudioPlayer(tracks);

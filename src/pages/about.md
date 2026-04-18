@@ -8,6 +8,11 @@ description: "关于我？"
 
 ## 你好，这里是[执笔画江南](#)
 
+{% media video %}
+- name: "测试视频"
+  url: https://files.catbox.moe/4zege9.mp4
+{% endmedia %}
+
 <div class="iframe-embed no-scrollbar" style="height: 600px">
   <iframe
     src="https://zh-hans.react.dev/"
@@ -62,3 +67,9 @@ description: "关于我？"
 随机跳转P站涩图的网页：
 
 <https://pixiv-nsfw.aionfatedio.top>
+
++++primary 随便搞的网页
+
+<https://wallpaper.aionfatedio.top>
+
++++

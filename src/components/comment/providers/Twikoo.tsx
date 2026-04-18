@@ -29,11 +29,7 @@ export default function Twikoo() {
       });
     };
 
-    // astro:page-load fires on initial load AND on subsequent navigations
-    document.addEventListener('astro:page-load', initTwikoo);
-    return () => {
-      document.removeEventListener('astro:page-load', initTwikoo);
-    };
+    initTwikoo();
   }, []);
 
   if (!config) return null;

@@ -26,7 +26,8 @@ import { classifyLink, isStandaloneLinkParagraph } from './link-utils';
 
 const CACHE_DIR = path.join(process.cwd(), '.cache');
 const CACHE_FILE = path.join(CACHE_DIR, 'og-data.json');
-const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+const CACHE_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days for successful entries
+const ERROR_CACHE_TTL = 1 * 24 * 60 * 60 * 1000; // 1 day for error entries (retry sooner)
 
 interface CacheEntry {
   data: OGData;
@@ -60,36 +61,53 @@ function loadCache(): CacheData {
 }
 
 /**
- * Save cache to file system
+ * Save cache to file system.
+ * Prunes expired entries before writing to keep the file lean (important
+ * because og-data.json is committed to git for Vercel build caching).
  */
 function saveCache(cache: CacheData): void {
   try {
     if (!fs.existsSync(CACHE_DIR)) {
       fs.mkdirSync(CACHE_DIR, { recursive: true });
     }
-    fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2));
-    memoryCache = cache;
+    const now = Date.now();
+    const pruned: CacheData = {};
+    for (const [url, entry] of Object.entries(cache)) {
+      const ttl = entry.data.error ? ERROR_CACHE_TTL : CACHE_TTL;
+      if (now - entry.timestamp < ttl) {
+        pruned[url] = entry;
+      }
+    }
+    fs.writeFileSync(CACHE_FILE, `${JSON.stringify(pruned, null, 2)}\n`);
+    memoryCache = pruned;
   } catch (error) {
     console.warn('[Link Embed] Failed to save cache:', error);
   }
 }
 
 /**
- * Get cached OG data if valid
+ * Get cached OG data if valid.
+ * Error entries expire after 1 day; successful entries after 30 days.
  */
 function getCachedOGData(url: string): OGData | null {
   const cache = loadCache();
   const entry = cache[url];
+  if (!entry) return null;
 
-  if (entry && Date.now() - entry.timestamp < CACHE_TTL) {
+  const ttl = entry.data.error ? ERROR_CACHE_TTL : CACHE_TTL;
+  if (Date.now() - entry.timestamp < ttl) {
     return entry.data;
   }
 
   return null;
 }
 
+/** Whether the in-memory cache has unflushed changes */
+let cacheDirty = false;
+
 /**
- * Set OG data in cache
+ * Set OG data in memory cache (does NOT write to disk immediately).
+ * Call `flushCache()` after batch processing to persist.
  */
 function setCachedOGData(url: string, data: OGData): void {
   const cache = loadCache();
@@ -97,7 +115,16 @@ function setCachedOGData(url: string, data: OGData): void {
     data,
     timestamp: Date.now(),
   };
-  saveCache(cache);
+  cacheDirty = true;
+}
+
+/**
+ * Flush in-memory cache to disk if it has been modified.
+ */
+function flushCache(): void {
+  if (!cacheDirty || !memoryCache) return;
+  saveCache(memoryCache);
+  cacheDirty = false;
 }
 
 interface OGData {
@@ -225,6 +252,9 @@ async function fetchOGData(url: string): Promise<OGData> {
   }
 }
 
+/** Default globe SVG for sites without a favicon */
+const DEFAULT_FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-muted-foreground" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2s.06-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.92 7.92 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8 8 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.7 15.7 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>`;
+
 /**
  * Get domain from URL for display
  */
@@ -319,7 +349,7 @@ function generateLinkPreviewHTML(ogData: OGData): string {
     <div class="bg-card flex md:flex-col flex-row">
       <div class="flex-1 p-4">
         <div class="mb-2 flex items-center gap-2">
-          ${safeLogo ? `<img src="${safeLogo}" alt="" class="h-4 w-4 shrink-0" loading="lazy" aria-hidden="true" />` : ''}
+          ${safeLogo ? `<img src="${safeLogo}" alt="" class="h-4 w-4 shrink-0" loading="lazy" aria-hidden="true" referrerpolicy="no-referrer" onerror="this.outerHTML=this.nextElementSibling.innerHTML" /><template>${DEFAULT_FAVICON_SVG}</template>` : DEFAULT_FAVICON_SVG}
           <span class="text-muted-foreground truncate text-xs font-medium">${safeDomain}</span>
         </div>
         <h3 class="text-foreground mb-2 line-clamp-2 font-semibold leading-tight">${safeTitle}</h3>
@@ -329,7 +359,7 @@ function generateLinkPreviewHTML(ogData: OGData): string {
           <svg class="h-3 w-3 shrink-0 transition-transform group-hover:translate-x-0.5" aria-hidden="true" viewBox="0 0 12 12"><path fill="currentColor" d="M4 3.5a.5.5 0 0 0-.5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-.25a.75.75 0 0 1 1.5 0V8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h.25a.75.75 0 0 1 0 1.5zm2.75 0a.75.75 0 0 1 0-1.5h2.5a.75.75 0 0 1 .75.75v2.5a.75.75 0 0 1-1.5 0v-.69L7.28 5.78a.75.75 0 0 1-1.06-1.06L7.44 3.5z"/></svg> 
         </div>
       </div>
-      ${safeImage ? `<div class="bg-muted relative md:w-full shrink-0 aspect-1200/630 w-80"><img src="${safeImage}" alt="${safeTitle}" class="link-preview-image h-full md:h-full w-full object-cover" loading="lazy" referrerpolicy="no-referrer" data-fallback-title="${safeTitle}" /></div>` : ''}
+      ${safeImage ? `<div class="bg-muted relative md:w-full shrink-0 aspect-1200/630 md:aspect-auto md:max-h-48 w-80"><img src="${safeImage}" alt="${safeTitle}" class="link-preview-image h-full md:h-full w-full object-cover" loading="lazy" referrerpolicy="no-referrer" data-fallback-title="${safeTitle}" /></div>` : ''}
     </div>
   </a>
 </div>`;
@@ -433,6 +463,9 @@ export function remarkLinkEmbed(options: RemarkLinkEmbedOptions = {}) {
 
     // Wait for all fetches to complete in parallel
     const embedNodes = await Promise.all(fetchPromises);
+
+    // Flush cache to disk once per markdown file (instead of per-URL)
+    flushCache();
 
     // Replace nodes with their embed counterparts
     nodesToReplace.forEach(({ index, parent }, i) => {

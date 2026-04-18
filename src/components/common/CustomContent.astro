@@ -41,6 +41,7 @@ const finalConfig = { ...defaultContentConfig, ...config };
   import { enhanceLinkPreviews } from '@lib/link-preview-enhancer';
   import { enhanceVideos, cleanupVideos } from '@lib/video-enhancer';
   import { enhanceComics, cleanupComics } from '@lib/comic-enhancer';
+  import { enhanceIframes } from '@lib/iframe-enhancer';
 
   let spoilerJsLoaded = false;
 
@@ -116,6 +117,9 @@ const finalConfig = { ...defaultContentConfig, ...config };
 
     // Enhance comic card readers
     enhanceComics(contentContainer);
+
+    // Inject open-in-new-tab button into iframe-embed containers
+    enhanceIframes(contentContainer);
 
     // Tab group switching logic
     const tabHeaders = contentContainer.querySelectorAll<HTMLElement>('.tab-header[role="tab"]');

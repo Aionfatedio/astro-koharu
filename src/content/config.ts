@@ -53,6 +53,8 @@ const blogCollection = defineCollection({
     artist: z.string().optional(),
     // 整篇文章加密密码
     password: z.string().optional(),
+    /** Keywords for SEO */
+    keywords: z.array(z.string()).optional(),
   }) satisfies z.ZodType<BlogSchema, z.ZodTypeDef, BlogSchemaInput>,
 });
 

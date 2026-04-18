@@ -22,7 +22,7 @@ site:
   url: https://koharu.cosine.ren # 站点 URL 用于 RSS 和 SEO
   defaultOgImage: /img/avatar.png # 默认 Open Graph 图片
   startYear: 2026 # 建站年份
-  keywords: # SEO 关键词
+  keywords: # SEO 关键词 (全局)
     - 博客
     - 同人志
     - 单行本
@@ -32,6 +32,9 @@ site:
   # 时区配置 (IANA 格式)，用于文章日期的正确解析和显示
   # 参考: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
   timezone: Asia/Shanghai
+  # Enable slug transliteration (converts CJK characters to pinyin/romaji)
+  # Note: enabling this will break existing CJK URLs. Run `pnpm save-slugs` first to save old slugs into frontmatter.link
+  # enableSlugTransliteration: true
 
 # =============================================================================
 # Category Map
@@ -286,6 +289,17 @@ announcements:
   #   publishDate: '2025-12-25'
 
 # =============================================================================
+# Default Cover List
+# 默认封面列表 - 文章未指定封面时从此列表中随机选择
+# =============================================================================
+# 不设置则使用内置的 21 张默认封面 (/img/cover/1~21.webp)
+# =============================================================================
+# defaultCoverList:
+#   - /img/cover/1.webp
+#   - https://example.com/custom-cover.webp
+
+
+# =============================================================================
 # Content Processing Options
 # 内容处理选项 - 控制文章渲染和交互行为
 # =============================================================================
@@ -520,6 +534,10 @@ analytics:
     enabled: false
     id: your-umami-id
     endpoint: https://stats.example.com
+    # statistics_display:
+    #   token: your-umami-share-token
+    #   article_page_views: true
+    #   footer_site_stats: true
 
 # =============================================================================
 # SEO Configuration
@@ -546,6 +564,7 @@ seo:
 # =============================================================================
 bgm:
   enabled: true  # (有 audio 时自动启用，显式 false 可禁用)
+  # metingApi: https://163.hyc.moe/  # Meting API 地址，默认为 https://163.hyc.moe/，推荐自部署
   audio:
     - title: Love BGM
       list:
@@ -589,18 +608,18 @@ christmas:
 #     - urlTemplate: URL 模板，支持占位符 {path}（文件绝对路径）
 # -----------------------------------------------------------------------------
 dev:
-  localProjectPath: '/Code/html code/astro-koharu' # 请修改为你的项目绝对路径
+  localProjectPath: 'D:/Code/html code/astro-koharu' # 请修改为你的项目绝对路径
   contentRelativePath: 'src/content/blog'
   editors:
     - id: vscode
       name: VS Code
       icon: devicon-plain:vscode
-      urlTemplate: 'vscode://file{path}'
+      urlTemplate: 'vscode://file/{path}'
     - id: cursor
       name: Cursor
       icon: simple-icons:cursor
-      urlTemplate: 'cursor://file{path}'
+      urlTemplate: 'cursor://file/{path}'
     - id: zed
       name: Zed
       icon: simple-icons:zedindustries
-      urlTemplate: 'zed://file{path}'
+      urlTemplate: 'zed://file/{path}'
