@@ -29,10 +29,14 @@ export interface FriendLinkData {
 
 export interface MediaItem {
   name?: string;
+  src?: string;
   url?: string;
   title?: string;
   list?: string[];
-  protected?: boolean;
+  poster?: string;
+  autoplay?: boolean;
+  loop?: boolean;
+  muted?: boolean;
 }
 
 interface AudioGroup {
@@ -74,16 +78,20 @@ export function renderAudioMedia(items: MediaItem[]): string {
 }
 
 export function renderVideoMedia(items: MediaItem[]): string {
-  const videos = items.filter((item): item is MediaItem & { url: string } => !!item.url);
+  const videos = items.filter((item) => !!(item.url || item.src));
   if (videos.length === 0) return '';
 
   return videos
     .map((item) => {
-      const src = escapeHtml(item.url);
-      if (item.protected) {
-        return `<div class="artplayer-container" data-video-src="${src}" data-video-protected="true"></div>`;
-      }
-      return `<div class="artplayer-container" data-video-src="${src}"></div>`;
+      const attrs = [
+        `data-video-src="${escapeHtml(item.url || item.src || '')}"`,
+        item.poster ? `data-video-poster="${escapeHtml(item.poster)}"` : '',
+        item.autoplay ? 'data-video-autoplay="true"' : '',
+        item.loop ? 'data-video-loop="true"' : '',
+        item.muted ? 'data-video-muted="true"' : '',
+      ].filter(Boolean);
+
+      return `<div class="artplayer-container" ${attrs.join(' ')}></div>`;
     })
     .join('\n');
 }

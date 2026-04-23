@@ -1,15 +1,45 @@
 /**
  * Video enhancement with Artplayer
- * Initializes Artplayer instances for all video containers in the document
+ * Lazily initializes Artplayer instances for video containers in the document
  */
 
 import type Artplayer from 'artplayer';
+import { $activePlayerId } from '../store/player';
 
-// Track initialized containers to avoid duplicate processing
-const initializedContainers = new WeakSet<Element>();
+interface PlayerInitState {
+  cancelled: boolean;
+  observer?: IntersectionObserver;
+}
+
+interface LocalVideoMetadata {
+  video?: {
+    fps?: number;
+    bitrate?: number;
+  };
+  format?: {
+    bitrate?: number;
+  };
+}
+
+const LAZY_LOAD_ROOT_MARGIN = '400px 0px';
+const VIDEO_PLAYER_ID_PREFIX = 'video-artplayer';
+
+let nextVideoPlayerId = 0;
+
+// Track queued, initializing, and initialized containers to avoid duplicate processing
+const trackedContainers = new WeakSet<Element>();
 
 // Store Artplayer instances for cleanup
 const playerInstances = new Map<Element, Artplayer>();
+
+// Store pending observer/initialization state for cleanup before the Artplayer instance exists
+const playerInitStates = new WeakMap<Element, PlayerInitState>();
+
+// Store media mutex cleanup callbacks for initialized players
+const playerMediaCleanups = new WeakMap<Element, () => void>();
+
+// Store stable global media player ids for each video container
+const videoPlayerIds = new WeakMap<Element, string>();
 
 /**
  * Get theme color from CSS variable
@@ -61,38 +91,15 @@ function getQualityLabel(width: number, height: number): string {
 }
 
 /**
- * Resolve the actual video URL.
- * For protected resources, fetches a signed URL from the content backend.
- * For regular resources, returns the src as-is.
- */
-async function resolveVideoUrl(container: Element): Promise<string | null> {
-  const src = container.getAttribute('data-video-src');
-  if (!src) return null;
-
-  const isProtected = container.getAttribute('data-video-protected') === 'true';
-  if (!isProtected) return src;
-
-  try {
-    const { getSignedUrl } = await import('./content-api');
-    return await getSignedUrl(src);
-  } catch (error) {
-    console.error('[Video Enhancer] Failed to resolve protected video URL:', error);
-    return null;
-  }
-}
-
-/**
  * Initialize a single Artplayer instance
  */
-async function initializePlayer(container: Element): Promise<void> {
-  if (initializedContainers.has(container)) return;
-  initializedContainers.add(container);
+async function initializePlayer(container: Element, state: PlayerInitState): Promise<void> {
+  if (shouldAbortInitialization(container, state)) return;
 
-  // Resolve the actual video URL (handles both public and protected resources)
-  const src = await resolveVideoUrl(container);
+  const src = container.getAttribute('data-video-src');
   if (!src) {
-    console.warn('[Video Enhancer] Could not resolve video URL for container');
-    initializedContainers.delete(container);
+    console.warn('[Video Enhancer] Missing video URL for container');
+    releaseInitialization(container, state);
     return;
   }
 
@@ -104,6 +111,7 @@ async function initializePlayer(container: Element): Promise<void> {
   try {
     // Dynamically import Artplayer to reduce initial bundle size
     const { default: ArtplayerClass } = await import('artplayer');
+    if (shouldAbortInitialization(container, state)) return;
 
     // Ensure ArtPlayer styles exist in the document
     // View Transitions may remove dynamically injected <style> tags from <head>
@@ -123,9 +131,9 @@ async function initializePlayer(container: Element): Promise<void> {
       ...(poster && { poster }),
 
       // Playback behavior
-      autoplay: false,
+      autoplay,
       muted: muted || autoplay, // autoplay requires muted
-      loop: false,
+      loop,
       volume: 0.5,
 
       // Player features
@@ -180,6 +188,12 @@ async function initializePlayer(container: Element): Promise<void> {
 
     // Store instance for cleanup
     playerInstances.set(container, player);
+    if (playerInitStates.get(container) === state) {
+      playerInitStates.delete(container);
+    }
+
+    setupGlobalMediaMutex(container, player);
+    setupLocalVideoMetadataInfo(container, player);
 
     // Set initial loop state if specified in markdown
     if (loop && player.video) {
@@ -232,8 +246,8 @@ async function initializePlayer(container: Element): Promise<void> {
     // Listen for theme changes
     const observer = new MutationObserver(() => {
       const newTheme = getThemeColor();
-      if (player.option.theme !== newTheme) {
-        player.option.theme = newTheme;
+      if (player.theme !== newTheme) {
+        player.theme = newTheme;
       }
     });
 
@@ -248,20 +262,245 @@ async function initializePlayer(container: Element): Promise<void> {
       playerInstances.delete(container);
     });
   } catch (error) {
-    console.error('[Video Enhancer] Failed to initialize Artplayer:', error);
+    if (!state.cancelled) {
+      console.error('[Video Enhancer] Failed to initialize Artplayer:', error);
+    }
+    releaseInitialization(container, state);
   }
+}
+
+/**
+ * Get a stable id for the video container in the global media mutex store.
+ */
+function getVideoPlayerId(container: Element): string {
+  const existingId = videoPlayerIds.get(container);
+  if (existingId) return existingId;
+
+  nextVideoPlayerId += 1;
+  const id = `${VIDEO_PLAYER_ID_PREFIX}-${nextVideoPlayerId}`;
+  videoPlayerIds.set(container, id);
+  return id;
+}
+
+/**
+ * Connect Artplayer playback to the site's global audio/video mutex.
+ */
+function setupGlobalMediaMutex(container: Element, player: Artplayer): void {
+  const playerId = getVideoPlayerId(container);
+  let cleaned = false;
+
+  const markActive = () => {
+    if (cleaned) return;
+    if ($activePlayerId.get() !== playerId) {
+      $activePlayerId.set(playerId);
+    }
+  };
+
+  const clearActive = () => {
+    if (cleaned) return;
+    if ($activePlayerId.get() === playerId) {
+      $activePlayerId.set(null);
+    }
+  };
+
+  const unsubscribe = $activePlayerId.listen((activeId) => {
+    if (cleaned || !activeId || activeId === playerId || !player.playing) return;
+    player.pause();
+  });
+
+  player.on('video:play', markActive);
+  player.on('video:playing', markActive);
+  player.on('video:pause', clearActive);
+  player.on('video:ended', clearActive);
+
+  const cleanup = () => {
+    if (cleaned) return;
+    unsubscribe();
+    clearActive();
+    cleaned = true;
+    playerMediaCleanups.delete(container);
+  };
+
+  playerMediaCleanups.set(container, cleanup);
+  player.on('destroy', cleanup);
+
+  if (player.playing) {
+    markActive();
+  }
+}
+
+/**
+ * Resolve local video sidecar metadata URL. Network resources are skipped.
+ */
+function getLocalVideoMetadataUrl(container: Element): string | null {
+  if (typeof window === 'undefined') return null;
+
+  const rawSrc = container.getAttribute('data-video-src');
+  if (!rawSrc) return null;
+
+  let url: URL;
+  try {
+    url = new URL(rawSrc, window.location.href);
+  } catch {
+    return null;
+  }
+
+  if (url.origin !== window.location.origin) return null;
+  if (!url.pathname.toLowerCase().startsWith('/media/')) return null;
+
+  return `${url.pathname}.json`;
+}
+
+function formatFrameRate(fps: number): string {
+  return fps.toLocaleString(undefined, { maximumFractionDigits: 3 });
+}
+
+function formatBitrate(bitsPerSecond: number): string {
+  if (bitsPerSecond >= 1_000_000) {
+    return `${(bitsPerSecond / 1_000_000).toLocaleString(undefined, { maximumFractionDigits: 2 })} Mbps`;
+  }
+
+  if (bitsPerSecond >= 1_000) {
+    return `${(bitsPerSecond / 1_000).toLocaleString(undefined, { maximumFractionDigits: 1 })} Kbps`;
+  }
+
+  return `${bitsPerSecond.toLocaleString()} bps`;
+}
+
+function appendInfoItem(panel: HTMLElement, title: string, content: string): void {
+  const item = document.createElement('div');
+  item.className = 'art-info-item art-info-item-local-metadata';
+
+  const titleElement = document.createElement('div');
+  titleElement.className = 'art-info-title';
+  titleElement.textContent = title;
+
+  const contentElement = document.createElement('div');
+  contentElement.className = 'art-info-content';
+  contentElement.textContent = content;
+
+  item.append(titleElement, contentElement);
+  panel.append(item);
+}
+
+/**
+ * Add precise local-video metadata from generated sidecar JSON to Artplayer's info panel.
+ */
+async function setupLocalVideoMetadataInfo(container: Element, player: Artplayer): Promise<void> {
+  const metadataUrl = getLocalVideoMetadataUrl(container);
+  if (!metadataUrl) return;
+
+  const controller = new AbortController();
+  let destroyed = false;
+
+  player.on('destroy', () => {
+    destroyed = true;
+    controller.abort();
+  });
+
+  try {
+    const response = await fetch(metadataUrl, { signal: controller.signal });
+    if (!response.ok) return;
+
+    const metadata = (await response.json()) as LocalVideoMetadata;
+    if (destroyed) return;
+
+    const panel = player.query<HTMLElement>('.art-info-panel');
+    if (!panel) return;
+
+    const fps = metadata.video?.fps;
+    if (typeof fps === 'number' && Number.isFinite(fps) && fps > 0) {
+      appendInfoItem(panel, 'Video framerate:', formatFrameRate(fps));
+    }
+
+    const bitrate = metadata.video?.bitrate ?? metadata.format?.bitrate;
+    if (typeof bitrate === 'number' && Number.isFinite(bitrate) && bitrate > 0) {
+      appendInfoItem(panel, 'Video bitrate:', formatBitrate(bitrate));
+    }
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') return;
+    console.warn('[Video Enhancer] Failed to load local video metadata:', error);
+  }
+}
+
+/**
+ * Release pending initialization state. Keeps a newer state intact if the same
+ * element was re-enhanced after cleanup.
+ */
+function releaseInitialization(container: Element, state: PlayerInitState): void {
+  state.observer?.disconnect();
+  if (playerInitStates.get(container) === state) {
+    playerInitStates.delete(container);
+    trackedContainers.delete(container);
+  }
+}
+
+/**
+ * Check whether an async initialization should stop before touching the DOM.
+ */
+function shouldAbortInitialization(container: Element, state: PlayerInitState): boolean {
+  if (!state.cancelled && container.isConnected) return false;
+  releaseInitialization(container, state);
+  return true;
+}
+
+/**
+ * Queue player initialization until the video is near the viewport.
+ */
+function queuePlayerInitialization(container: Element): void {
+  if (trackedContainers.has(container)) return;
+
+  const state: PlayerInitState = { cancelled: false };
+  trackedContainers.add(container);
+  playerInitStates.set(container, state);
+
+  if (!container.isConnected) {
+    releaseInitialization(container, state);
+    return;
+  }
+
+  if (typeof IntersectionObserver === 'undefined') {
+    initializePlayer(container, state);
+    return;
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      const shouldInitialize = entries.some((entry) => entry.isIntersecting || entry.intersectionRatio > 0);
+      if (!shouldInitialize) return;
+
+      observer.disconnect();
+      state.observer = undefined;
+      initializePlayer(container, state);
+    },
+    {
+      rootMargin: LAZY_LOAD_ROOT_MARGIN,
+      threshold: 0.01,
+    },
+  );
+
+  state.observer = observer;
+  observer.observe(container);
 }
 
 /**
  * Destroy a player instance
  */
 function destroyPlayer(container: Element): void {
+  const state = playerInitStates.get(container);
+  if (state) {
+    state.cancelled = true;
+    state.observer?.disconnect();
+    playerInitStates.delete(container);
+  }
+
   const player = playerInstances.get(container);
   if (player) {
+    playerMediaCleanups.get(container)?.();
     player.destroy(true); // true = remove all generated HTML DOM
     playerInstances.delete(container);
   }
-  initializedContainers.delete(container);
+  trackedContainers.delete(container);
 }
 
 /**
@@ -280,7 +519,7 @@ export function enhanceVideos(container: Element): void {
   const videoContainers = container.querySelectorAll('.artplayer-container');
 
   videoContainers.forEach((videoContainer) => {
-    initializePlayer(videoContainer);
+    queuePlayerInitialization(videoContainer);
   });
 }
 

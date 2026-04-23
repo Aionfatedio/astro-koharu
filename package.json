@@ -3,6 +3,7 @@
   "type": "module",
   "version": "4.0.0",
   "scripts": {
+    "predev": "pnpm generate:videos",
     "dev": "astro dev",
     "generate:lqips": "npx tsx src/scripts/generateLqips.ts",
     "generate:similarities": "npx tsx src/scripts/generateSimilarities.ts",
@@ -11,7 +12,9 @@
     "generate:summaries:force": "npx tsx src/scripts/generateSummaries.ts --force",
     "generate:comics": "npx tsx src/scripts/generateComicManifests.ts",
     "generate:music": "npx tsx src/scripts/generateMusicManifests.ts",
-    "generate:all": "npm run generate:lqips && npm run generate:summaries && npm run generate:similarities",
+    "generate:videos": "npx tsx src/scripts/generateVideoMetadata.ts",
+    "generate:all": "npm run generate:lqips && npm run generate:summaries && npm run generate:similarities && npm run generate:videos",
+    "prebuild": "pnpm generate:videos",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",

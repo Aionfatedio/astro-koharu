@@ -366,6 +366,7 @@
     margin: 0;
     /* 覆盖 Typography 背景色 */
     background-color: hsl(var(--card));
+    --markdown-scrollbar-inline-offset: 1rem;
     /* 阴影 */
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   }
@@ -374,6 +375,8 @@
     display: block;
     padding: 1rem 1.5rem;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    --markdown-scrollbar-inline-offset: 1rem;
     font-size: 0.875rem;
     line-height: 1.7;
     /* 覆盖 Typography 默认值 */
@@ -391,7 +394,48 @@
     display: block;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    --markdown-scrollbar-inline-offset: 0.75rem;
   }
+}
+
+.prose pre code,
+.prose table,
+.mermaid-source,
+.infographic-container {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--primary) / 0.45) transparent;
+}
+
+.prose pre code::-webkit-scrollbar,
+.prose table::-webkit-scrollbar,
+.mermaid-source::-webkit-scrollbar,
+.infographic-container::-webkit-scrollbar {
+  width: 0.45rem;
+  height: 0.45rem;
+  background: transparent;
+}
+
+.prose pre code::-webkit-scrollbar-track,
+.prose table::-webkit-scrollbar-track,
+.mermaid-source::-webkit-scrollbar-track,
+.infographic-container::-webkit-scrollbar-track {
+  margin-inline: var(--markdown-scrollbar-inline-offset, 0.75rem);
+  background: transparent;
+}
+
+.prose pre code::-webkit-scrollbar-thumb,
+.prose table::-webkit-scrollbar-thumb,
+.mermaid-source::-webkit-scrollbar-thumb,
+.infographic-container::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background-color: hsl(var(--primary) / 0.45);
+}
+
+.prose pre code::-webkit-scrollbar-thumb:hover,
+.prose table::-webkit-scrollbar-thumb:hover,
+.mermaid-source::-webkit-scrollbar-thumb:hover,
+.infographic-container::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--primary) / 0.62);
 }
 
 /* ========== Code/Mermaid/Infographic wrapper layout ========== */
@@ -639,6 +683,8 @@
   border-top: none;
   margin: 0;
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  --markdown-scrollbar-inline-offset: 0.75rem;
   background-color: hsl(var(--card));
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   min-height: 200px;
@@ -671,6 +717,8 @@
 .mermaid-source {
   padding: 1rem 1.5rem;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  --markdown-scrollbar-inline-offset: 0.75rem;
   font-size: 0.875rem;
   line-height: 1.7;
   font-family: var(--font-mono);

@@ -83,6 +83,13 @@ draft: false
   ></iframe>
 </div>
 
+<div class="iframe-embed no-scrollbar" style="height: 600px">
+  <iframe
+    src="https://tiktok.aionfatedio.top"
+    scrolling="yes"
+  ></iframe>
+</div>
+
 ## 视频嵌入
 
 使用 `{% media video %}` 指令可以嵌入视频播放器：
@@ -90,7 +97,7 @@ draft: false
 {% media video %}
 - name: "测试视频"
   url: /media/test.mp4
-  {% endmedia %}
+{% endmedia %}
 
 ### 视频指令语法
 
@@ -98,32 +105,27 @@ draft: false
 {% media video %}
 - name: "测试 1"
   url: https://cdn.kastatic.org/ka-youtube-converted/O_nY1TM2RZM.mp4/O_nY1TM2RZM.mp4#t=0
+  poster: /images/video-cover.jpg
+  loop: true
 - name: "测试 2"
   url: https://cdn.kastatic.org/ka-youtube-converted/O_nY1TM2RZM.mp4/O_nY1TM2RZM.mp4#t=0
-{% endmedia %}
-
-{% media video %}
-- name: "受保护视频"
-  url: mmd
-  protected: true
+  muted: true
 {% endmedia %}
 ```
 
 **参数说明：**
 
-* `src`：视频源地址（必填）
+* `url`：视频源地址（必填，`src` 也可作为兼容别名）
+
+* `name`：视频名称（可选，用于内容标识）
 
 * `poster`：封面图片地址（可选）
 
-* `autoplay`：自动播放（可选，布尔值）
+* `autoplay`：自动播放（可选，布尔值；浏览器通常要求自动播放时静音，播放器会自动设置静音）
 
 * `loop`：循环播放（可选，布尔值）
 
 * `muted`：静音（可选，布尔值）
-
-* `controls`：显示控件（可选，默认 true）
-
-* `playsinline`：移动端内联播放（可选，默认 true）
 
 ## 漫画阅读器
 
