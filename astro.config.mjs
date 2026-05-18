@@ -141,8 +141,11 @@ if (contentConfig.enableComicCard) {
 remarkPlugins.push([
   remarkLinkEmbed,
   {
+    enableLinkEmbed: contentConfig.enableLinkEmbed ?? true,
     enableTweetEmbed: contentConfig.enableTweetEmbed ?? true,
     enableOGPreview: contentConfig.enableOGPreview ?? true,
+    enableCodePenEmbed: contentConfig.enableCodePenEmbed ?? true,
+    previewCacheTime: contentConfig.previewCacheTime ?? 30,
   },
 ]);
 
