@@ -5,15 +5,40 @@
 
 import { useIsDarkTheme } from '@hooks/index';
 import { useEffect, useState } from 'react';
-import { Tweet } from 'react-tweet';
+import { EmbeddedTweet, TweetNotFound, useTweet } from 'react-tweet';
+import type { QuotedTweet, Tweet, TweetEntities } from 'react-tweet/api';
 
 interface TweetEmbedProps {
   tweetId: string;
 }
 
+function normalizeTweetEntities(entities: TweetEntities | undefined): TweetEntities {
+  return {
+    hashtags: Array.isArray(entities?.hashtags) ? entities.hashtags : [],
+    urls: Array.isArray(entities?.urls) ? entities.urls : [],
+    user_mentions: Array.isArray(entities?.user_mentions) ? entities.user_mentions : [],
+    symbols: Array.isArray(entities?.symbols) ? entities.symbols : [],
+    ...(Array.isArray(entities?.media) && { media: entities.media }),
+  };
+}
+
+function normalizeTweet(tweet: Tweet): Tweet {
+  return {
+    ...tweet,
+    entities: normalizeTweetEntities(tweet.entities),
+    ...(tweet.quoted_tweet && {
+      quoted_tweet: {
+        ...tweet.quoted_tweet,
+        entities: normalizeTweetEntities((tweet.quoted_tweet as QuotedTweet).entities),
+      },
+    }),
+  };
+}
+
 function TweetEmbed({ tweetId }: TweetEmbedProps) {
   const [mounted, setMounted] = useState(false);
   const isDark = useIsDarkTheme();
+  const { data, error, isLoading } = useTweet(tweetId);
 
   useEffect(() => {
     setMounted(true);
@@ -21,7 +46,7 @@ function TweetEmbed({ tweetId }: TweetEmbedProps) {
 
   const theme = isDark ? 'dark' : 'light';
 
-  if (!mounted) {
+  if (!mounted || isLoading) {
     return (
       <output className="my-6 flex justify-center" aria-busy="true" aria-label="正在加载 Tweet">
         <div className="w-full max-w-[550px] animate-pulse rounded-xl bg-muted/50 p-4">
@@ -38,9 +63,17 @@ function TweetEmbed({ tweetId }: TweetEmbedProps) {
     );
   }
 
+  if (error || !data) {
+    return (
+      <div className="not-prose my-6 flex justify-center" data-theme={theme}>
+        <TweetNotFound error={error} />
+      </div>
+    );
+  }
+
   return (
     <div className="not-prose my-6 flex justify-center" data-theme={theme}>
-      <Tweet id={tweetId} />
+      <EmbeddedTweet tweet={normalizeTweet(data)} />
     </div>
   );
 }

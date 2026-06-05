@@ -4,14 +4,11 @@
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { relative } from 'node:path';
-import type { SiteYamlConfig } from '@lib/config/types';
 import { glob } from 'glob';
 import matter from 'gray-matter';
-import { load } from 'js-yaml';
 
 const dryRun = process.argv.includes('--dry-run');
 
-const yamlConfig = load(readFileSync('config/site.yaml', 'utf8')) as SiteYamlConfig;
 const allKnownLocales = new Set<string>();
 const defaultLocale = 'zh';
 

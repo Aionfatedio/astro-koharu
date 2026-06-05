@@ -6,7 +6,7 @@ import { CONTENT_PADDING } from '@constants/layout';
 import { siteConfig } from '@constants/site-config';
 import TwoColumnLayout from '@layouts/TwoColumnLayout.astro';
 import { displayDate } from '@lib/date';
-import { encodeSlug } from '@lib/route';
+import { encodeSlug, getPostSlug } from '@lib/route';
 import Layout from '../layouts/Layout.astro';
 
 const posts = await getCollection('blog', ({ data }) => {
@@ -57,7 +57,7 @@ const years = Object.keys(postsByYear).sort((a, b) => Number(b) - Number(a));
                       {displayDate.date(post.data.date)}
                     </span>
                     <a
-                      href={`/post/${encodeSlug(post.data?.link ?? post.slug)}`}
+                      href={`/post/${encodeSlug(getPostSlug(post))}`}
                       class="dashed-border text-primary hover:text-blue truncate transition-colors"
                     >
                       {post.data.title}

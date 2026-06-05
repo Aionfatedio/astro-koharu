@@ -113,6 +113,17 @@ async function openPhotoSwipe(container: Element, clickedImg: HTMLImageElement):
     // Store instance reference
     photoSwipeInstance = pswp;
 
+    pswp.on('contentResize', ({ content, width, height }) => {
+      if (!content.slide || !content.isImageContent()) {
+        return;
+      }
+
+      // Placeholder and final image are separate PhotoSwipe nodes; clip their shared wrapper.
+      content.slide.container.classList.add('koharu-pswp-image-clip');
+      content.slide.container.style.width = `${width}px`;
+      content.slide.container.style.height = `${height}px`;
+    });
+
     // Clean up on destroy
     pswp.on('destroy', () => {
       photoSwipeInstance = null;
@@ -249,6 +260,13 @@ export function enhanceImages(container: Element): void {
 
   // Initial grouping for already-loaded images
   scheduleGrouping();
+}
+
+export function cleanupImages(container: Element): void {
+  container.removeEventListener('click', handleImageClick);
+  photoSwipeInstance?.destroy();
+  photoSwipeInstance = null;
+  isOpening = false;
 }
 
 function handleImageLoaded(img: HTMLImageElement): void {

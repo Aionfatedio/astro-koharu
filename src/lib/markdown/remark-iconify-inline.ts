@@ -139,11 +139,9 @@ function parseParams(raw: string | undefined): ParsedParams {
   const colorParts: string[] = [];
 
   for (const token of tokens) {
-    if (SIZE_REGEX.test(token)) {
-      const match = SIZE_REGEX.exec(token);
-      if (match) {
-        result.size = match[2] ? token : `${token}px`;
-      }
+    const sizeMatch = token.match(SIZE_REGEX);
+    if (sizeMatch) {
+      result.size = sizeMatch[2] ? token : `${token}px`;
     } else {
       colorParts.push(token);
     }

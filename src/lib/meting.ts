@@ -110,6 +110,10 @@ function isLocalMusicPath(url: string): boolean {
   return /^\/music\/[\w-]+\/?$/.test(url);
 }
 
+function isInvalidLocalMusicPath(url: string): boolean {
+  return url.startsWith('/music/');
+}
+
 interface LocalManifest {
   tracks?: MetingSong[];
 }
@@ -121,11 +125,18 @@ async function fetchLocalPlaylist(basePath: string): Promise<MetingSong[]> {
 
   try {
     const response = await fetch(manifestUrl);
-    if (!response.ok) return [];
+    if (!response.ok) {
+      console.warn(`[Meting] Failed to load local playlist manifest: ${manifestUrl} (${response.status})`);
+      return [];
+    }
     const manifest: LocalManifest = await response.json();
-    if (!Array.isArray(manifest.tracks)) return [];
+    if (!Array.isArray(manifest.tracks)) {
+      console.warn(`[Meting] Invalid local playlist manifest: ${manifestUrl}`);
+      return [];
+    }
     return manifest.tracks.filter(isMetingSong);
-  } catch {
+  } catch (error) {
+    console.warn(`[Meting] Failed to parse local playlist manifest: ${manifestUrl}`, error);
     return [];
   }
 }
@@ -136,6 +147,10 @@ export async function resolvePlaylist(urls: string[], apiUrl?: string): Promise<
     urls.map((url) => {
       // Local music playlist: /music/<playlist-name>
       if (isLocalMusicPath(url)) return fetchLocalPlaylist(url);
+      if (isInvalidLocalMusicPath(url)) {
+        console.warn(`[Meting] Invalid local music playlist path: ${url}`);
+        return Promise.resolve([]);
+      }
 
       // Network music platform URL
       const parsed = parseMusicUrl(url);

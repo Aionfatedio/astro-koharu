@@ -37,7 +37,7 @@ const finalConfig = { ...defaultContentConfig, ...config };
 {finalConfig.enableTweetEmbed && <EmbedHydrator client:load />}
 
 <script>
-  import { enhanceImages } from '@lib/image-enhancer';
+  import { enhanceImages, cleanupImages } from '@lib/image-enhancer';
   import { enhanceLinkPreviews } from '@lib/link-preview-enhancer';
   import { enhanceVideos, cleanupVideos } from '@lib/video-enhancer';
   import { enhanceComics, cleanupComics } from '@lib/comic-enhancer';
@@ -168,10 +168,11 @@ const finalConfig = { ...defaultContentConfig, ...config };
     enhanceContent();
   });
 
-  // Cleanup video players and comic readers before page swap to prevent memory leaks
+  // Cleanup enhanced media before page swap to prevent stale client-side state
   document.addEventListener('astro:before-swap', () => {
     const contentContainer = document.querySelector('.custom-content');
     if (contentContainer) {
+      cleanupImages(contentContainer);
       cleanupVideos(contentContainer);
       cleanupComics(contentContainer);
     }

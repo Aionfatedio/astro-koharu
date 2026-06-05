@@ -9,6 +9,7 @@ import { siteConfig } from '@constants/site-config';
 import type { FeaturedSeriesItem } from '@lib/config/types';
 import readingTime from 'reading-time';
 import type { BlogPost } from 'types/blog';
+import { getPostSlug } from '../route';
 import { extractTextFromMarkdown } from '../sanitize';
 import { memoize } from './cache';
 import { buildCategoryPath } from './category-path';
@@ -77,7 +78,7 @@ export function getPostSummary(slug: string): string | null {
  */
 export function getPostDescriptionWithSummary(post: BlogPost, maxLength: number = 150): string {
   if (post.data.password) return '本文已加密，请输入密码后查看。';
-  const slug = post.data?.link ?? post.slug;
+  const slug = getPostSlug(post);
   return post.data.description || getPostSummary(slug) || extractTextFromMarkdown(post.body, maxLength);
 }
 

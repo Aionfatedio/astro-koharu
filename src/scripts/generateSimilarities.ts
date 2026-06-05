@@ -19,8 +19,11 @@ import { glob } from 'glob';
 import matter from 'gray-matter';
 import { remark } from 'remark';
 import strip from 'strip-markdown';
+import { transliterateSlugValue } from '../lib/slug-core';
+import { readSlugTransliterationEnabled } from './lib/site-config';
 
 // --------- Configuration ---------
+const CONTENT_ROOT = path.join('src', 'content', 'blog');
 const CONTENT_GLOB = 'src/content/blog/**/*.md';
 const OUTPUT_FILE = 'src/assets/similarities.json';
 const TOP_N_SIMILAR = 5;
@@ -171,17 +174,23 @@ async function getPlainText(markdown: string): Promise<string> {
 /**
  * Extract slug from file path, with support for custom link field
  */
-function extractSlug(filePath: string, link?: string): string {
-  if (link) return link.toLowerCase();
-  // Extract from path: src/content/blog/foo/bar.md -> foo/bar
-  const relativePath = filePath.replace(/^src\/content\/blog\//, '').replace(/\.md$/, '');
-  return relativePath.toLowerCase();
+function extractSlug(filePath: string, link: string | undefined, slugTransliterationEnabled: boolean): string {
+  if (link) return link;
+
+  const relativePath = path.relative(CONTENT_ROOT, filePath);
+  const extension = path.extname(relativePath);
+  const slug = extension ? relativePath.slice(0, -extension.length) : relativePath;
+  return transliterateSlugValue(slug.split(path.sep).join('/'), slugTransliterationEnabled);
 }
 
 /**
  * Process a single markdown file
  */
-async function processFile(filePath: string, summaries: SummariesMap): Promise<PostData | null> {
+async function processFile(
+  filePath: string,
+  summaries: SummariesMap,
+  slugTransliterationEnabled: boolean,
+): Promise<PostData | null> {
   try {
     const content = await fs.readFile(filePath, 'utf-8');
     const { data: frontmatter, content: body } = matter(content);
@@ -201,7 +210,7 @@ async function processFile(filePath: string, summaries: SummariesMap): Promise<P
       return null;
     }
 
-    const slug = extractSlug(filePath, frontmatter.link as string | undefined);
+    const slug = extractSlug(filePath, frontmatter.link as string | undefined, slugTransliterationEnabled);
 
     // Use AI summary if available, otherwise use description
     const aiSummary = summaries[slug]?.summary;
@@ -231,12 +240,12 @@ async function processFile(filePath: string, summaries: SummariesMap): Promise<P
 /**
  * Load and process all markdown files
  */
-async function loadPosts(files: string[], summaries: SummariesMap): Promise<PostData[]> {
+async function loadPosts(files: string[], summaries: SummariesMap, slugTransliterationEnabled: boolean): Promise<PostData[]> {
   console.log(chalk.blue('Processing markdown files...'));
   const posts: PostData[] = [];
   for (let i = 0; i < files.length; i++) {
     process.stdout.write(`\r  Processing ${i + 1}/${files.length}...`);
-    const post = await processFile(files[i], summaries);
+    const post = await processFile(files[i], summaries, slugTransliterationEnabled);
     if (post) posts.push(post);
   }
   console.log('');
@@ -330,6 +339,8 @@ async function main() {
     const extractor = await pipeline('feature-extraction', MODEL_NAME, { device });
     console.log(chalk.green('Model loaded!\n'));
 
+    const slugTransliterationEnabled = await readSlugTransliterationEnabled();
+
     // 3. Find all markdown files
     const files = await glob(CONTENT_GLOB);
     if (!files.length) {
@@ -339,7 +350,7 @@ async function main() {
     console.log(chalk.blue(`Found ${files.length} markdown files\n`));
 
     // 4. Parse and process all files
-    const posts = await loadPosts(files, summaries);
+    const posts = await loadPosts(files, summaries, slugTransliterationEnabled);
     if (!posts.length) {
       console.log(chalk.red('No valid posts found.'));
       return;

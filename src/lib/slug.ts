@@ -5,8 +5,8 @@
  * using the `transliteration` library. Gated by `enableSlugTransliteration`.
  */
 
-import { slugify } from 'transliteration';
 import { siteConfig } from '@/constants/site-config';
+import { transliterateSlugValue } from './slug-core';
 
 /**
  * Transliterate a slug containing non-ASCII characters to ASCII.
@@ -21,6 +21,5 @@ import { siteConfig } from '@/constants/site-config';
  * transliterateSlug('tools/getting-started') // 'tools/getting-started'
  */
 export function transliterateSlug(slug: string): string {
-  if (!siteConfig.enableSlugTransliteration) return slug;
-  return slugify(slug, { allowedChars: 'a-zA-Z0-9-_.~/', separator: '-' });
+  return transliterateSlugValue(slug, siteConfig.enableSlugTransliteration === true);
 }

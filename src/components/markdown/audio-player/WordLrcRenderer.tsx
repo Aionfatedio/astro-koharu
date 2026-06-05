@@ -32,8 +32,14 @@ export const WordLrcRenderer = memo(function WordLrcRenderer({
   lrcContainerHeight,
 }: WordLrcRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const currentIndexRef = useRef(currentIndex);
+  const linesRef = useRef(lines);
   const centerOffset = (lrcContainerHeight - lrcLineHeight) / 2;
 
+  currentIndexRef.current = currentIndex;
+  linesRef.current = lines;
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: currentIndex/lines intentionally trigger a DOM reset without restarting the rAF loop.
   useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -47,6 +53,13 @@ export const WordLrcRenderer = memo(function WordLrcRenderer({
       const spans = (lineElements[i] as HTMLElement).querySelectorAll<HTMLElement>('.lrc-word');
       for (const s of spans) s.style.setProperty('--word-progress', '0%');
     }
+  }, [currentIndex, lines]);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const lineElements = container.children;
 
     // Time interpolation state: bridge the ~250ms gaps between timeupdate events
     let lastStoreTime = timeStore.getCurrentTime();
@@ -65,11 +78,13 @@ export const WordLrcRenderer = memo(function WordLrcRenderer({
       const now = performance.now();
       const delta = (now - lastPerfTime) / 1000; // seconds since last timeupdate
       const time = lastStoreTime + delta;
+      const activeIndex = currentIndexRef.current;
+      const activeLines = linesRef.current;
 
-      const currentLineEl = lineElements[currentIndex] as HTMLElement | undefined;
+      const currentLineEl = lineElements[activeIndex] as HTMLElement | undefined;
 
       if (currentLineEl) {
-        const lineData = lines[currentIndex];
+        const lineData = activeLines[activeIndex];
         const wordSpans = currentLineEl.querySelectorAll<HTMLElement>('.lrc-word');
 
         if (lineData) {
@@ -96,7 +111,7 @@ export const WordLrcRenderer = memo(function WordLrcRenderer({
 
       // Neighbour cleanup — guard against seek jumps
       // Past line → 0% (reset to muted grey)
-      const prevEl = lineElements[currentIndex - 1] as HTMLElement | undefined;
+      const prevEl = lineElements[activeIndex - 1] as HTMLElement | undefined;
       if (prevEl) {
         const spans = prevEl.querySelectorAll<HTMLElement>('.lrc-word');
         if (spans.length > 0 && spans[0].style.getPropertyValue('--word-progress') !== '0%') {
@@ -105,7 +120,7 @@ export const WordLrcRenderer = memo(function WordLrcRenderer({
       }
 
       // Future line → 0% (stay muted grey)
-      const nextEl = lineElements[currentIndex + 1] as HTMLElement | undefined;
+      const nextEl = lineElements[activeIndex + 1] as HTMLElement | undefined;
       if (nextEl) {
         const spans = nextEl.querySelectorAll<HTMLElement>('.lrc-word');
         if (spans.length > 0 && spans[0].style.getPropertyValue('--word-progress') !== '0%') {
@@ -121,7 +136,7 @@ export const WordLrcRenderer = memo(function WordLrcRenderer({
       cancelAnimationFrame(rafId);
       unsubscribe();
     };
-  }, [timeStore, currentIndex, lines]);
+  }, [timeStore]);
 
   return (
     <div className="audio-player-lrc">

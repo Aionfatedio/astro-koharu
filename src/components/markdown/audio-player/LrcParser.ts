@@ -16,7 +16,13 @@ export interface LrcLine {
   text: string;
 }
 
-const TIME_REGEX = /\[(\d+):(\d+)(?:\.(\d+))?\]/g;
+function getBracketTimestampMatches(text: string): RegExpMatchArray[] {
+  return Array.from(text.matchAll(/\[(\d+):(\d+)(?:\.(\d+))?\]/g));
+}
+
+function getAngleTimestampMatches(text: string): RegExpMatchArray[] {
+  return Array.from(text.matchAll(/<(\d+):(\d+)(?:\.(\d+))?>/g));
+}
 
 export function parseLrc(lrcText: string): LrcLine[] {
   if (!lrcText) return [];
@@ -27,20 +33,18 @@ export function parseLrc(lrcText: string): LrcLine[] {
     const trimmed = line.trim();
     if (!trimmed) continue;
 
-    const timestamps: number[] = [];
-    let lastIndex = 0;
+    const matches = getBracketTimestampMatches(trimmed);
+    if (matches.length === 0) continue;
 
-    for (let match = TIME_REGEX.exec(trimmed); match !== null; match = TIME_REGEX.exec(trimmed)) {
+    const timestamps = matches.map((match) => {
       const min = Number.parseInt(match[1], 10);
       const sec = Number.parseInt(match[2], 10);
       const ms = match[3] ? Number.parseInt(match[3].padEnd(3, '0'), 10) : 0;
-      timestamps.push(min * 60 + sec + ms / 1000);
-      lastIndex = match.index + match[0].length;
-    }
-    TIME_REGEX.lastIndex = 0;
+      return min * 60 + sec + ms / 1000;
+    });
 
-    if (timestamps.length === 0) continue;
-
+    const lastMatch = matches[matches.length - 1];
+    const lastIndex = (lastMatch.index ?? 0) + lastMatch[0].length;
     const text = trimmed.slice(lastIndex).trim();
     for (const time of timestamps) {
       lines.push({ time, text });
@@ -64,9 +68,6 @@ export interface WordLrcLine extends LrcLine {
   words: LrcWord[];
   endTime: number; // time + duration of last word
 }
-
-/** Timestamp pattern inside angle brackets: <mm:ss.xx> */
-const ANGLE_TIME_REGEX = /<(\d+):(\d+)(?:\.(\d+))?>/g;
 
 /** Parse a "mm:ss.xx" string to seconds */
 function parseTimestamp(min: string, sec: string, ms?: string): number {
@@ -161,24 +162,22 @@ export function parseWordLrc(lrcText: string): WordLrcLine[] {
  * Duration = next timestamp - current timestamp (last word extends to line end estimate).
  */
 function parseTypeA(content: string, _lineTime: number): LrcWord[] | null {
-  ANGLE_TIME_REGEX.lastIndex = 0;
-  if (!ANGLE_TIME_REGEX.test(content)) return null;
-  ANGLE_TIME_REGEX.lastIndex = 0;
+  const matches = getAngleTimestampMatches(content);
+  if (matches.length === 0) return null;
 
   const timestamps: number[] = [];
   const textParts: string[] = [];
   let lastEnd = 0;
 
-  for (let match = ANGLE_TIME_REGEX.exec(content); match !== null; match = ANGLE_TIME_REGEX.exec(content)) {
+  for (const match of matches) {
     // Text before this timestamp (may be empty)
-    const textBefore = content.slice(lastEnd, match.index);
+    const textBefore = content.slice(lastEnd, match.index ?? 0);
     if (textBefore && timestamps.length > 0) {
       textParts.push(textBefore);
     }
     timestamps.push(parseTimestamp(match[1], match[2], match[3]));
-    lastEnd = match.index + match[0].length;
+    lastEnd = (match.index ?? 0) + match[0].length;
   }
-  ANGLE_TIME_REGEX.lastIndex = 0;
 
   // Text after the last timestamp
   const trailing = content.slice(lastEnd);
@@ -208,24 +207,19 @@ function parseTypeA(content: string, _lineTime: number): LrcWord[] | null {
  * the start of the NEXT word. First word starts at lineTime.
  */
 function parseTypeB(content: string, lineTime: number): LrcWord[] | null {
-  TIME_REGEX.lastIndex = 0;
-
-  // Check if there are bracket timestamps within the content
-  const hasInternalTimestamps = TIME_REGEX.test(content);
-  TIME_REGEX.lastIndex = 0;
-  if (!hasInternalTimestamps) return null;
+  const matches = getBracketTimestampMatches(content);
+  if (matches.length === 0) return null;
 
   const timestamps: number[] = [lineTime];
   const textParts: string[] = [];
   let lastEnd = 0;
 
-  for (let match = TIME_REGEX.exec(content); match !== null; match = TIME_REGEX.exec(content)) {
-    const textBefore = content.slice(lastEnd, match.index);
+  for (const match of matches) {
+    const textBefore = content.slice(lastEnd, match.index ?? 0);
     if (textBefore) textParts.push(textBefore);
     timestamps.push(parseTimestamp(match[1], match[2], match[3]));
-    lastEnd = match.index + match[0].length;
+    lastEnd = (match.index ?? 0) + match[0].length;
   }
-  TIME_REGEX.lastIndex = 0;
 
   // Trailing text after last timestamp
   const trailing = content.slice(lastEnd);

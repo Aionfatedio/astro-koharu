@@ -345,7 +345,6 @@ function generateLinkPreviewHTML(ogData: OGData): string {
   const safeDomain = sanitizeText(domain);
   const safeLogo = logo ? sanitizeUrl(logo) : '';
   const safeImage = image ? sanitizeUrl(image) : '';
-  // console.log('ogData:%o', ogData);
   return `<div class="link-preview-block not-prose" data-state="success">
   <a href="${safeUrl}" target="_blank" class="group block overflow-hidden rounded-lg border border-border transition-all hover:border-primary/50 hover:shadow-md" aria-label="${safeTitle} - ${safeDomain}">
     <div class="bg-card flex md:flex-col flex-row">

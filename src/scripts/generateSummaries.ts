@@ -23,8 +23,11 @@ import { glob } from 'glob';
 import matter from 'gray-matter';
 import { remark } from 'remark';
 import strip from 'strip-markdown';
+import { transliterateSlugValue } from '../lib/slug-core';
+import { readSlugTransliterationEnabled } from './lib/site-config';
 
 // --------- Configuration ---------
+const CONTENT_ROOT = path.join('src', 'content', 'blog');
 const CONTENT_GLOB = 'src/content/blog/**/*.md';
 const CACHE_FILE = '.cache/summaries-cache.json';
 const OUTPUT_FILE = 'src/assets/summaries.json';
@@ -119,10 +122,13 @@ async function getPlainText(markdown: string): Promise<string> {
     .trim();
 }
 
-function extractSlug(filePath: string, link?: string): string {
-  if (link) return link.toLowerCase();
-  const relativePath = filePath.replace(/^src\/content\/blog\//, '').replace(/\.md$/, '');
-  return relativePath.toLowerCase();
+function extractSlug(filePath: string, link: string | undefined, slugTransliterationEnabled: boolean): string {
+  if (link) return link;
+
+  const relativePath = path.relative(CONTENT_ROOT, filePath);
+  const extension = path.extname(relativePath);
+  const slug = extension ? relativePath.slice(0, -extension.length) : relativePath;
+  return transliterateSlugValue(slug.split(path.sep).join('/'), slugTransliterationEnabled);
 }
 
 // --------- LLM API ---------
@@ -167,7 +173,7 @@ async function generateSummary(text: string, model: string): Promise<string> {
 
 // --------- File Processing ---------
 
-async function processFile(filePath: string): Promise<PostData | null> {
+async function processFile(filePath: string, slugTransliterationEnabled: boolean): Promise<PostData | null> {
   try {
     const content = await fs.readFile(filePath, 'utf-8');
     const { data: frontmatter, content: body } = matter(content);
@@ -184,7 +190,7 @@ async function processFile(filePath: string): Promise<PostData | null> {
       return null;
     }
 
-    const slug = extractSlug(filePath, frontmatter.link as string | undefined);
+    const slug = extractSlug(filePath, frontmatter.link as string | undefined, slugTransliterationEnabled);
 
     const plainText = await getPlainText(body);
     const hash = computeHash(content);
@@ -201,12 +207,12 @@ async function processFile(filePath: string): Promise<PostData | null> {
   }
 }
 
-async function loadPosts(files: string[]): Promise<PostData[]> {
+async function loadPosts(files: string[], slugTransliterationEnabled: boolean): Promise<PostData[]> {
   console.log(chalk.blue('Processing markdown files...'));
   const posts: PostData[] = [];
   for (let i = 0; i < files.length; i++) {
     process.stdout.write(`\r  Processing ${i + 1}/${files.length}...`);
-    const post = await processFile(files[i]);
+    const post = await processFile(files[i], slugTransliterationEnabled);
     if (post) posts.push(post);
   }
   console.log('');
@@ -251,6 +257,8 @@ async function main() {
       console.log(chalk.gray('No cache found, will generate all summaries\n'));
     }
 
+    const slugTransliterationEnabled = await readSlugTransliterationEnabled();
+
     // Find all markdown files
     const files = await glob(CONTENT_GLOB);
     if (!files.length) {
@@ -260,7 +268,7 @@ async function main() {
     console.log(chalk.blue(`Found ${files.length} markdown files\n`));
 
     // Process all files
-    const posts = await loadPosts(files);
+    const posts = await loadPosts(files, slugTransliterationEnabled);
     if (!posts.length) {
       console.log(chalk.red('No valid posts found.'));
       return;

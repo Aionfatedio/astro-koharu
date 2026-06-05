@@ -2,7 +2,7 @@
 import rss from '@astrojs/rss';
 import { siteConfig } from '@constants/site-config';
 import { getCategoryArr, getSortedPosts } from '@lib/content';
-import { encodeSlug } from '@lib/route';
+import { encodeSlug, getPostSlug } from '@lib/route';
 import { buildRssItemFields } from '@lib/rss-utils';
 import type { APIContext } from 'astro';
 import type { BlogPost } from 'types/blog';
@@ -33,7 +33,7 @@ export async function GET(context: APIContext) {
         ...(post.data.tags || []).map((tag) => `tag:${tag}`),
       ];
 
-      const postSlug = post.data.link ?? post.slug;
+      const postSlug = getPostSlug(post);
       const postLink = `/post/${encodeSlug(postSlug)}`;
       const { title, description, content } = buildRssItemFields(post);
 

@@ -49,7 +49,7 @@ function FloatingButton({ onClick, ariaLabel, title, children, className, dataBg
 }
 
 export default function FloatingGroup() {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const isDrawerOpen = useStore($isDrawerOpen);
   const isChristmasEnabled = useStore(christmasEnabled);
   const isBgmPanelOpen = useStore($bgmPanelOpen);

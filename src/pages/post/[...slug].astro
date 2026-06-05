@@ -11,6 +11,7 @@ import Layout from '@layouts/Layout.astro';
 import TwoColumnLayout from '@layouts/TwoColumnLayout.astro';
 import { buildCategoryPath, getCategoryArr, getPostDescription, getPostSummary, getSortedPosts } from '@lib/content';
 import { formatForSeo } from '@lib/date';
+import { getPostSlug } from '@lib/route';
 import { getOgImageUrl } from '@lib/seo/og-image';
 import { Icon } from 'astro-icon/components';
 import { Comment } from '@/components/comment';
@@ -22,7 +23,7 @@ export async function getStaticPaths() {
   const postCollections = await getSortedPosts();
 
   return postCollections.map((post) => {
-    const link = post.data?.link ?? post.slug;
+    const link = getPostSlug(post);
     return {
       params: { slug: link },
       props: { post, postId: post.id },
@@ -112,7 +113,7 @@ const breadcrumbJsonLd = {
 };
 
 // 确定显示的摘要内容和来源类型
-const postSlug = post.data?.link ?? post.slug;
+const postSlug = getPostSlug(post);
 let summaryText: string | null = null;
 let summarySource: SummarySource | null = null;
 

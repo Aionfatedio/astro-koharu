@@ -772,17 +772,13 @@
    PhotoSwipe Customization
    ======================================== */
 
-/* Custom background color (no blur for performance) */
-.pswp__img {
-  border-radius: 0.2rem;
-}
-
-.pswp__img--placeholder {
-  border-radius: 0.2rem;
-}
-
-.pswp__img:not(.pswp__img--placeholder) {
+.koharu-pswp-image-clip {
+  overflow: hidden;
   border-radius: 0.5rem;
+}
+
+.koharu-pswp-image-clip > .pswp__img {
+  border-radius: 0;
 }
 
 /* ========== Inline Iconify icons ========== */

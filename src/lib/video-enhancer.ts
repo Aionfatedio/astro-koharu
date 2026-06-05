@@ -87,7 +87,7 @@ function getQualityLabel(width: number, height: number): string {
   if (maxDimension >= 640 || minDimension >= 360) {
     return '360P';
   }
-  return `Quality`;
+  return 'Quality';
 }
 
 /**
@@ -208,8 +208,12 @@ async function initializePlayer(container: Element, state: PlayerInitState): Pro
       }
     });
 
+    let qualityLabelAdded = false;
+
     // Add quality label control when video metadata is loaded
     player.on('video:loadedmetadata', () => {
+      if (qualityLabelAdded) return;
+
       const video = player.video;
       if (video && video.videoWidth > 0 && video.videoHeight > 0) {
         const qualityLabel = getQualityLabel(video.videoWidth, video.videoHeight);
@@ -229,8 +233,8 @@ async function initializePlayer(container: Element, state: PlayerInitState): Pro
             userSelect: 'none',
           },
           tooltip: `当前画质: ${video.videoWidth}×${video.videoHeight}`,
-          // tooltip: ``,
         });
+        qualityLabelAdded = true;
 
         // 音量键移动到右侧：Move volume control from left to right (between quality-label and setting)
         const $volume = player.query('.art-control-volume');
