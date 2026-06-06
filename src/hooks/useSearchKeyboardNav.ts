@@ -3,7 +3,8 @@
  *
  * Manages keyboard navigation for search results (ArrowUp/Down, Enter).
  * Tracks selected index, handles DOM selection highlighting, and
- * observes result mutations to reset selection.
+ * observes result mutations to reset selection. Also delegates mouse
+ * clicks so the whole result card (not just the title link) navigates.
  *
  * Extracted from SearchDialog to keep component under 300 lines.
  */
@@ -107,15 +108,33 @@ export function useSearchKeyboardNav(isOpen: boolean) {
 
     document.addEventListener('keydown', handleKeyDown);
 
+    // Mouse navigation: a click anywhere on a result card activates its link.
+    // The title link keeps its own click + hover behavior; this only covers
+    // clicks on the rest of the card (excerpt, padding…). Delegated on the
+    // container so dynamically loaded results ("load more") are handled too.
+    const handleResultClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // Native link clicks and the "load more" button keep their default behavior
+      if (target.closest('.pagefind-ui__result-link') || target.closest('.pagefind-ui__button')) return;
+      // Don't hijack an in-progress text selection inside the results
+      if (window.getSelection()?.toString()) return;
+      const link = target
+        .closest('.pagefind-ui__result')
+        ?.querySelector('.pagefind-ui__result-link') as HTMLAnchorElement | null;
+      link?.click();
+    };
+
     // Mutation observer: clear selection when results change
     const container = containerRef.current;
     if (container) {
+      container.addEventListener('click', handleResultClick);
       observerRef.current = new MutationObserver(clearSelection);
       observerRef.current.observe(container, { childList: true, subtree: true });
     }
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
+      container?.removeEventListener('click', handleResultClick);
       observerRef.current?.disconnect();
       observerRef.current = null;
     };

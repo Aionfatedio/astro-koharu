@@ -18,6 +18,8 @@ import { $isDrawerOpen } from '@store/modal';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 
+const FLOATING_GROUP_EXPANDED_KEY = 'floating-group-expanded';
+
 interface FloatingButtonProps {
   onClick: () => void;
   ariaLabel: string;
@@ -49,7 +51,7 @@ function FloatingButton({ onClick, ariaLabel, title, children, className, dataBg
 }
 
 export default function FloatingGroup() {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(() => localStorage.getItem(FLOATING_GROUP_EXPANDED_KEY) === 'true');
   const isDrawerOpen = useStore($isDrawerOpen);
   const isChristmasEnabled = useStore(christmasEnabled);
   const isBgmPanelOpen = useStore($bgmPanelOpen);
@@ -71,7 +73,13 @@ export default function FloatingGroup() {
     }
   };
 
-  const toggleExpand = () => setIsExpanded((prev) => !prev);
+  const toggleExpand = () => {
+    setIsExpanded((prev) => {
+      const next = !prev;
+      localStorage.setItem(FLOATING_GROUP_EXPANDED_KEY, String(next));
+      return next;
+    });
+  };
 
   // Hide when drawer is open
   const isHidden = isDrawerOpen;
@@ -86,7 +94,7 @@ export default function FloatingGroup() {
       }}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
     >
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {isExpanded && (
           <motion.div
             className="flex flex-col gap-2"

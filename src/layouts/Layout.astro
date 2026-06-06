@@ -317,7 +317,9 @@ const ogImage = getOgImageUrl(post?.data.cover, Astro.site);
           <GlobalBGMPlayer client:only="react" audioGroups={bgmConfig.audio} metingApi={bgmConfig.metingApi} />
         </div>
       )}
-      <FloatingGroup client:only="react" />
+      <div transition:persist="floating-group">
+        <FloatingGroup client:only="react" />
+      </div>
       <MobileDrawer type={siderType} post={post} artistProfile={artistProfile} />
       <SearchDialog client:idle />
       <SearchPortal />

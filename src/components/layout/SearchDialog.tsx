@@ -191,7 +191,7 @@ export function SearchTrigger({ className }: { className?: string }) {
       aria-label="搜索"
       title={title}
     >
-      <SearchIcon className="size-5" />
+      <SearchIcon className="size-6" />
     </button>
   );
 }

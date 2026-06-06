@@ -789,3 +789,80 @@
   flex-shrink: 0;
   fill: currentColor;
 }
+
+/* ========== Artist score badges ========== */
+.artist-score {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  gap: 0.2rem;
+  vertical-align: -0.18em;
+  isolation: isolate;
+}
+
+.artist-score-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.02rem;
+}
+
+.artist-score-icon,
+.artist-score-grade {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.artist-score-star-empty {
+  color: #d1d5db;
+}
+
+.artist-score {
+  position: relative; 
+}
+
+.artist-score::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 0.5rem);
+  z-index: 50;
+  min-width: max-content;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  background: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+  font-size: 0.75rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(0, -50%); 
+  transition: opacity 0.15s ease; 
+}
+
+.artist-score::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 0.5rem);
+  z-index: 49;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-left: 1px solid hsl(var(--border));
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--popover));
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-0.5rem, -50%) rotate(45deg); 
+  transition: opacity 0.15s ease; 
+}
+
+.artist-score:hover::after,
+.artist-score:focus-visible::after,
+.artist-score:hover::before,
+.artist-score:focus-visible::before {
+  opacity: 1;
+}

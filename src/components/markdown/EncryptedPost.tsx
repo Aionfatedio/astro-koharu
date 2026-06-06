@@ -8,7 +8,7 @@
  * Uses the same custom styles and animations as EncryptedBlock:
  * - Input expand animation (collapsed → expanded)
  * - Hint text crossfade (locked → error → locked)
- * - Success spinner → checkmark animation
+ * - Success checkmark → render spinner animation
  * - Shake animation on wrong password
  */
 import { Icon } from '@iconify/react';
@@ -20,7 +20,7 @@ interface EncryptedPostProps {
   element: HTMLElement;
 }
 
-type DecryptState = 'locked' | 'decrypting' | 'unlocked' | 'error' | 'success';
+type DecryptState = 'locked' | 'decrypting' | 'success' | 'rendering' | 'unlocked' | 'error';
 
 function LoadingSpinner() {
   return (
@@ -44,7 +44,7 @@ function LoadingSpinner() {
   );
 }
 
-function SuccessCheck() {
+function SuccessCheck({ onComplete }: { onComplete: () => void }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -58,10 +58,8 @@ function SuccessCheck() {
       role="img"
       aria-hidden="true"
     >
-      <g fill="none" strokeDasharray="24" strokeDashoffset="24">
-        <path d="M4.5 13.5l4 4l10.75 -10.75">
-          <animate fill="freeze" attributeName="stroke-dashoffset" dur="0.4s" values="24;0" />
-        </path>
+      <g fill="none">
+        <path className="encrypted-check-path" d="M4.5 13.5l4 4l10.75 -10.75" onAnimationEnd={onComplete} />
       </g>
     </svg>
   );
@@ -71,36 +69,51 @@ export function EncryptedPost({ element }: EncryptedPostProps) {
   const [state, setState] = useState<DecryptState>('locked');
   const [expanded, setExpanded] = useState(false);
   const [hintFaded, setHintFaded] = useState(false);
-  const [hintText, setHintText] = useState('此文章已加密，请输入密码查看');
-  const [showCheck, setShowCheck] = useState(false);
+  const [hintText, setHintText] = useState('请输入密码以查看文章内容');
   const decryptedRef = useRef('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const renderFrameRef = useRef<number | null>(null);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => {
     return () => {
+      if (renderFrameRef.current !== null) cancelAnimationFrame(renderFrameRef.current);
       for (const t of timersRef.current) clearTimeout(t);
     };
   }, []);
 
-  // Inject decrypted HTML after success animation completes
   useEffect(() => {
-    if (state !== 'unlocked' || !decryptedRef.current) return;
+    if (state !== 'rendering') return;
 
-    element.innerHTML = decryptedRef.current;
-    decryptedRef.current = '';
-    element.classList.remove('encrypted-post');
-    element.removeAttribute('data-cipher');
-    element.removeAttribute('data-iv');
-    element.removeAttribute('data-salt');
-    element.removeAttribute('data-react-enhanced');
+    renderFrameRef.current = requestAnimationFrame(() => {
+      renderFrameRef.current = null;
+      if (!decryptedRef.current) return;
 
-    requestAnimationFrame(() => {
+      element.innerHTML = decryptedRef.current;
+      decryptedRef.current = '';
+      element.classList.remove('encrypted-post');
+      element.removeAttribute('data-cipher');
+      element.removeAttribute('data-iv');
+      element.removeAttribute('data-salt');
+      element.removeAttribute('data-react-enhanced');
+
       const container = document.querySelector('.custom-content');
       if (container) container.removeAttribute('data-enhanced');
       document.dispatchEvent(new CustomEvent('content:decrypted'));
+      setState('unlocked');
     });
+
+    return () => {
+      if (renderFrameRef.current !== null) {
+        cancelAnimationFrame(renderFrameRef.current);
+        renderFrameRef.current = null;
+      }
+    };
   }, [state, element]);
+
+  const startRendering = useCallback(() => {
+    setState('rendering');
+  }, []);
 
   const schedule = useCallback((fn: () => void, ms: number) => {
     const id = setTimeout(fn, ms);
@@ -121,11 +134,6 @@ export function EncryptedPost({ element }: EncryptedPostProps) {
     if (result) {
       decryptedRef.current = result;
       setState('success');
-      setShowCheck(false);
-      // Phase 1: spinner → checkmark
-      schedule(() => setShowCheck(true), 400);
-      // Phase 2: inject HTML into DOM
-      schedule(() => setState('unlocked'), 800);
     } else {
       setState('error');
 
@@ -136,7 +144,7 @@ export function EncryptedPost({ element }: EncryptedPostProps) {
       }, 120);
       schedule(() => setHintFaded(true), 1120);
       schedule(() => {
-        setHintText('此文章已加密，请输入密码查看');
+        setHintText('请输入密码以查看文章内容');
         setHintFaded(false);
         setState('locked');
       }, 1240);
@@ -159,17 +167,21 @@ export function EncryptedPost({ element }: EncryptedPostProps) {
     handleDecrypt();
   }, [expanded, handleDecrypt, schedule]);
 
-  const busy = state === 'decrypting' || state === 'error' || state === 'success';
+  const busy = state === 'decrypting' || state === 'error' || state === 'success' || state === 'rendering';
 
   if (!element.dataset.cipher || !element.dataset.iv || !element.dataset.salt) {
     return <div className="encrypted-block-error">Error: Missing encryption data</div>;
   }
 
-  // After unlock, the useEffect injects HTML — component renders nothing
   if (state === 'unlocked') return null;
 
   return (
-    <div className={cn('encrypted-block-locked encrypted-post-locked', state === 'success' && 'encrypted-block-success')}>
+    <div
+      className={cn(
+        'encrypted-block-locked encrypted-post-locked',
+        (state === 'success' || state === 'rendering') && 'encrypted-block-success',
+      )}
+    >
       <Icon
         icon="ri:lock-2-line"
         className={cn('encrypted-block-icon', state === 'error' && 'encrypted-block-icon-error')}
@@ -179,7 +191,7 @@ export function EncryptedPost({ element }: EncryptedPostProps) {
       <p
         className={cn(
           'encrypted-block-hint',
-          (hintFaded || state === 'success') && 'encrypted-hint-faded',
+          (hintFaded || state === 'success' || state === 'rendering') && 'encrypted-hint-faded',
           state === 'error' && 'encrypted-hint-error',
         )}
       >
@@ -210,8 +222,10 @@ export function EncryptedPost({ element }: EncryptedPostProps) {
           )}
         </button>
       </div>
-      {state === 'success' && (
-        <div className="encrypted-success-overlay">{showCheck ? <LoadingSpinner /> : <SuccessCheck />}</div>
+      {(state === 'success' || state === 'rendering') && (
+        <div className="encrypted-success-overlay">
+          {state === 'rendering' ? <LoadingSpinner /> : <SuccessCheck onComplete={startRendering} />}
+        </div>
       )}
     </div>
   );

@@ -27,6 +27,7 @@ import { remarkComicDirective } from './src/lib/markdown/remark-comic-directive.
 import { remarkEncryptedDirective } from './src/lib/markdown/remark-encrypted-directive.ts';
 import { remarkIconifyInline } from './src/lib/markdown/remark-iconify-inline.ts';
 import { remarkLinkEmbed } from './src/lib/markdown/remark-link-embed.ts';
+import { remarkScoreInline } from './src/lib/markdown/remark-score-inline.ts';
 import { remarkIns, remarkMark } from './src/lib/markdown/remark-shoka-effects.ts';
 import { remarkShokaPreprocess } from './src/lib/markdown/remark-shoka-preprocess.ts';
 import { remarkShokaRuby } from './src/lib/markdown/remark-shoka-ruby.ts';
@@ -124,6 +125,7 @@ if (contentConfig.enableShokaEffects !== false) {
 // Inline Iconify icons: %prefix/icon-name% → inline <svg>
 if (contentConfig.enableIconifyInline !== false) {
   remarkPlugins.push(remarkIconifyInline);
+  remarkPlugins.push(remarkScoreInline);
 }
 // Encrypted block & comic card: remarkDirective is registered in BOTH places —
 // here for the main Astro pipeline (when remarkShokaPreprocess skips re-parse),

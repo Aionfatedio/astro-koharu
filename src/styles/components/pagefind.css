@@ -65,15 +65,23 @@
   @apply justify-center self-center !pb-2;
 }
 
-/* Result Item */
+/* Result Item — the whole card is clickable (see useSearchKeyboardNav) */
 .pagefind-ui__result {
   background: rgba(0, 0, 0, 0.03);
   transition: all 0.25s ease;
-  @apply bg-accent mb-2 rounded-lg !border-none !p-3;
+  /* 1px transparent border reserves space so the hover border never shifts layout */
+  @apply bg-accent mb-2 cursor-pointer rounded-lg !border !border-transparent !p-3;
 }
 
 .dark .pagefind-ui__result {
   background: rgba(255, 255, 255, 0.05);
+}
+
+/* Card hover: light up the whole card. Independent from the title-link hover,
+   which still only triggers when hovering the title text itself. Tailwind `!`
+   keeps parity with this file and overrides the transparent placeholder border. */
+.pagefind-ui__result:hover {
+  @apply !border-primary !bg-primary/[0.06];
 }
 
 /* Keyboard navigation selected state */

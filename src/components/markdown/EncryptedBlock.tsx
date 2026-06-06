@@ -7,7 +7,7 @@ interface EncryptedBlockProps {
   element: HTMLElement;
 }
 
-type DecryptState = 'locked' | 'decrypting' | 'unlocked' | 'error' | 'success';
+type DecryptState = 'locked' | 'decrypting' | 'success' | 'rendering' | 'rendered' | 'unlocked' | 'error';
 
 function LoadingSpinner() {
   return (
@@ -31,7 +31,7 @@ function LoadingSpinner() {
   );
 }
 
-function SuccessCheck() {
+function SuccessCheck({ onComplete }: { onComplete: () => void }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -45,10 +45,8 @@ function SuccessCheck() {
       role="img"
       aria-hidden="true"
     >
-      <g fill="none" strokeDasharray="24" strokeDashoffset="24">
-        <path d="M4.5 13.5l4 4l10.75 -10.75">
-          <animate fill="freeze" attributeName="stroke-dashoffset" dur="0.4s" values="24;0" />
-        </path>
+      <g fill="none">
+        <path className="encrypted-check-path" d="M4.5 13.5l4 4l10.75 -10.75" onAnimationEnd={onComplete} />
       </g>
     </svg>
   );
@@ -60,16 +58,33 @@ export function EncryptedBlock({ element }: EncryptedBlockProps) {
   const [expanded, setExpanded] = useState(false);
   const [hintFaded, setHintFaded] = useState(false);
   const [hintText, setHintText] = useState('此内容已加密，请输入密码查看');
-  const [showCheck, setShowCheck] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const renderFrameRef = useRef<number | null>(null);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const startHeightRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
+      if (renderFrameRef.current !== null) cancelAnimationFrame(renderFrameRef.current);
       for (const t of timersRef.current) clearTimeout(t);
     };
   }, []);
+
+  useEffect(() => {
+    if (state !== 'rendering') return;
+
+    renderFrameRef.current = requestAnimationFrame(() => {
+      renderFrameRef.current = null;
+      setState('rendered');
+    });
+
+    return () => {
+      if (renderFrameRef.current !== null) {
+        cancelAnimationFrame(renderFrameRef.current);
+        renderFrameRef.current = null;
+      }
+    };
+  }, [state]);
 
   // After unlocked content is rendered, trigger content enhancers (images, videos, etc.)
   useEffect(() => {
@@ -82,32 +97,47 @@ export function EncryptedBlock({ element }: EncryptedBlockProps) {
     });
   }, [state]);
 
-  // Smooth height transition: success → unlocked
+  // Smooth height transition after decrypted content is committed.
   useLayoutEffect(() => {
-    if (state !== 'unlocked' || startHeightRef.current === null) return;
+    if (state !== 'rendered' || startHeightRef.current === null) return;
 
     const startHeight = startHeightRef.current;
     startHeightRef.current = null;
 
-    // DOM now has unlocked content — measure its natural height before paint
     const endHeight = element.offsetHeight;
 
     // Lock to old height (user never sees the natural height)
     element.style.height = `${startHeight}px`;
+    element.style.overflow = 'hidden';
+
+    if (startHeight === endHeight) {
+      element.style.height = '';
+      element.style.overflow = '';
+      setState('unlocked');
+      return;
+    }
 
     requestAnimationFrame(() => {
       element.style.transition = 'height 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
       element.style.height = `${endHeight}px`;
 
-      const cleanup = () => {
+      const cleanup = (event: TransitionEvent) => {
+        if (event.target !== element || event.propertyName !== 'height') return;
         element.style.height = '';
+        element.style.overflow = '';
         element.style.transition = '';
+        element.removeEventListener('transitionend', cleanup);
       };
-      element.addEventListener('transitionend', cleanup, { once: true });
-      // Fallback in case transitionend doesn't fire
-      setTimeout(cleanup, 500);
+      element.addEventListener('transitionend', cleanup);
     });
+
+    setState('unlocked');
   }, [state, element]);
+
+  const startRendering = useCallback(() => {
+    startHeightRef.current = element.offsetHeight;
+    setState('rendering');
+  }, [element]);
 
   const schedule = useCallback((fn: () => void, ms: number) => {
     const id = setTimeout(fn, ms);
@@ -128,14 +158,6 @@ export function EncryptedBlock({ element }: EncryptedBlockProps) {
     if (result) {
       setHtml(result);
       setState('success');
-      setShowCheck(false);
-      // Phase 1: spinner → checkmark
-      schedule(() => setShowCheck(true), 400);
-      // Phase 2: capture height → reveal content
-      schedule(() => {
-        startHeightRef.current = element.offsetHeight;
-        setState('unlocked');
-      }, 800);
     } else {
       setState('error');
 
@@ -169,23 +191,31 @@ export function EncryptedBlock({ element }: EncryptedBlockProps) {
     handleDecrypt();
   }, [expanded, handleDecrypt, schedule]);
 
-  const busy = state === 'decrypting' || state === 'error' || state === 'success';
+  const busy =
+    state === 'decrypting' || state === 'error' || state === 'success' || state === 'rendering' || state === 'rendered';
 
   if (!element.dataset.cipher || !element.dataset.iv || !element.dataset.salt) {
     return <div className="encrypted-block-error">Error: Missing encryption data</div>;
   }
 
-  if (state === 'unlocked') {
+  if (state === 'rendered' || state === 'unlocked') {
     return (
-      <div className="encrypted-block-content encrypted-content-enter prose dark:prose-invert max-w-none">
-        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: content is from our own build-time markdown pipeline */}
-        <div dangerouslySetInnerHTML={{ __html: html }} />
+      <div className="encrypted-block-render-frame">
+        <div className="encrypted-block-content encrypted-content-enter prose dark:prose-invert max-w-none">
+          {/* biome-ignore lint/security/noDangerouslySetInnerHtml: content is from our own build-time markdown pipeline */}
+          <div dangerouslySetInnerHTML={{ __html: html }} />
+        </div>
+        {state === 'rendered' && (
+          <div className="encrypted-success-overlay">
+            <LoadingSpinner />
+          </div>
+        )}
       </div>
     );
   }
 
   return (
-    <div className={cn('encrypted-block-locked', state === 'success' && 'encrypted-block-success')}>
+    <div className={cn('encrypted-block-locked', (state === 'success' || state === 'rendering') && 'encrypted-block-success')}>
       <Icon
         icon="ri:lock-2-line"
         className={cn('encrypted-block-icon', state === 'error' && 'encrypted-block-icon-error')}
@@ -194,7 +224,7 @@ export function EncryptedBlock({ element }: EncryptedBlockProps) {
       <p
         className={cn(
           'encrypted-block-hint',
-          (hintFaded || state === 'success') && 'encrypted-hint-faded',
+          (hintFaded || state === 'success' || state === 'rendering') && 'encrypted-hint-faded',
           state === 'error' && 'encrypted-hint-error',
         )}
       >
@@ -225,8 +255,10 @@ export function EncryptedBlock({ element }: EncryptedBlockProps) {
           )}
         </button>
       </div>
-      {state === 'success' && (
-        <div className="encrypted-success-overlay">{showCheck ? <LoadingSpinner /> : <SuccessCheck />}</div>
+      {(state === 'success' || state === 'rendering') && (
+        <div className="encrypted-success-overlay">
+          {state === 'rendering' ? <LoadingSpinner /> : <SuccessCheck onComplete={startRendering} />}
+        </div>
       )}
     </div>
   );

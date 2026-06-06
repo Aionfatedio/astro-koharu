@@ -3,7 +3,7 @@
   "type": "module",
   "version": "4.1.0",
   "scripts": {
-    "predev": "pnpm generate:videos",
+    "predev": "pnpm generate:media --target videos",
     "dev": "astro dev",
     "generate:lqips": "npx tsx src/scripts/generateLqips.ts",
     "generate:similarities": "npx tsx src/scripts/generateSimilarities.ts",
@@ -15,7 +15,7 @@
     "generate:music": "pnpm generate:media --target music",
     "generate:videos": "pnpm generate:media --target videos",
     "generate:all": "npm run generate:lqips && npm run generate:summaries && npm run generate:similarities && npm run generate:media",
-    "prebuild": "pnpm generate:videos",
+    "prebuild": "pnpm generate:media --target videos",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",

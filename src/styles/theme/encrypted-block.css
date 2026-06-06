@@ -104,6 +104,10 @@
   border-top: 1px solid hsl(var(--border));
 }
 
+.encrypted-block-render-frame {
+  position: relative;
+}
+
 /* ── Error state ── */
 
 .encrypted-block-error {
@@ -146,7 +150,7 @@
   transition: opacity 0.25s ease;
 }
 
-/* Centered overlay for spinner → checkmark */
+/* Centered overlay for checkmark and render spinner */
 .encrypted-success-overlay {
   @apply absolute inset-0 flex items-center justify-center;
   color: hsl(var(--primary));

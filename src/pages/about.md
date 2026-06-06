@@ -60,11 +60,13 @@ description: "关于我？"
 
 <https://reader.aionfatedio.top>
 
-随机跳转P站图片(~~涩图~~)的网页：
+<http://reader.anyin.bond>
+
+随机跳转 P 站图片(~~涩图~~)的网页：
 
 <https://pixiv.aionfatedio.top>
 
-随机跳转P站涩图的网页：
+随机跳转 P 站涩图的网页：
 
 <https://pixiv-nsfw.aionfatedio.top>
 

@@ -1,0 +1,7 @@
+/* Search highlight — matched terms on article pages when navigating from search.
+   <mark class="pagefind-highlight"> is injected by Pagefind's highlight script
+   (addStyles:false → styled here to match the search dialog's excerpt marks). */
+[data-pagefind-body] .pagefind-highlight {
+  border-radius: 0.2rem;
+  @apply bg-primary/20 text-primary py-px font-bold;
+}

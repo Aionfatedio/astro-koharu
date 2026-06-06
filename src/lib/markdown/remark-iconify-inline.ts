@@ -190,6 +190,37 @@ function buildSvg(
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${escapeHtml(viewBoxStr)}" class="iconify-inline" style="${styleAttr}" aria-hidden="true">${body}</svg>`;
 }
 
+export function renderInlineIcon(identifier: string, rawParams?: string): string | null {
+  const { size, color } = parseParams(rawParams);
+
+  if (identifier.startsWith('/')) {
+    const svgData = loadSvgFile(identifier);
+    if (!svgData) return null;
+
+    const hasExplicitParams = rawParams?.trim();
+    if (!hasExplicitParams && svgData.style) {
+      return buildSvg(svgData.body, svgData.viewBox, size, color, { styleOverride: svgData.style });
+    }
+    return buildSvg(svgData.body, svgData.viewBox, size, color);
+  }
+
+  const [prefix, name] = identifier.split('/');
+  if (!prefix || !name) return null;
+
+  if (!loadIconSet(prefix)) {
+    console.warn(`[remark-iconify] Icon set "@iconify-json/${prefix}" not found. Skipping %${identifier}%.`);
+    return null;
+  }
+
+  const body = getIconSvg(prefix, name);
+  if (!body) {
+    console.warn(`[remark-iconify] Icon "${name}" not found in set "${prefix}". Skipping %${identifier}%.`);
+    return null;
+  }
+
+  return buildSvg(body, getIconViewBox(prefix, name), size, color);
+}
+
 // ── Plugin Entry ────────────────────────────────────────────────────────────
 
 export function remarkIconifyInline() {
@@ -210,35 +241,7 @@ export function remarkIconifyInline() {
 
         const identifier = match[1];
         const rawParams = match[2];
-        const { size, color } = parseParams(rawParams);
-
-        let svg: string | null = null;
-
-        if (identifier.startsWith('/')) {
-          // ── Custom SVG file from public/ ──
-          const svgData = loadSvgFile(identifier);
-          if (svgData) {
-            const hasExplicitParams = rawParams?.trim();
-            if (!hasExplicitParams && svgData.style) {
-              svg = buildSvg(svgData.body, svgData.viewBox, size, color, { styleOverride: svgData.style });
-            } else {
-              svg = buildSvg(svgData.body, svgData.viewBox, size, color);
-            }
-          }
-        } else {
-          // ── Iconify icon set ──
-          const [prefix, name] = identifier.split('/');
-          if (loadIconSet(prefix)) {
-            const body = getIconSvg(prefix, name);
-            if (body) {
-              svg = buildSvg(body, getIconViewBox(prefix, name), size, color);
-            } else {
-              console.warn(`[remark-iconify] Icon "${name}" not found in set "${prefix}". Skipping %${identifier}%.`);
-            }
-          } else {
-            console.warn(`[remark-iconify] Icon set "@iconify-json/${prefix}" not found. Skipping %${identifier}%.`);
-          }
-        }
+        const svg = renderInlineIcon(identifier, rawParams);
 
         if (svg) {
           parts.push({ type: 'html', value: svg });
