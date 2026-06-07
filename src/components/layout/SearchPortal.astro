@@ -35,22 +35,165 @@ import Search from 'astro-pagefind/components/Search';
 </div>
 
 <script>
+  import {
+    applyPagefindSearchQuery,
+    PAGEFIND_SEARCH_INPUT_SELECTOR,
+    type PagefindSearchSession,
+    readPagefindSearchSession,
+    SEARCH_DIALOG_SCROLL_AREA_ID,
+    updatePagefindSearchSession,
+  } from '@lib/pagefind-search-session';
+
+  function getSearchComponent(): HTMLElement | null {
+    return document.getElementById('search-for-dialog');
+  }
+
+  function getSearchInput(searchComponent: HTMLElement): HTMLInputElement | null {
+    return searchComponent.querySelector<HTMLInputElement>(PAGEFIND_SEARCH_INPUT_SELECTOR);
+  }
+
+  function getScrollArea(): HTMLElement | null {
+    return document.getElementById(SEARCH_DIALOG_SCROLL_AREA_ID);
+  }
+
+  function persistSearchSession() {
+    const searchComponent = getSearchComponent();
+    const scrollArea = getScrollArea();
+    const patch: Partial<PagefindSearchSession> = {};
+
+    if (searchComponent) {
+      const input = getSearchInput(searchComponent);
+
+      if (input) {
+        patch.query = input.value;
+      }
+    }
+
+    if (scrollArea) {
+      patch.scrollTop = scrollArea.scrollTop;
+    }
+
+    if (Object.keys(patch).length > 0) {
+      updatePagefindSearchSession(patch);
+    }
+  }
+
+  function restoreSearchQuery(searchComponent: HTMLElement) {
+    const input = getSearchInput(searchComponent);
+    if (!input) return;
+
+    const { query } = readPagefindSearchSession();
+    applyPagefindSearchQuery(input, query);
+  }
+
+  function restoreScrollPosition() {
+    const scrollArea = getScrollArea();
+    if (!scrollArea) return;
+
+    const { scrollTop } = readPagefindSearchSession();
+    scrollArea.scrollTop = scrollTop;
+  }
+
+  let inputController: AbortController | null = null;
+  let scrollController: AbortController | null = null;
+  let resultObserver: MutationObserver | null = null;
+
+  function bindInputPersistence(searchComponent: HTMLElement) {
+    const input = getSearchInput(searchComponent);
+    if (!input) return;
+
+    inputController?.abort();
+    inputController = new AbortController();
+
+    input.addEventListener(
+      'input',
+      () => {
+        const scrollArea = getScrollArea();
+        if (scrollArea) {
+          scrollArea.scrollTop = 0;
+        }
+        updatePagefindSearchSession({ query: input.value, scrollTop: 0 });
+      },
+      { signal: inputController.signal },
+    );
+
+    searchComponent.addEventListener(
+      'click',
+      (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (!target.closest('.pagefind-ui__search-clear')) return;
+
+        queueMicrotask(() => {
+          persistSearchSession();
+        });
+      },
+      { signal: inputController.signal },
+    );
+  }
+
+  function bindScrollPersistence() {
+    const scrollArea = getScrollArea();
+    if (!scrollArea) return;
+
+    scrollController?.abort();
+    scrollController = new AbortController();
+
+    scrollArea.addEventListener(
+      'scroll',
+      () => {
+        updatePagefindSearchSession({ scrollTop: scrollArea.scrollTop });
+      },
+      { passive: true, signal: scrollController.signal },
+    );
+  }
+
+  function bindResultObserver(searchComponent: HTMLElement) {
+    resultObserver?.disconnect();
+    resultObserver = new MutationObserver(() => {
+      restoreScrollPosition();
+    });
+    resultObserver.observe(searchComponent, { childList: true, subtree: true });
+  }
+
+  function bindSearchSession(searchComponent: HTMLElement) {
+    bindInputPersistence(searchComponent);
+    bindScrollPersistence();
+    bindResultObserver(searchComponent);
+  }
+
+  function unbindSearchSession() {
+    inputController?.abort();
+    inputController = null;
+    scrollController?.abort();
+    scrollController = null;
+    resultObserver?.disconnect();
+    resultObserver = null;
+  }
+
   function moveSearchToDialog() {
     const dialogContainer = document.getElementById('search-dialog-container');
     const searchPortal = document.getElementById('search-component-portal');
-    const searchComponent = document.getElementById('search-for-dialog');
+    const searchComponent = getSearchComponent();
 
     if (!dialogContainer || !searchPortal || !searchComponent) return;
 
     // Check if search component is already in the dialog
-    if (dialogContainer.contains(searchComponent)) return;
+    if (!dialogContainer.contains(searchComponent)) {
+      // Move search component to dialog
+      dialogContainer.appendChild(searchComponent);
+    }
 
-    // Move search component to dialog
-    dialogContainer.appendChild(searchComponent);
+    restoreSearchQuery(searchComponent);
+    bindSearchSession(searchComponent);
+    restoreScrollPosition();
   }
 
   function moveSearchBack() {
-    const searchComponent = document.getElementById('search-for-dialog');
+    persistSearchSession();
+    unbindSearchSession();
+
+    const searchComponent = getSearchComponent();
     const searchPortal = document.getElementById('search-component-portal');
 
     if (!searchComponent || !searchPortal) return;
@@ -65,6 +208,7 @@ import Search from 'astro-pagefind/components/Search';
     // Small delay to ensure dialog container is rendered
     requestAnimationFrame(() => {
       moveSearchToDialog();
+      restoreScrollPosition();
     });
   }
 
@@ -81,11 +225,19 @@ import Search from 'astro-pagefind/components/Search';
 
     window.addEventListener('search-dialog-open', handleDialogOpen);
     window.addEventListener('search-dialog-close', handleDialogClose);
+
+    const searchComponent = getSearchComponent();
+    if (searchComponent) {
+      restoreSearchQuery(searchComponent);
+      bindInputPersistence(searchComponent);
+    }
   }
 
   function cleanupSearchPortal() {
     if (!initialized) return;
 
+    persistSearchSession();
+    unbindSearchSession();
     window.removeEventListener('search-dialog-open', handleDialogOpen);
     window.removeEventListener('search-dialog-close', handleDialogClose);
     initialized = false;

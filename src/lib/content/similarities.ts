@@ -2,8 +2,10 @@
  * Similarity-based post retrieval utilities
  */
 
+import similarityRaw from '@assets/similarities.json';
 import type { BlogPost } from 'types/blog';
 import { getPostSlug } from '../route';
+import { validateSimilarityDataSlugs } from './generated-assets';
 
 interface SimilarPost {
   slug: string;
@@ -13,25 +15,10 @@ interface SimilarPost {
 
 type SimilarityMap = Record<string, SimilarPost[]>;
 
-// Load similarity data (generated at build time)
-let similarityData: SimilarityMap = {};
-
-try {
-  // Dynamic import to handle missing file gracefully
-  const data = await import('@assets/similarities.json');
-  similarityData = data.default as SimilarityMap;
-} catch {
-  // File doesn't exist yet or failed to load
-  console.warn('similarities.json not found. Run `pnpm generate:similarities` to generate it.');
-}
-
-/** Pre-built lowercase slug → original key map for O(1) case-insensitive fallback */
-const similarityLowerMap = new Map<string, string>();
-for (const key of Object.keys(similarityData)) {
-  similarityLowerMap.set(key.toLowerCase(), key);
-}
-
-const _hasSimilarityData = similarityLowerMap.size > 0;
+// Loaded statically at build time (like summaries.json). Generate via
+// `pnpm generate:similarities`; a missing file is a hard build error.
+const similarityData = similarityRaw as SimilarityMap;
+const _hasSimilarityData = Object.keys(similarityData).length > 0;
 
 /** WeakMap cache: reuse slug→post Map when the same allPosts array reference is passed */
 const slugToPostCache = new WeakMap<BlogPost[], Map<string, BlogPost>>();
@@ -56,16 +43,12 @@ function getSlugToPostMap(allPosts: BlogPost[]): Map<string, BlogPost> {
  * @returns Array of similar post data with similarity scores
  */
 export function getRelatedPostSlugs(currentSlug: string, count: number = 5): SimilarPost[] {
-  // Fast path: exact match (O(1))
   const exactMatch = similarityData[currentSlug];
-  if (exactMatch) {
-    return exactMatch.slice(0, count);
-  }
-
-  // Fallback: case-insensitive lookup via pre-built map
-  const originalKey = similarityLowerMap.get(currentSlug.toLowerCase());
-  return originalKey ? similarityData[originalKey].slice(0, count) : [];
+  return exactMatch ? exactMatch.slice(0, count) : [];
 }
+
+/** Validate generated similarity data once per allPosts reference (build-time fail-fast). */
+const validatedPostArrays = new WeakSet<BlogPost[]>();
 
 /**
  * Get related posts with full post data
@@ -75,31 +58,27 @@ export function getRelatedPostSlugs(currentSlug: string, count: number = 5): Sim
  * @returns Array of BlogPost objects sorted by similarity
  */
 export function getRelatedPosts(currentPost: BlogPost, allPosts: BlogPost[], count: number = 5): BlogPost[] {
-  try {
-    const currentSlug = getPostSlug(currentPost);
-    const relatedSlugs = getRelatedPostSlugs(currentSlug, count);
-
-    if (!relatedSlugs.length) {
-      return [];
-    }
-
-    // Reuse cached slug→post map (built once per allPosts reference)
-    const slugToPost = getSlugToPostMap(allPosts);
-
-    // Map related slugs to full posts, maintaining similarity order
-    const relatedPosts: BlogPost[] = [];
-    for (const { slug } of relatedSlugs) {
-      const post = slugToPost.get(slug);
-      if (post) {
-        relatedPosts.push(post);
-      }
-    }
-
-    return relatedPosts;
-  } catch (error) {
-    console.warn('Failed to get related posts:', error);
-    return [];
+  // Validate generated data once per allPosts reference. allPosts comes from the
+  // memoized getSortedPosts(), so this runs once per build instead of once per page.
+  if (!validatedPostArrays.has(allPosts)) {
+    validateSimilarityDataSlugs(similarityData, allPosts);
+    validatedPostArrays.add(allPosts);
   }
+
+  const relatedSlugs = getRelatedPostSlugs(getPostSlug(currentPost), count);
+  if (!relatedSlugs.length) return [];
+
+  // Reuse cached slug→post map (built once per allPosts reference)
+  const slugToPost = getSlugToPostMap(allPosts);
+
+  // Map related slugs to full posts, maintaining similarity order
+  const relatedPosts: BlogPost[] = [];
+  for (const { slug } of relatedSlugs) {
+    const post = slugToPost.get(slug);
+    if (post) relatedPosts.push(post);
+  }
+
+  return relatedPosts;
 }
 
 /**

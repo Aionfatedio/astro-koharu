@@ -618,7 +618,6 @@ async function generateVideoMetadata(ffprobePath: string, video: VideoFile, forc
   if (!force) {
     const existing = await readJsonFileIfExists<VideoMetadata>(video.sidecarPath);
     if (isFreshVideoMetadata(existing, video)) {
-      console.log(chalk.dim(`  Skipping ${video.publicUrl} (metadata is fresh)`));
       return false;
     }
   }
@@ -630,6 +629,7 @@ async function generateVideoMetadata(ffprobePath: string, video: VideoFile, forc
 }
 
 async function runVideoGenerator(force: boolean): Promise<void> {
+  console.log(chalk.blue.bold('\n=== Video Metadata Generator ===\n'));
   if (force) console.log(chalk.yellow('Force mode: regenerating all video metadata\n'));
 
   const ffprobePath = await findFfprobePath();
@@ -641,8 +641,12 @@ async function runVideoGenerator(force: boolean): Promise<void> {
 
   const videos = await scanVideos();
   if (videos.length === 0) {
+    console.log(chalk.yellow('\nNo video files found.'));
+    console.log(chalk.dim(`Add video files to: ${VIDEO_BASE_DIR}/`));
     return;
   }
+
+  console.log(chalk.green(`Found ${videos.length} video file(s)\n`));
 
   let generated = 0;
   let skipped = 0;
@@ -664,6 +668,9 @@ async function runVideoGenerator(force: boolean): Promise<void> {
     }
   }
 
+  console.log(chalk.blue.bold('\n=== Video Summary ==='));
+  console.log(chalk.green(`  Generated: ${generated}`));
+  console.log(chalk.dim(`  Skipped: ${skipped}`));
   if (failed > 0) console.log(chalk.red(`  Failed: ${failed}`));
 }
 

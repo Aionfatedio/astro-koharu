@@ -14,6 +14,10 @@ const enhancedImages = new WeakSet<HTMLImageElement>();
 let photoSwipeInstance: PhotoSwipe | null = null;
 let isOpening = false; // Prevent double-click race condition
 
+// Debounce timer for portrait grouping; module-level so cleanupImages can cancel
+// a pending group pass when the page swaps within the 100ms debounce window.
+let groupTimer: ReturnType<typeof setTimeout> | undefined;
+
 /**
  * Collect all markdown images in container as PhotoSwipe slide data
  */
@@ -218,7 +222,6 @@ export function enhanceImages(container: Element): void {
 
   // Debounced grouping so lazy-loaded images get grouped as they load,
   // instead of waiting for every image on the page to finish.
-  let groupTimer: ReturnType<typeof setTimeout> | undefined;
   const scheduleGrouping = () => {
     clearTimeout(groupTimer);
     groupTimer = setTimeout(() => groupPortraitImages(container), 100);
@@ -264,6 +267,8 @@ export function enhanceImages(container: Element): void {
 
 export function cleanupImages(container: Element): void {
   container.removeEventListener('click', handleImageClick);
+  clearTimeout(groupTimer);
+  groupTimer = undefined;
   photoSwipeInstance?.destroy();
   photoSwipeInstance = null;
   isOpening = false;

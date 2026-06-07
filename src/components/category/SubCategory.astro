@@ -1,35 +1,33 @@
 ---
-import { buildCategoryPath, type Category } from '@lib/content';
+import type { Category } from '@lib/content';
 import CategoryTitle from './CategoryTitle.astro';
 
 interface Props {
   category: Category;
-  parentName: string;
   countMap: Record<string, number>;
 }
 
-const { category, parentName, countMap } = Astro.props;
+const { category, countMap } = Astro.props;
+const hasChildren = (category.children?.length ?? 0) > 0;
 ---
 
-<!-- <div class="flex flex-col gap-2 pl-6"> -->
 <CategoryTitle
   title={category.name}
-  count={countMap[category.name]}
-  href={buildCategoryPath([parentName, category.name])}
+  count={countMap[category.link]}
+  href={`/categories/${category.link}`}
   level="h3"
 />
 {
-  category.children?.length && (
+  hasChildren && (
     <div class="category-second-level-container flex flex-col">
-      {category.children.map((grandChild) => (
+      {category.children?.map((grandChild) => (
         <p class="shoka-decoration-circle relative px-7.5 py-2 text-base/9 text-primary hover:text-blue">
-          <a href={buildCategoryPath([parentName, category.name, grandChild.name])} class="dashed-border">
+          <a href={`/categories/${grandChild.link}`} class="dashed-border">
             {grandChild.name}
           </a>
-          <span class="text-sm text-muted-foreground">({countMap[grandChild.name] ?? 0})</span>
+          <span class="text-sm text-muted-foreground">({countMap[grandChild.link] ?? 0})</span>
         </p>
       ))}
     </div>
   )
 }
-<!-- </div> -->

@@ -74,7 +74,7 @@ export function pickPosts<K extends keyof PostFieldMap>(posts: BlogPost[], keys:
   return posts.map((post) => pickPost(post, keys));
 }
 
-// 便捷别名 - 保持向后兼容
+// 便捷转换函数：基于 pickPost 的预设字段组合
 
 /** PostRef 需要的字段 */
 const POST_REF_KEYS = ['slug', 'link', 'title'] as const;

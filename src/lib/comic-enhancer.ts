@@ -24,12 +24,38 @@ interface ComicReaderInstance {
   setProps: (key: string, value: unknown) => void;
 }
 
+interface ComicReaderInitConfig {
+  props?: {
+    defaultOption?: {
+      pageNum?: 1 | 2 | 0;
+      autoSwitchPageMode?: boolean;
+    };
+    option?: {
+      pageNum?: 1 | 2 | 0;
+      autoSwitchPageMode?: boolean;
+    };
+  };
+}
+
 interface ComicReadScriptGlobal {
-  initComicReader: (config?: unknown) => ComicReaderInstance;
+  initComicReader: (config?: ComicReaderInitConfig) => ComicReaderInstance;
 }
 
 const enhancedContainers = new WeakSet<Element>();
 const listenerMap = new WeakMap<Element, () => void>();
+
+const COMIC_READER_INIT_CONFIG = {
+  props: {
+    defaultOption: {
+      pageNum: 1,
+      autoSwitchPageMode: false,
+    },
+    option: {
+      pageNum: 1,
+      autoSwitchPageMode: false,
+    },
+  },
+} satisfies ComicReaderInitConfig;
 
 let scriptLoading: Promise<ComicReadScriptGlobal> | null = null;
 let readerInstance: ComicReaderInstance | null = null;
@@ -66,7 +92,7 @@ function loadComicReaderScript(): Promise<ComicReadScriptGlobal> {
 async function getReader(): Promise<ComicReaderInstance> {
   if (readerInstance) return readerInstance;
   const comicReadScript = await loadComicReaderScript();
-  readerInstance = comicReadScript.initComicReader();
+  readerInstance = comicReadScript.initComicReader(COMIC_READER_INIT_CONFIG);
   return readerInstance;
 }
 

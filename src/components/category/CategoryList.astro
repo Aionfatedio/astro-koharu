@@ -1,6 +1,6 @@
 ---
 import { CONTENT_PADDING } from '@constants/layout';
-import { buildCategoryPath, type Category } from '@lib/content';
+import type { Category } from '@lib/content';
 import CategoryTitle from './CategoryTitle.astro';
 import SubCategory from './SubCategory.astro';
 
@@ -20,24 +20,28 @@ const { categories, countMap, totalCount } = Astro.props;
 
   <div class="flex w-full flex-col">
     {
-      categories.map((category) => (
-        <>
-          <CategoryTitle
-            title={category.name}
-            count={countMap[category.name]}
-            href={buildCategoryPath(category.name)}
-            className={category?.children?.length ? 'has-children' : ''}
-          />
-          {category?.children?.length && (
-            <div class="category-first-level-container flex flex-col">
-              {category?.children?.length &&
-                category.children.map((child) => (
-                  <SubCategory category={child} parentName={category.name} countMap={countMap} />
-                ))}
-            </div>
-          )}
-        </>
-      ))
+      categories.map((category) => {
+        const hasChildren = (category.children?.length ?? 0) > 0;
+        return (
+          <>
+            <CategoryTitle
+              title={category.name}
+              count={countMap[category.link]}
+              href={`/categories/${category.link}`}
+              className={hasChildren ? 'has-children' : ''}
+            />
+            {
+              hasChildren && (
+                <div class="category-first-level-container flex flex-col">
+                  {category.children?.map((child) => (
+                    <SubCategory category={child} countMap={countMap} />
+                  ))}
+                </div>
+              )
+            }
+          </>
+        );
+      })
     }
   </div>
 </div>

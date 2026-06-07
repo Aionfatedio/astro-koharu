@@ -7,8 +7,9 @@
 
 import { Dialog, DialogPortal } from '@components/ui/dialog';
 import { useIsMounted } from '@hooks/useIsMounted';
-import { useEscapeKey, useKeyboardShortcut } from '@hooks/useKeyboardShortcut';
+import { useKeyboardShortcut } from '@hooks/useKeyboardShortcut';
 import { useSearchKeyboardNav } from '@hooks/useSearchKeyboardNav';
+import { SEARCH_DIALOG_SCROLL_AREA_ID } from '@lib/pagefind-search-session';
 import { cn } from '@lib/utils';
 import { useStore } from '@nanostores/react';
 import { $isSearchOpen, closeModal, openModal } from '@store/modal';
@@ -45,20 +46,32 @@ export default function SearchDialog() {
     handler: () => openModal('search'),
   });
 
-  // ESC to close
-  useEscapeKey(() => {
-    if (isOpen) closeModal();
-  }, isOpen);
+  // Capture Escape before Pagefind's input handler clears the current query.
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEscapeCapture = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      closeModal();
+    };
+
+    window.addEventListener('keydown', handleEscapeCapture, true);
+    return () => {
+      window.removeEventListener('keydown', handleEscapeCapture, true);
+    };
+  }, [isOpen]);
 
   // Dispatch events for search component portal
   useEffect(() => {
     if (isOpen) {
       window.dispatchEvent(new CustomEvent('search-dialog-open'));
-      // Focus search input after animation
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         const searchInput = document.querySelector('.pagefind-ui__search-input') as HTMLInputElement;
         searchInput?.focus();
-      }, 150);
+      });
     } else {
       window.dispatchEvent(new CustomEvent('search-dialog-close'));
     }
@@ -141,7 +154,10 @@ export default function SearchDialog() {
                       </div>
 
                       {/* Search Content Area */}
-                      <div className="vertical-scrollbar scroll-feather-mask -mx-6 h-[calc(80dvh-140px)] overflow-auto scroll-smooth px-6 pb-8 after:bottom-10 md:-mx-3 md:h-[calc(80dvh-120px)] md:px-3">
+                      <div
+                        id={SEARCH_DIALOG_SCROLL_AREA_ID}
+                        className="vertical-scrollbar scroll-feather-mask -mx-6 h-[calc(80dvh-140px)] overflow-auto scroll-smooth px-6 pb-8 after:bottom-10 md:-mx-3 md:h-[calc(80dvh-120px)] md:px-3"
+                      >
                         <div id="search-dialog-container" ref={containerRef} />
                       </div>
                     </div>

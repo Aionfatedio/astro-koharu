@@ -4,27 +4,17 @@
  */
 
 import type Artplayer from 'artplayer';
-import { $activePlayerId } from '../store/player';
+import { cleanupGlobalMediaMutex, setupGlobalMediaMutex } from './video/media-mutex';
+import { setupLocalVideoMetadataInfo } from './video/metadata';
+import { getQualityLabel } from './video/quality';
+import { getThemeColor } from './video/theme';
 
 interface PlayerInitState {
   cancelled: boolean;
   observer?: IntersectionObserver;
 }
 
-interface LocalVideoMetadata {
-  video?: {
-    fps?: number;
-    bitrate?: number;
-  };
-  format?: {
-    bitrate?: number;
-  };
-}
-
 const LAZY_LOAD_ROOT_MARGIN = '400px 0px';
-const VIDEO_PLAYER_ID_PREFIX = 'video-artplayer';
-
-let nextVideoPlayerId = 0;
 
 // Track queued, initializing, and initialized containers to avoid duplicate processing
 const trackedContainers = new WeakSet<Element>();
@@ -34,61 +24,6 @@ const playerInstances = new Map<Element, Artplayer>();
 
 // Store pending observer/initialization state for cleanup before the Artplayer instance exists
 const playerInitStates = new WeakMap<Element, PlayerInitState>();
-
-// Store media mutex cleanup callbacks for initialized players
-const playerMediaCleanups = new WeakMap<Element, () => void>();
-
-// Store stable global media player ids for each video container
-const videoPlayerIds = new WeakMap<Element, string>();
-
-/**
- * Get theme color from CSS variable
- */
-function getThemeColor(): string {
-  if (typeof document === 'undefined') return '#6366f1';
-
-  const root = document.documentElement;
-  const style = getComputedStyle(root);
-
-  // Try to get the primary color HSL values
-  const primaryHsl = style.getPropertyValue('--primary').trim();
-  if (primaryHsl) {
-    return `hsl(${primaryHsl})`;
-  }
-
-  // Fallback to a nice purple/indigo color
-  return '#6366f1';
-}
-
-/**
- * Get quality label based on video resolution
- */
-function getQualityLabel(width: number, height: number): string {
-  // Use the larger dimension to determine quality (handles both landscape and portrait)
-  const maxDimension = Math.max(width, height);
-  const minDimension = Math.min(width, height);
-
-  // Check based on standard resolutions
-  if (maxDimension >= 3840 || minDimension >= 2160) {
-    return '4K UHD';
-  }
-  if (maxDimension >= 2560 || minDimension >= 1440) {
-    return '2K FHD';
-  }
-  if (maxDimension >= 1920 || minDimension >= 1080) {
-    return '1080P HD';
-  }
-  if (maxDimension >= 1280 || minDimension >= 720) {
-    return '720P HD';
-  }
-  if (maxDimension >= 854 || minDimension >= 480) {
-    return '480P SD';
-  }
-  if (maxDimension >= 640 || minDimension >= 360) {
-    return '360P';
-  }
-  return 'Quality';
-}
 
 /**
  * Initialize a single Artplayer instance
@@ -274,160 +209,6 @@ async function initializePlayer(container: Element, state: PlayerInitState): Pro
 }
 
 /**
- * Get a stable id for the video container in the global media mutex store.
- */
-function getVideoPlayerId(container: Element): string {
-  const existingId = videoPlayerIds.get(container);
-  if (existingId) return existingId;
-
-  nextVideoPlayerId += 1;
-  const id = `${VIDEO_PLAYER_ID_PREFIX}-${nextVideoPlayerId}`;
-  videoPlayerIds.set(container, id);
-  return id;
-}
-
-/**
- * Connect Artplayer playback to the site's global audio/video mutex.
- */
-function setupGlobalMediaMutex(container: Element, player: Artplayer): void {
-  const playerId = getVideoPlayerId(container);
-  let cleaned = false;
-
-  const markActive = () => {
-    if (cleaned) return;
-    if ($activePlayerId.get() !== playerId) {
-      $activePlayerId.set(playerId);
-    }
-  };
-
-  const clearActive = () => {
-    if (cleaned) return;
-    if ($activePlayerId.get() === playerId) {
-      $activePlayerId.set(null);
-    }
-  };
-
-  const unsubscribe = $activePlayerId.listen((activeId) => {
-    if (cleaned || !activeId || activeId === playerId || !player.playing) return;
-    player.pause();
-  });
-
-  player.on('video:play', markActive);
-  player.on('video:playing', markActive);
-  player.on('video:pause', clearActive);
-  player.on('video:ended', clearActive);
-
-  const cleanup = () => {
-    if (cleaned) return;
-    unsubscribe();
-    clearActive();
-    cleaned = true;
-    playerMediaCleanups.delete(container);
-  };
-
-  playerMediaCleanups.set(container, cleanup);
-  player.on('destroy', cleanup);
-
-  if (player.playing) {
-    markActive();
-  }
-}
-
-/**
- * Resolve local video sidecar metadata URL. Network resources are skipped.
- */
-function getLocalVideoMetadataUrl(container: Element): string | null {
-  if (typeof window === 'undefined') return null;
-
-  const rawSrc = container.getAttribute('data-video-src');
-  if (!rawSrc) return null;
-
-  let url: URL;
-  try {
-    url = new URL(rawSrc, window.location.href);
-  } catch {
-    return null;
-  }
-
-  if (url.origin !== window.location.origin) return null;
-  if (!url.pathname.toLowerCase().startsWith('/media/')) return null;
-
-  return `${url.pathname}.json`;
-}
-
-function formatFrameRate(fps: number): string {
-  return fps.toLocaleString(undefined, { maximumFractionDigits: 3 });
-}
-
-function formatBitrate(bitsPerSecond: number): string {
-  if (bitsPerSecond >= 1_000_000) {
-    return `${(bitsPerSecond / 1_000_000).toLocaleString(undefined, { maximumFractionDigits: 2 })} Mbps`;
-  }
-
-  if (bitsPerSecond >= 1_000) {
-    return `${(bitsPerSecond / 1_000).toLocaleString(undefined, { maximumFractionDigits: 1 })} Kbps`;
-  }
-
-  return `${bitsPerSecond.toLocaleString()} bps`;
-}
-
-function appendInfoItem(panel: HTMLElement, title: string, content: string): void {
-  const item = document.createElement('div');
-  item.className = 'art-info-item art-info-item-local-metadata';
-
-  const titleElement = document.createElement('div');
-  titleElement.className = 'art-info-title';
-  titleElement.textContent = title;
-
-  const contentElement = document.createElement('div');
-  contentElement.className = 'art-info-content';
-  contentElement.textContent = content;
-
-  item.append(titleElement, contentElement);
-  panel.append(item);
-}
-
-/**
- * Add precise local-video metadata from generated sidecar JSON to Artplayer's info panel.
- */
-async function setupLocalVideoMetadataInfo(container: Element, player: Artplayer): Promise<void> {
-  const metadataUrl = getLocalVideoMetadataUrl(container);
-  if (!metadataUrl) return;
-
-  const controller = new AbortController();
-  let destroyed = false;
-
-  player.on('destroy', () => {
-    destroyed = true;
-    controller.abort();
-  });
-
-  try {
-    const response = await fetch(metadataUrl, { signal: controller.signal });
-    if (!response.ok) return;
-
-    const metadata = (await response.json()) as LocalVideoMetadata;
-    if (destroyed) return;
-
-    const panel = player.query<HTMLElement>('.art-info-panel');
-    if (!panel) return;
-
-    const fps = metadata.video?.fps;
-    if (typeof fps === 'number' && Number.isFinite(fps) && fps > 0) {
-      appendInfoItem(panel, 'Video framerate:', formatFrameRate(fps));
-    }
-
-    const bitrate = metadata.video?.bitrate ?? metadata.format?.bitrate;
-    if (typeof bitrate === 'number' && Number.isFinite(bitrate) && bitrate > 0) {
-      appendInfoItem(panel, 'Video bitrate:', formatBitrate(bitrate));
-    }
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') return;
-    console.warn('[Video Enhancer] Failed to load local video metadata:', error);
-  }
-}
-
-/**
  * Release pending initialization state. Keeps a newer state intact if the same
  * element was re-enhanced after cleanup.
  */
@@ -500,7 +281,7 @@ function destroyPlayer(container: Element): void {
 
   const player = playerInstances.get(container);
   if (player) {
-    playerMediaCleanups.get(container)?.();
+    cleanupGlobalMediaMutex(container);
     player.destroy(true); // true = remove all generated HTML DOM
     playerInstances.delete(container);
   }

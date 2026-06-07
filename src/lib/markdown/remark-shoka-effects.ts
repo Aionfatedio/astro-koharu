@@ -64,14 +64,19 @@ function createInlinePlugin(pattern: RegExp, tagName: string) {
           parts.push({ type: 'text', value: text.slice(lastIndex, match.index) });
         }
 
-        // Check for trailing {attrs} immediately after the match
+        // Check for trailing {attrs} immediately after the match.
+        // Only consume the {...} when it parses into at least one valid attribute;
+        // otherwise leave it untouched so literal braces are preserved as text.
         let attrStr = '';
         const afterMatch = text.slice(match.index + match[0].length);
         const attrMatch = TRAILING_ATTRS.exec(afterMatch);
         if (attrMatch) {
-          attrStr = buildAttrString(attrMatch[1]);
-          // Advance past the consumed {attrs}
-          pattern.lastIndex += attrMatch[0].length;
+          const built = buildAttrString(attrMatch[1]);
+          if (built) {
+            attrStr = built;
+            // Advance past the consumed {attrs}
+            pattern.lastIndex += attrMatch[0].length;
+          }
         }
 
         parts.push({

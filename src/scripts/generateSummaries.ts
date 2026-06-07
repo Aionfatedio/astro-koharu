@@ -21,14 +21,10 @@ import { generateText } from '@xsai/generate-text';
 import chalk from 'chalk';
 import { glob } from 'glob';
 import matter from 'gray-matter';
-import { remark } from 'remark';
-import strip from 'strip-markdown';
-import { transliterateSlugValue } from '../lib/slug-core';
+import { CONTENT_GLOB, extractSlug, getPlainText } from './lib/content-text';
 import { readSlugTransliterationEnabled } from './lib/site-config';
 
 // --------- Configuration ---------
-const CONTENT_ROOT = path.join('src', 'content', 'blog');
-const CONTENT_GLOB = 'src/content/blog/**/*.md';
 const CACHE_FILE = '.cache/summaries-cache.json';
 const OUTPUT_FILE = 'src/assets/summaries.json';
 const CACHE_VERSION = '1';
@@ -106,29 +102,6 @@ async function saveCache(cache: SummariesCache): Promise<void> {
 
 function isCacheValid(cache: SummariesCache, model: string): boolean {
   return cache.version === CACHE_VERSION && cache.model === model;
-}
-
-async function getPlainText(markdown: string): Promise<string> {
-  const result = await remark().use(strip).process(markdown);
-  return String(result)
-    .replace(/^import\s+.*$/gm, '')
-    .replace(/^export\s+.*$/gm, '')
-    .replace(/^\s*(TLDR|Introduction|Conclusion|Summary|References?|Footnotes?)\s*$/gim, '')
-    .replace(/^[A-Z\s]{4,}$/gm, '')
-    .replace(/^\|.*\|$/gm, '')
-    .replace(/^:::.*/gm, '')
-    .replace(/\n{3,}/g, '\n\n')
-    .replace(/\s{2,}/g, ' ')
-    .trim();
-}
-
-function extractSlug(filePath: string, link: string | undefined, slugTransliterationEnabled: boolean): string {
-  if (link) return link;
-
-  const relativePath = path.relative(CONTENT_ROOT, filePath);
-  const extension = path.extname(relativePath);
-  const slug = extension ? relativePath.slice(0, -extension.length) : relativePath;
-  return transliterateSlugValue(slug.split(path.sep).join('/'), slugTransliterationEnabled);
 }
 
 // --------- LLM API ---------

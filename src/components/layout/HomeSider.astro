@@ -108,6 +108,7 @@ const nextPost = adjacentPosts.nextPost ? toPostRef(adjacentPosts.nextPost) : nu
     private seriesContent: HTMLElement | null = null;
     private pageType: string | null = null;
     private defaultType: string | null = null;
+    private unsubscribe: (() => void) | null = null;
 
     constructor() {
       super();
@@ -145,10 +146,16 @@ const nextPost = adjacentPosts.nextPost ? toPostRef(adjacentPosts.nextPost) : nu
         this.showContent(initialType, true);
 
         // 监听状态变化（有动画）
-        homeSiderSegmentType.listen((value) => {
+        this.unsubscribe = homeSiderSegmentType.listen((value) => {
           this.showContent(value, false);
         });
       }
+    }
+
+    disconnectedCallback() {
+      // 元素从 DOM 移除时退订，避免客户端导航后旧元素的 store 订阅泄漏
+      this.unsubscribe?.();
+      this.unsubscribe = null;
     }
 
     showContent(type: HomeSiderSegmentType, skipAnimation = false) {

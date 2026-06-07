@@ -1,10 +1,9 @@
 ---
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
-import { categoryMap } from '@constants/category';
 import { Routes } from '@constants/router';
 import { siteConfig } from '@constants/site-config';
-import { type Category, getCategoryByLink, getCategoryList, getParentCategory, getPostsByCategory } from '@lib/content';
+import { type Category, getCategoryByLink, getCategoryList, getParentCategory, getPostsByCategoryPath } from '@lib/content';
 import { toPostRefs } from '@lib/content/transforms';
 import { getLqipStyle } from '@lib/lqip';
 import { routeBuilder } from '@lib/route';
@@ -27,7 +26,7 @@ const { categories } = await getCategoryList();
 const categoryPosts: CategoryWithPosts[] = await Promise.all(
   siteConfig.featuredCategories?.map(async (category) => {
     const categoryInfo = getCategoryByLink(categories, category?.link);
-    const posts = await getPostsByCategory(categoryInfo?.name ?? '');
+    const posts = categoryInfo ? await getPostsByCategoryPath(categoryInfo.path) : [];
     return {
       link: category.link,
       label: category?.label,
@@ -86,7 +85,7 @@ const categoryPosts: CategoryWithPosts[] = await Promise.all(
               {categoryInfo?.children?.length
                 ? categoryInfo.children.map((child) => (
                     <a
-                      href={categoryLink + '/' + categoryMap[child?.name]}
+                      href={`${Routes.Categories}/${child.link}`}
                       class="text-primary hover:text-blue truncate text-left transition-colors duration-300"
                     >
                       {child.name}

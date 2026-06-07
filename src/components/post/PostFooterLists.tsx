@@ -18,12 +18,6 @@ export default function PostFooterLists({ allPosts, relatedPosts, leftCount, rig
   const { leftPosts, rightPosts, hasRelatedPosts } = useMemo(() => {
     const hasRelated = relatedPosts.length > 0;
 
-    // Debug logging
-    if (import.meta.env.DEV) {
-      console.log('[PostFooterLists] relatedPosts:', relatedPosts);
-      console.log('[PostFooterLists] hasRelated:', hasRelated);
-    }
-
     // Shuffle once and split to avoid duplicates
     const shuffled = shuffleArray(allPosts);
     return {

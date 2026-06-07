@@ -197,3 +197,38 @@ export function getSiblingIds(targetHeading: Heading, allHeadings: Heading[]): s
 
   return siblings;
 }
+
+/**
+ * Accordion update for the heading tree.
+ *
+ * Given the path of node IDs to open (ancestors, optionally including the node
+ * itself), opens every node on the path and closes its same-level siblings.
+ * Pure function — returns a new Set, so it is trivially testable.
+ */
+export function applyAccordion(prev: Set<string>, headings: Heading[], pathIds: string[]): Set<string> {
+  const newSet = new Set(prev);
+
+  // Group path nodes by level (a node closes only its same-level siblings)
+  const idsByLevel: { [level: number]: string[] } = {};
+  for (const id of pathIds) {
+    const heading = findHeadingById(headings, id);
+    if (!heading) continue;
+    if (!idsByLevel[heading.level]) idsByLevel[heading.level] = [];
+    idsByLevel[heading.level].push(id);
+  }
+
+  for (const idsAtLevel of Object.values(idsByLevel)) {
+    for (const id of idsAtLevel) {
+      const heading = findHeadingById(headings, id);
+      if (!heading) continue;
+      // Close siblings at this level
+      for (const siblingId of getSiblingIds(heading, headings)) {
+        newSet.delete(siblingId);
+      }
+      // Open this node
+      newSet.add(id);
+    }
+  }
+
+  return newSet;
+}

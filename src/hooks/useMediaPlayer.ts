@@ -159,12 +159,14 @@ export function useMediaPlayer<T>({ tracks, getUrl, getElement }: UseMediaPlayer
     };
   }, [boundElement, timeStore]);
 
-  // Pause when another player starts
+  // Pause when another player starts. Driven by activeId; reads the latest
+  // playing flag via stateRef so a high-frequency state.playing dependency
+  // doesn't re-subscribe this effect on every play/pause.
   useEffect(() => {
-    if (activeId !== null && activeId !== playerId && state.playing) {
+    if (activeId !== null && activeId !== playerId && stateRef.current.playing) {
       getElementRef.current()?.pause();
     }
-  }, [activeId, playerId, state.playing]);
+  }, [activeId, playerId]);
 
   const play = useCallback(
     (index?: number) => {

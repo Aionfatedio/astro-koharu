@@ -1,13 +1,16 @@
 ---
-import FriendRequestForm from '@components/friends/FriendRequestForm';
-import FriendsGrid from '@components/friends/FriendsGrid';
+import FriendsRedirect from '@components/friends/FriendsRedirect';
+// 友情链接功能暂时停用，以下组件保留代码、暂时注释，恢复友链功能时取消注释即可：
+// import FriendRequestForm from '@components/friends/FriendRequestForm';
+// import FriendsGrid from '@components/friends/FriendsGrid';
 import HomeSider from '@components/layout/HomeSider.astro';
 import Cover from '@components/ui/cover/Cover.astro';
 import { CONTENT_PADDING } from '@constants/layout';
 import { siteConfig } from '@constants/site-config';
 import Layout from '@layouts/Layout.astro';
 import TwoColumnLayout from '@layouts/TwoColumnLayout.astro';
-import { Comment } from '@/components/comment';
+
+// import { Comment } from '@/components/comment';
 
 const title = `友情链接 | ${siteConfig.title}`;
 const description = '我的小伙伴们，欢迎加友链～';
@@ -20,6 +23,10 @@ const description = '我的小伙伴们，欢迎加友链～';
     <div
       class={`bg-gradient-start shadow-box tablet:shadow-none flex flex-col gap-10 overflow-hidden ${CONTENT_PADDING.standard}`}
     >
+      {/* 友情链接功能暂时停用：访问者将在 5 秒后重定向回主页 */}
+      <FriendsRedirect client:load />
+
+      {/* 原友链内容（友链网格 / 申请友链卡片 / 评论区）暂时停用，恢复时取消以下注释：
       <div class="mt-4">
         <FriendsGrid client:load />
       </div>
@@ -27,6 +34,7 @@ const description = '我的小伙伴们，欢迎加友链～';
         <FriendRequestForm client:visible />
         <Comment />
       </div>
+      */}
     </div>
   </TwoColumnLayout>
 </Layout>

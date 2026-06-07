@@ -19,23 +19,20 @@ const lightCount = 50;
 </ul>
 
 <script>
-  function initLightsVisibility() {
-    // Tab 可见性检测 - 不可见时暂停动画以节省资源
-    const handleVisibility = () => {
-      document.documentElement.classList.toggle('lights-paused', document.hidden);
-    };
-
-    // 初始化时检查状态
-    handleVisibility();
-
-    document.addEventListener('visibilitychange', handleVisibility);
+  // Module-level stable reference. visibilitychange is global, so it only needs
+  // to be bound once for the page lifetime (script module code runs once across
+  // Astro view transitions) — avoiding listener accumulation on every navigation.
+  function handleVisibility() {
+    document.documentElement.classList.toggle('lights-paused', document.hidden);
   }
 
-  // 初始化
+  document.addEventListener('visibilitychange', handleVisibility);
+
+  // On initial load and each navigation, just re-sync the current state.
   if (document.readyState !== 'loading') {
-    initLightsVisibility();
+    handleVisibility();
   }
-  document.addEventListener('astro:page-load', initLightsVisibility);
+  document.addEventListener('astro:page-load', handleVisibility);
 </script>
 
 <style>

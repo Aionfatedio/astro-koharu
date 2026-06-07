@@ -73,11 +73,6 @@ export interface FeaturedSeriesItem {
   links?: FeaturedSeriesLinks;
 }
 
-/**
- * @deprecated Use FeaturedSeriesItem instead
- */
-export type FeaturedSeries = FeaturedSeriesItem;
-
 // =============================================================================
 // Social Configuration
 // =============================================================================
@@ -169,6 +164,8 @@ export interface ContentConfig {
   enableEncryptedBlock?: boolean;
   enableComicCard?: boolean;
   enableIconifyInline?: boolean;
+  /** Post card image position on list pages @default 'alternating' */
+  postCardImagePosition?: 'alternating' | 'left' | 'right';
 }
 
 // =============================================================================
@@ -556,7 +553,7 @@ export interface SiteYamlConfig {
   friends?: FriendsConfig;
   announcements?: AnnouncementConfig[];
   defaultCoverList?: string[];
-  content?: ContentConfig;
+  content?: Partial<ContentConfig>;
   navigation?: RouterItem[];
   comment?: CommentConfig;
   analytics?: AnalyticsConfig;
@@ -567,5 +564,5 @@ export interface SiteYamlConfig {
   bgm?: BgmConfig;
   christmas?: ChristmasConfig;
   /** Development tools configuration (dev only) */
-  dev?: DevConfig;
+  dev?: Partial<DevConfig>;
 }

@@ -41,7 +41,13 @@ const relatedPosts = hasData && post ? getRelatedPosts(post, allPosts, 5).map(to
   ) : (
     <>
       <RandomPostList client:only="react" postsPool={leftPool} count={leftCount} />
-      {(hasData || totalPosts <= 10) && <RelatedPostList client:only="react" posts={relatedPosts} fallbackPool={rightPool} fallbackCount={rightCount} startIndex={leftCount + 1} />}
+      <RelatedPostList
+        client:only="react"
+        posts={relatedPosts}
+        fallbackPool={rightPool}
+        fallbackCount={rightCount}
+        startIndex={leftCount + 1}
+      />
     </>
   )}
 </div>

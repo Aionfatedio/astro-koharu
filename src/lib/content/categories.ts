@@ -3,19 +3,53 @@
  */
 
 import { categoryMap } from '@constants/category';
-import { encodeSlug } from '../route';
 import { memoize } from './cache';
+import { buildCategoryLink, getCategoryPaths, getCategorySlug } from './category-path';
 import { getSortedPosts } from './posts';
 import type { Category, CategoryListResult } from './types';
 
-/** Reverse map: slug → category name for O(1) lookup */
-const slugToName = new Map<string, string>();
-for (const [name, slug] of Object.entries(categoryMap)) {
-  slugToName.set(slug, name);
+// Re-export pure path utilities (defined in category-path.ts to break circular dependency)
+export { buildCategoryLink, buildCategoryPath, getCategoryPaths, getCategorySlug } from './category-path';
+
+function createCategory(path: string[]): Category {
+  const name = path[path.length - 1];
+  return {
+    name,
+    slug: getCategorySlug(name),
+    path: [...path],
+    link: buildCategoryLink(path),
+  };
 }
 
-// Re-export pure path utilities (defined in category-path.ts to break circular dependency)
-export { buildCategoryPath, getCategoryArr } from './category-path';
+function ensureCategoryPath(rootCategories: Category[], path: string[]): void {
+  let siblings = rootCategories;
+  const currentPath: string[] = [];
+
+  for (const name of path) {
+    currentPath.push(name);
+    const link = buildCategoryLink(currentPath);
+    let category = siblings.find((item) => item.link === link);
+
+    if (!category) {
+      category = createCategory(currentPath);
+      siblings.push(category);
+    }
+
+    category.children ??= [];
+    siblings = category.children;
+  }
+}
+
+function findCategoryByLink(categories: Category[], link: string): Category | null {
+  for (const category of categories) {
+    if (category.link === link) return category;
+    if (category.children?.length) {
+      const childCategory = findCategoryByLink(category.children, link);
+      if (childCategory) return childCategory;
+    }
+  }
+  return null;
+}
 
 /**
  * Get hierarchical category list with counts (excluding drafts in production)
@@ -23,10 +57,9 @@ export { buildCategoryPath, getCategoryArr } from './category-path';
 export async function getCategoryList(): Promise<CategoryListResult> {
   return memoize('categoryList', '__all__', async () => {
     const allBlogPosts = await getSortedPosts();
-    const countMap: { [key: string]: number } = {}; // TODO: 需要优化，应该以分类路径为键名而不是 name 如数据结构既是根分类也是笔记-后端-数据结构。
+    const countMap: { [key: string]: number } = {};
     const resCategories: Category[] = [];
 
-    // 统计每个分类的直接文章数量
     for (let i = 0; i < allBlogPosts.length; ++i) {
       const post = allBlogPosts[i];
       const { catalog, categories } = post.data;
@@ -34,25 +67,14 @@ export async function getCategoryList(): Promise<CategoryListResult> {
         continue;
       }
 
-      const firstCategory = categories[0];
-      if (Array.isArray(firstCategory)) {
-        // categories[0] = ['笔记', '算法']
-        if (!firstCategory.length) continue;
+      for (const categoryPath of getCategoryPaths(categories)) {
+        ensureCategoryPath(resCategories, categoryPath);
 
-        for (let j = 0; j < firstCategory.length; ++j) {
-          const name = firstCategory[j];
-          countMap[name] = (countMap[name] || 0) + 1;
-          if (j === 0) {
-            addCategoryRecursively(resCategories, [], name);
-          } else {
-            const parentNames = firstCategory.slice(0, j);
-            addCategoryRecursively(resCategories, parentNames, name);
-          }
+        for (let j = 0; j < categoryPath.length; ++j) {
+          const partialPath = categoryPath.slice(0, j + 1);
+          const link = buildCategoryLink(partialPath);
+          countMap[link] = (countMap[link] || 0) + 1;
         }
-      } else if (typeof firstCategory === 'string') {
-        // categories[0] = '工具'
-        countMap[firstCategory] = (countMap[firstCategory] || 0) + 1;
-        addCategoryRecursively(resCategories, [], firstCategory);
       }
     }
 
@@ -67,25 +89,7 @@ export async function getCategoryList(): Promise<CategoryListResult> {
  * @param name 子分类名 '分类3'
  */
 export function addCategoryRecursively(rootCategories: Category[], parentNames: string[], name: string) {
-  if (parentNames.length === 0) {
-    const index = rootCategories.findIndex((c) => c.name === name); // 如果当前分类已存在，则直接返回
-    if (index === -1) rootCategories.push({ name });
-    return;
-  } else {
-    const rootParentName = parentNames[0];
-    const index = rootCategories.findIndex((c) => c.name === rootParentName);
-    if (index === -1) {
-      // 如果父级分类不存在，则创建
-      const rootParentCategory = { name: rootParentName, children: [] };
-      rootCategories.push(rootParentCategory);
-      addCategoryRecursively(rootParentCategory.children, parentNames.slice(1), name);
-    } else {
-      // 如果父级分类存在,找到这个分类
-      const rootParentCategory = rootCategories[index];
-      if (!rootParentCategory?.children) rootParentCategory.children = [];
-      addCategoryRecursively(rootParentCategory.children, parentNames.slice(1), name);
-    }
-  }
+  ensureCategoryPath(rootCategories, [...parentNames, name]);
 }
 
 /**
@@ -98,11 +102,9 @@ export function getCategoryLinks(categories?: Category[], parentLink?: string): 
   if (!categories?.length) return [];
   const res: string[] = [];
   categories.forEach((category: Category) => {
-    const link = encodeSlug(categoryMap[category.name]);
-    const fullLink = parentLink ? `${parentLink}/${link}` : link;
-    res.push(fullLink);
+    res.push(parentLink ? `${parentLink}/${category.slug}` : category.link);
     if (category?.children?.length) {
-      const children = getCategoryLinks(category?.children, fullLink);
+      const children = getCategoryLinks(category?.children, category.link);
       res.push(...children);
     }
   });
@@ -117,34 +119,24 @@ export function getCategoryLinks(categories?: Category[], parentLink?: string): 
 export function getCategoryNameByLink(link: string): string {
   if (!link) return '';
 
-  // Remove leading/trailing slashes and split
   const cleanLink = link.replace(/^\/+|\/+$/g, '');
   if (!cleanLink) return '';
 
-  const segments = cleanLink.split('/').filter(Boolean); // Filter out empty segments
+  const segments = cleanLink.split('/').filter(Boolean);
   if (segments.length === 0) return '';
 
   const lastSegment = decodeURIComponent(segments[segments.length - 1]);
-  return slugToName.get(lastSegment) ?? '';
+  const match = Object.entries(categoryMap).find(([, slug]) => slug === lastSegment);
+  return match?.[0] ?? '';
 }
 
 /**
  * Get category by link
  */
 export function getCategoryByLink(categories: Category[], link?: string): Category | null {
-  const name = getCategoryNameByLink(link ?? '');
-  if (!name || !categories?.length) return null;
-  for (let i = 0; i < categories.length; ++i) {
-    const category = categories[i];
-    if (category.name === name) {
-      return category;
-    }
-    if (category?.children?.length) {
-      const res = getCategoryByLink(category.children, link);
-      if (res) return res;
-    }
-  }
-  return null;
+  const normalizedLink = link?.replace(/^\/+|\/+$/g, '') ?? '';
+  if (!normalizedLink || !categories?.length) return null;
+  return findCategoryByLink(categories, normalizedLink);
 }
 
 /**
@@ -157,7 +149,7 @@ export function getParentCategory(category: Category | null, categories: Categor
     if (!c.children?.length) continue;
 
     // 直接检查当前层级
-    if (c.children.some((child) => child.name === category.name)) {
+    if (c.children.some((child) => child.link === category.link)) {
       return c;
     }
 

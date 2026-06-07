@@ -1,19 +1,21 @@
 // Import YAML config directly - processed by @rollup/plugin-yaml
 
+import { normalizeSiteYamlConfig } from '@lib/config/normalize';
 import type {
   AnalyticsConfig,
   BgmAudioGroup,
   CommentConfig,
+  ContentConfig,
   DevConfig,
   FeaturedCategory,
   FeaturedSeriesItem,
   SiteBasicConfig,
 } from '@lib/config/types';
-import { DEFAULT_TIMEZONE, isValidTimezone } from '@lib/timezone';
 import { createUmamiStatsConfig } from '@lib/umami-stats';
 import type { UmamiStatsConfig } from '@/types/umami-stats';
-import yamlConfig from '../../config/site.yaml';
-import { isReservedSlug, RESERVED_ROUTES } from './router';
+import rawYamlConfig from '../../config/site.yaml';
+
+const yamlConfig = normalizeSiteYamlConfig(rawYamlConfig);
 
 /**
  * Runtime site configuration
@@ -26,131 +28,6 @@ type SiteConfig = Omit<SiteBasicConfig, 'url'> & {
   /** Normalized array of featured series */
   featuredSeries: FeaturedSeriesItem[];
 };
-
-/**
- * Type guard to check if an unknown value is a valid FeaturedSeriesItem
- * @param value - The value to check
- * @returns true if the value is a valid FeaturedSeriesItem
- */
-function isFeaturedSeriesItem(value: unknown): value is FeaturedSeriesItem {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-
-  const item = value as Record<string, unknown>;
-
-  // Check required field: categoryName must be a non-empty string
-  if (typeof item.categoryName !== 'string' || item.categoryName.trim() === '') {
-    return false;
-  }
-
-  // Check optional but important fields
-  if (item.slug !== undefined && typeof item.slug !== 'string') {
-    return false;
-  }
-
-  if (item.label !== undefined && typeof item.label !== 'string') {
-    return false;
-  }
-
-  if (item.enabled !== undefined && typeof item.enabled !== 'boolean') {
-    return false;
-  }
-
-  return true;
-}
-
-/**
- * Normalize featured series config to array format
- * Supports both legacy single object and new array format
- * Validates all series configurations at build time
- */
-function normalizeFeaturedSeries(config: unknown): FeaturedSeriesItem[] {
-  if (!config) return [];
-
-  // Convert to array format
-  let items: unknown[];
-  if (Array.isArray(config)) {
-    items = config;
-  } else {
-    // Legacy single object format - convert to array with default slug
-    items = [config];
-  }
-
-  // Validate each item using type guard
-  const validatedItems: FeaturedSeriesItem[] = [];
-  for (const [index, item] of items.entries()) {
-    if (!isFeaturedSeriesItem(item)) {
-      const itemStr = JSON.stringify(item, null, 2);
-      throw new Error(
-        `Featured series configuration error: Item at index ${index} is not a valid FeaturedSeriesItem.\n` +
-          `Expected an object with at least a 'categoryName' string field.\n` +
-          `Received: ${itemStr}`,
-      );
-    }
-
-    // Add default slug for legacy configs
-    const slug = item.slug || yamlConfig.categoryMap?.[item.categoryName] || 'series';
-    validatedItems.push({ ...item, slug });
-  }
-
-  // Validate each series configuration
-  const slugSet = new Set<string>();
-
-  for (const item of validatedItems) {
-    const rawSlug = typeof item.slug === 'string' ? item.slug : '';
-    const normalizedSlug = rawSlug.trim().toLowerCase();
-
-    // Validate required fields
-    if (!normalizedSlug) {
-      throw new Error(
-        `Featured series configuration error: Missing or invalid "slug" field. ` + `Each series must have a non-empty slug.`,
-      );
-    }
-
-    if (!item.categoryName || typeof item.categoryName !== 'string' || item.categoryName.trim() === '') {
-      throw new Error(
-        `Featured series configuration error: Series "${item.slug}" is missing or has invalid "categoryName" field. ` +
-          `Each series must have a valid category name.`,
-      );
-    }
-
-    // Validate slug format (alphanumeric, hyphens, underscores only)
-    const slugPattern = /^[a-z0-9-_]+$/i;
-    if (!slugPattern.test(normalizedSlug)) {
-      throw new Error(
-        `Featured series configuration error: Invalid slug "${rawSlug}". ` +
-          `Slugs must contain only alphanumeric characters, hyphens, and underscores.`,
-      );
-    }
-
-    // Check for reserved slugs
-    if (isReservedSlug(normalizedSlug)) {
-      throw new Error(
-        `Featured series configuration error: Slug "${rawSlug}" conflicts with a reserved route. ` +
-          `Reserved routes are: ${Array.from(RESERVED_ROUTES).join(', ')}. ` +
-          `Please choose a different slug.`,
-      );
-    }
-
-    // Check for duplicate slugs
-    if (slugSet.has(normalizedSlug)) {
-      throw new Error(`Featured series configuration error: Duplicate slug "${rawSlug}". Each series must have a unique slug.`);
-    }
-    slugSet.add(normalizedSlug);
-    item.slug = normalizedSlug;
-
-    // Validate categoryName exists in categoryMap
-    if (yamlConfig.categoryMap && !yamlConfig.categoryMap[item.categoryName]) {
-      console.warn(
-        `[Warning] Featured series "${item.slug}": Category "${item.categoryName}" not found in categoryMap. ` +
-          `Consider adding it to config/site.yaml for proper URL mapping.`,
-      );
-    }
-  }
-
-  return validatedItems;
-}
 
 type SocialPlatform = {
   url: string;
@@ -193,7 +70,7 @@ export const siteConfig: SiteConfig = {
   keywords: yamlConfig.site.keywords,
   breadcrumbHome: yamlConfig.site.breadcrumbHome,
   featuredCategories: yamlConfig.featuredCategories,
-  featuredSeries: normalizeFeaturedSeries(yamlConfig.featuredSeries),
+  featuredSeries: yamlConfig.featuredSeries,
   enableSlugTransliteration: yamlConfig.site.enableSlugTransliteration,
 };
 
@@ -235,30 +112,13 @@ type ChristmasConfig = {
 };
 
 // Map YAML comment config
-export const commentConfig: CommentConfig = yamlConfig.comment || {};
-
-// Content config types
-type ContentConfig = {
-  addBlankTarget?: boolean;
-  smoothScroll?: boolean;
-  addHeadingLevel?: boolean;
-  enhanceCodeBlock?: boolean;
-  enableCodeCopy?: boolean;
-  enableCodeFullscreen?: boolean;
-  enableLinkEmbed?: boolean;
-  enableTweetEmbed?: boolean;
-  enableOGPreview?: boolean;
-  previewCacheTime?: number;
-  lazyLoadEmbeds?: boolean;
-  /** Post card image position: 'alternating' | 'left' | 'right' */
-  postCardImagePosition?: 'alternating' | 'left' | 'right';
-};
+export const commentConfig: CommentConfig = yamlConfig.comment;
 
 // Map YAML content config
-export const contentConfig: ContentConfig = yamlConfig.content || {};
+export const contentConfig: ContentConfig = yamlConfig.content;
 
 // Map YAML analytics config
-export const analyticsConfig: AnalyticsConfig = yamlConfig.analytics || {};
+export const analyticsConfig: AnalyticsConfig = yamlConfig.analytics;
 
 const _umami = analyticsConfig?.umami;
 
@@ -276,39 +136,17 @@ export function createArticleStatsConfig(href: string): UmamiStatsConfig | null 
 }
 
 // Map YAML christmas config with defaults
-export const christmasConfig: ChristmasConfig = yamlConfig.christmas || {
-  enabled: false,
-  features: {
-    snowfall: true,
-    christmasColorScheme: true,
-    christmasCoverDecoration: true,
-    christmasHat: true,
-    readingTimeSnow: true,
-  },
-  snowfall: {
-    speed: 0.5,
-    intensity: 0.7,
-    mobileIntensity: 0.4,
-    maxLayers: 6,
-    maxIterations: 8,
-    mobileMaxLayers: 4,
-    mobileMaxIterations: 6,
-  },
-};
+export const christmasConfig: ChristmasConfig = yamlConfig.christmas;
 
 // Map YAML bgm config
 export const bgmConfig: { enabled: boolean; metingApi?: string; audio: BgmAudioGroup[] } = {
-  enabled: yamlConfig.bgm?.enabled ?? (yamlConfig.bgm?.audio?.length ?? 0) > 0,
-  metingApi: yamlConfig.bgm?.metingApi,
-  audio: yamlConfig.bgm?.audio ?? [],
+  enabled: yamlConfig.bgm.enabled,
+  metingApi: yamlConfig.bgm.metingApi,
+  audio: yamlConfig.bgm.audio,
 };
 
 // Map YAML dev tools config with defaults (dev only)
-export const devConfig: DevConfig = {
-  localProjectPath: yamlConfig.dev?.localProjectPath ?? '',
-  contentRelativePath: yamlConfig.dev?.contentRelativePath ?? 'src/content/blog',
-  editors: yamlConfig.dev?.editors ?? [],
-};
+export const devConfig: DevConfig = yamlConfig.dev;
 
 // =============================================================================
 // Site Timezone
@@ -316,16 +154,11 @@ export const devConfig: DevConfig = {
 
 /**
  * Site timezone in IANA format
- * Falls back to 'Asia/Shanghai' if configured timezone is invalid
+ * Defaults to 'Asia/Shanghai' and throws during config normalization if invalid.
  * @default 'Asia/Shanghai'
  */
 export const siteTimezone: string = (() => {
-  const configuredTz = yamlConfig.site.timezone ?? DEFAULT_TIMEZONE;
-  if (!isValidTimezone(configuredTz)) {
-    console.warn(`[config] Invalid timezone "${configuredTz}", falling back to "${DEFAULT_TIMEZONE}"`);
-    return DEFAULT_TIMEZONE;
-  }
-  return configuredTz;
+  return yamlConfig.site.timezone;
 })();
 
 // =============================================================================

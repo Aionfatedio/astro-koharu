@@ -398,21 +398,22 @@
   }
 }
 
-.prose pre code,
-.prose table,
-.mermaid-source,
-.infographic-container {
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--primary) / 0.45) transparent;
-}
-
 .prose pre code::-webkit-scrollbar,
 .prose table::-webkit-scrollbar,
 .mermaid-source::-webkit-scrollbar,
 .infographic-container::-webkit-scrollbar {
   width: 0.45rem;
-  height: 0.45rem;
+  height: 0.25rem;
   background: transparent;
+}
+
+.prose pre code::-webkit-scrollbar-button,
+.prose table::-webkit-scrollbar-button,
+.mermaid-source::-webkit-scrollbar-button,
+.infographic-container::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .prose pre code::-webkit-scrollbar-track,
@@ -819,7 +820,7 @@
 }
 
 .artist-score {
-  position: relative; 
+  position: relative;
 }
 
 .artist-score::after {
@@ -839,8 +840,8 @@
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
-  transform: translate(0, -50%); 
-  transition: opacity 0.15s ease; 
+  transform: translate(0, -50%);
+  transition: opacity 0.15s ease;
 }
 
 .artist-score::before {
@@ -856,8 +857,8 @@
   background: hsl(var(--popover));
   pointer-events: none;
   opacity: 0;
-  transform: translate(-0.5rem, -50%) rotate(45deg); 
-  transition: opacity 0.15s ease; 
+  transform: translate(-0.5rem, -50%) rotate(45deg);
+  transition: opacity 0.15s ease;
 }
 
 .artist-score:hover::after,

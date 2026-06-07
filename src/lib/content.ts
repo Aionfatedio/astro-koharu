@@ -1,8 +1,8 @@
 /**
- * Content utilities - Index file
+ * Content utilities - barrel file
  *
- * Re-exports all content-related utilities from modular files.
- * This maintains backward compatibility while organizing code better.
+ * Re-exports all content-related utilities from the modular files under
+ * content/, providing a single `@lib/content` import surface.
  */
 
 // =============================================================================
@@ -10,15 +10,17 @@
 // =============================================================================
 export {
   addCategoryRecursively,
+  buildCategoryLink,
   buildCategoryPath,
-  getCategoryArr,
   getCategoryByLink,
   getCategoryLinks,
   getCategoryList,
   getCategoryNameByLink,
+  getCategoryPaths,
+  getCategorySlug,
   getParentCategory,
 } from './content/categories';
-
+export type { PostSummarySource, ResolvedPostSummary } from './content/posts';
 // =============================================================================
 // Post Utilities
 // =============================================================================
@@ -39,20 +41,19 @@ export {
   getPostLastCategory,
   getPostReadingTime,
   getPostSummary,
-  getPostsByCategory,
+  getPostsByCategoryName,
+  getPostsByCategoryPath,
   getPostsBySeriesSlug,
   getPostsBySticky,
-  getRandomPosts,
   getSeriesBySlug,
   getSeriesPosts,
   getSortedPosts,
+  resolvePostSummary,
 } from './content/posts';
-
 // =============================================================================
 // Tag Utilities
 // =============================================================================
 export { buildTagPath, getAllTags, normalizeTag, tagToSlug } from './content/tags';
-
 // =============================================================================
 // Types
 // =============================================================================

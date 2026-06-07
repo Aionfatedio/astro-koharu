@@ -6,7 +6,7 @@
  * 1. Loads the embedding model via @huggingface/transformers
  * 2. Reads all markdown files from src/content/blog/
  * 3. Extracts plain text from title + description + body using remark
- * 4. Generates normalized embeddings for each post (batched for performance)
+ * 4. Generates normalized embeddings for each post (sequential — see generateEmbeddings)
  * 5. Computes cosine similarity between all posts
  * 6. Stores top N similar posts per post in JSON
  */
@@ -17,14 +17,10 @@ import { type DeviceType, env, type FeatureExtractionPipeline, pipeline } from '
 import chalk from 'chalk';
 import { glob } from 'glob';
 import matter from 'gray-matter';
-import { remark } from 'remark';
-import strip from 'strip-markdown';
-import { transliterateSlugValue } from '../lib/slug-core';
+import { CONTENT_GLOB, extractSlug, getPlainText } from './lib/content-text';
 import { readSlugTransliterationEnabled } from './lib/site-config';
 
 // --------- Configuration ---------
-const CONTENT_ROOT = path.join('src', 'content', 'blog');
-const CONTENT_GLOB = 'src/content/blog/**/*.md';
 const OUTPUT_FILE = 'src/assets/similarities.json';
 const TOP_N_SIMILAR = 5;
 const MODEL_NAME = 'Snowflake/snowflake-arctic-embed-m-v2.0';
@@ -122,10 +118,14 @@ async function loadSummaries(): Promise<SummariesMap> {
 
 /**
  * Normalizes a vector to unit length (L2 norm == 1)
- * This makes cosine similarity a simple dot product
+ * This makes cosine similarity a simple dot product.
+ * Uses a manual loop (not Math.hypot(...vec)) to avoid spreading large typed
+ * arrays as function arguments, which risks a RangeError on high-dimension models.
  */
 function normalize(vec: Float32Array): Float32Array {
-  const len = Math.hypot(...vec);
+  let sumSq = 0;
+  for (const x of vec) sumSq += x * x;
+  const len = Math.sqrt(sumSq);
   if (!len) return vec;
   return new Float32Array(vec.map((x) => x / len));
 }
@@ -140,47 +140,6 @@ function dotProduct(a: Float32Array, b: Float32Array): number {
     sum += a[i] * b[i];
   }
   return sum;
-}
-
-/**
- * Extract plain text from markdown content using remark + strip-markdown
- * This AST-based approach is more reliable than regex
- */
-async function getPlainText(markdown: string): Promise<string> {
-  const result = await remark().use(strip).process(markdown);
-  return (
-    String(result)
-      // Remove import/export statements (MDX)
-      .replace(/^import\s+.*$/gm, '')
-      .replace(/^export\s+.*$/gm, '')
-      // Remove common section headings that don't add semantic value
-      .replace(/^\s*(TLDR|Introduction|Conclusion|Summary|References?|Footnotes?)\s*$/gim, '')
-      // Remove all-caps headings
-      .replace(/^[A-Z\s]{4,}$/gm, '')
-      // Remove table remnants
-      .replace(/^\|.*\|$/gm, '')
-      // Remove container directives (:::)
-      .replace(/^:::.*/gm, '')
-      // Normalize multiple newlines
-      .replace(/\n{3,}/g, '\n\n')
-      // Convert newlines to spaces for embedding
-      .replace(/\n/g, ' ')
-      // Normalize multiple spaces
-      .replace(/\s{2,}/g, ' ')
-      .trim()
-  );
-}
-
-/**
- * Extract slug from file path, with support for custom link field
- */
-function extractSlug(filePath: string, link: string | undefined, slugTransliterationEnabled: boolean): string {
-  if (link) return link;
-
-  const relativePath = path.relative(CONTENT_ROOT, filePath);
-  const extension = path.extname(relativePath);
-  const slug = extension ? relativePath.slice(0, -extension.length) : relativePath;
-  return transliterateSlugValue(slug.split(path.sep).join('/'), slugTransliterationEnabled);
 }
 
 /**
@@ -221,7 +180,7 @@ async function processFile(
 
     if (INCLUDE_BODY) {
       // Extract plain text using remark (AST-based, more reliable)
-      const plainText = await getPlainText(body);
+      const plainText = await getPlainText(body, true);
       fullText = `${fullText} ${plainText}`.slice(0, 8000);
     }
 
@@ -357,17 +316,32 @@ async function main() {
     }
     console.log(chalk.green(`Loaded ${posts.length} posts\n`));
 
-    // 5. Generate embeddings (batch mode for performance)
+    // 5. Generate embeddings (sequential; batching is unreliable with this model)
     const embeddings = await generateEmbeddings(posts, extractor);
     if (!embeddings.length) {
       console.log(chalk.red('No embeddings generated.'));
       return;
     }
 
-    // 6. Compute similarities
-    const similarities = computeSimilarities(posts, embeddings, TOP_N_SIMILAR);
+    // 6. Drop posts whose embedding is a zero vector (empty/degenerate text).
+    //    Their cosine similarity to everything is 0, which would otherwise be
+    //    written silently as a meaningless "top 5" of arbitrary posts.
+    const validPairs = posts
+      .map((post, i) => ({ post, embedding: embeddings[i] }))
+      .filter(({ post, embedding }) => {
+        const isZero = embedding.every((x) => x === 0);
+        if (isZero) {
+          console.warn(chalk.yellow(`  Skipping "${post.slug}": empty embedding (post text too short?)`));
+        }
+        return !isZero;
+      });
+    const validPosts = validPairs.map((p) => p.post);
+    const validEmbeddings = validPairs.map((p) => p.embedding);
 
-    // 7. Save results
+    // 7. Compute similarities
+    const similarities = computeSimilarities(validPosts, validEmbeddings, TOP_N_SIMILAR);
+
+    // 8. Save results
     await saveResults(similarities, OUTPUT_FILE);
 
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);

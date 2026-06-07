@@ -1,7 +1,7 @@
 // edit https://github.com/lawvs/lawvs.github.io/blob/dba2e51e312765f8322ee87755b4e9c22b520048/src/pages/rss.xml.ts
 import rss from '@astrojs/rss';
 import { siteConfig } from '@constants/site-config';
-import { getCategoryArr, getSortedPosts } from '@lib/content';
+import { getCategoryPaths, getSortedPosts } from '@lib/content';
 import { encodeSlug, getPostSlug } from '@lib/route';
 import { buildRssItemFields } from '@lib/rss-utils';
 import type { APIContext } from 'astro';
@@ -23,7 +23,7 @@ export async function GET(context: APIContext) {
     stylesheet: '/rss/feed.xsl', // https://docs.astro.build/en/recipes/rss/#adding-a-stylesheet
     items: posts.slice(0, 20).map((post: BlogPost) => {
       // 获取分类数组
-      const categoryArr = getCategoryArr(post.data.categories?.[0]);
+      const categoryArr = getCategoryPaths(post.data.categories)[0] ?? [];
 
       // 构建 categories 数组，包含分类和标签
       const categories = [

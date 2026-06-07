@@ -77,28 +77,35 @@ export function extractQuestionParts(el: HTMLElement): QuestionPart[] {
     }
   }
 
-  // Replace each span.gap with a unique sentinel text node
-  const SENTINEL = '\x00GAP\x00';
+  // Replace each span.gap with a unique sentinel marker wrapping its index.
+  // The \x00 control chars cannot appear in normal text, so the marker regex
+  // below can never collide with question content (including bare numbers).
   const gaps: string[] = [];
   for (const span of Array.from(clone.querySelectorAll('span.gap'))) {
     gaps.push(span.textContent || '');
-    const marker = document.createTextNode(`${SENTINEL}${gaps.length - 1}${SENTINEL}`);
+    const marker = document.createTextNode(`\x00GAP${gaps.length - 1}GAP\x00`);
     span.replaceWith(marker);
   }
 
-  // Split the serialized HTML by sentinel markers
+  // Walk the serialized HTML, splitting on gap markers into interleaved
+  // html fragments and gap placeholders.
   const html = clone.innerHTML.trim();
   const parts: QuestionPart[] = [];
-  const segments = html.split(SENTINEL);
-
-  for (const segment of segments) {
-    if (segment === '') continue;
-    const gapIndex = Number(segment);
-    if (Number.isInteger(gapIndex) && gapIndex >= 0 && gapIndex < gaps.length) {
-      parts.push({ type: 'gap', answer: gaps[gapIndex], index: gapIndex });
-    } else {
-      parts.push({ type: 'html', content: segment });
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: the \x00 sentinel cannot occur in real content — that is exactly what makes the marker collision-proof
+  const markerRe = /\x00GAP(\d+)GAP\x00/g;
+  let lastIndex = 0;
+  for (let match = markerRe.exec(html); match !== null; match = markerRe.exec(html)) {
+    if (match.index > lastIndex) {
+      parts.push({ type: 'html', content: html.slice(lastIndex, match.index) });
     }
+    const gapIndex = Number(match[1]);
+    if (gapIndex >= 0 && gapIndex < gaps.length) {
+      parts.push({ type: 'gap', answer: gaps[gapIndex], index: gapIndex });
+    }
+    lastIndex = markerRe.lastIndex;
+  }
+  if (lastIndex < html.length) {
+    parts.push({ type: 'html', content: html.slice(lastIndex) });
   }
 
   return parts;

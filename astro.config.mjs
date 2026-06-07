@@ -19,6 +19,7 @@ import Sonda from 'sonda/astro';
 import { loadEnv } from 'vite';
 import svgr from 'vite-plugin-svgr';
 import YAML from 'yaml';
+import { normalizeSiteYamlConfig } from './src/lib/config/normalize.ts';
 import { rehypeEncryptedBlock } from './src/lib/markdown/rehype-encrypted-block.ts';
 import { rehypeEncryptedPost } from './src/lib/markdown/rehype-encrypted-post.ts';
 import { rehypeImagePlaceholder } from './src/lib/markdown/rehype-image-placeholder.ts';
@@ -43,7 +44,7 @@ function loadConfigForAstro() {
   return YAML.parse(content);
 }
 
-const yamlConfig = loadConfigForAstro();
+const yamlConfig = normalizeSiteYamlConfig(loadConfigForAstro());
 
 // Bundle analysis mode: ANALYZE=true pnpm build
 // Use loadEnv to read .env file (astro.config.mjs runs before Vite loads .env)

@@ -9,7 +9,7 @@ import { CONTENT_PADDING } from '@constants/layout';
 import { siteConfig } from '@constants/site-config';
 import Layout from '@layouts/Layout.astro';
 import TwoColumnLayout from '@layouts/TwoColumnLayout.astro';
-import { buildCategoryPath, getCategoryArr, getPostDescription, getPostSummary, getSortedPosts } from '@lib/content';
+import { buildCategoryPath, getCategoryPaths, getPostDescription, getSortedPosts, resolvePostSummary } from '@lib/content';
 import { formatForSeo } from '@lib/date';
 import { getPostSlug } from '@lib/route';
 import { getOgImageUrl } from '@lib/seo/og-image';
@@ -17,7 +17,6 @@ import { Icon } from 'astro-icon/components';
 import { Comment } from '@/components/comment';
 import EditButton from '@/components/EditButton';
 import { getArtistById } from '@/lib/artists';
-import { extractTextFromMarkdown } from '@/lib/sanitize';
 
 export async function getStaticPaths() {
   const postCollections = await getSortedPosts();
@@ -67,7 +66,7 @@ const jsonLd = {
   mainEntityOfPage: Astro.url.href,
 };
 
-const categoryArr = getCategoryArr(categories?.[0]);
+const categoryArr = getCategoryPaths(categories)[0] ?? [];
 const categoryStr = categoryArr?.length ? ` | ${categoryArr.join(' / ')}` : '';
 
 // Generate breadcrumb data for categories
@@ -113,26 +112,9 @@ const breadcrumbJsonLd = {
 };
 
 // 确定显示的摘要内容和来源类型
-const postSlug = getPostSlug(post);
-let summaryText: string | null = null;
-let summarySource: SummarySource | null = null;
-
-if (post.data.description) {
-  // 优先使用手写描述
-  summaryText = post.data.description;
-  summarySource = 'description';
-} else {
-  // 尝试获取 AI 摘要
-  const aiSummary = getPostSummary(postSlug);
-  if (aiSummary) {
-    summaryText = aiSummary;
-    summarySource = 'ai';
-  } else {
-    // 降级到自动提取
-    summaryText = extractTextFromMarkdown(post.body, 200);
-    summarySource = 'auto';
-  }
-}
+const resolvedSummary = resolvePostSummary(post);
+const summaryText = resolvedSummary?.text ?? null;
+const summarySource = (resolvedSummary?.source ?? null) as SummarySource | null;
 ---
 
 <Layout

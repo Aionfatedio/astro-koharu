@@ -12,7 +12,8 @@ import type { BlogPost } from 'types/blog';
 import { getPostSlug } from '../route';
 import { extractTextFromMarkdown } from '../sanitize';
 import { memoize } from './cache';
-import { buildCategoryPath } from './category-path';
+import { buildCategoryLink, buildCategoryPath, getCategoryPaths } from './category-path';
+import { validateSummaryDataSlugs } from './generated-assets';
 
 /** WeakMap-based cache for reading-time results — auto-GC when post objects are collected */
 const readingTimeCache = new WeakMap<CollectionEntry<'blog'>, { words: number; text: string; minutes: number }>();
@@ -34,12 +35,6 @@ export function getPostReadingTime(post: CollectionEntry<'blog'>): { words: numb
 /** AI 摘要数据类型 */
 type SummariesData = Record<string, { title: string; summary: string }>;
 
-/** Pre-built lowercase slug → original key map for O(1) case-insensitive fallback */
-const summaryLowerMap = new Map<string, string>();
-for (const key of Object.keys(summaries as SummariesData)) {
-  summaryLowerMap.set(key.toLowerCase(), key);
-}
-
 /**
  * 获取文章描述
  * 优先使用 frontmatter 中的 description，如果不存在则从 Markdown 内容中智能提取
@@ -59,14 +54,7 @@ export function getPostDescription(post: BlogPost, maxLength: number = 150): str
  */
 export function getPostSummary(slug: string): string | null {
   const data = summaries as SummariesData;
-
-  // Fast path: exact match (O(1))
-  const exactMatch = data[slug]?.summary ?? null;
-  if (exactMatch) return exactMatch;
-
-  // Fallback: case-insensitive lookup via pre-built map
-  const originalKey = summaryLowerMap.get(slug.toLowerCase());
-  return originalKey ? data[originalKey].summary : null;
+  return data[slug]?.summary ?? null;
 }
 
 /**
@@ -80,6 +68,40 @@ export function getPostDescriptionWithSummary(post: BlogPost, maxLength: number 
   if (post.data.password) return '本文已加密，请输入密码后查看。';
   const slug = getPostSlug(post);
   return post.data.description || getPostSummary(slug) || extractTextFromMarkdown(post.body, maxLength);
+}
+
+export type PostSummarySource = 'description' | 'ai' | 'auto';
+
+export interface ResolvedPostSummary {
+  text: string;
+  source: PostSummarySource;
+}
+
+/**
+ * Resolve the article summary text and its source for page-level UI.
+ */
+export function resolvePostSummary(post: BlogPost, maxLength: number = 200): ResolvedPostSummary | null {
+  if (post.data.password) return null;
+
+  if (post.data.description) {
+    return {
+      text: post.data.description,
+      source: 'description',
+    };
+  }
+
+  const aiSummary = getPostSummary(getPostSlug(post));
+  if (aiSummary) {
+    return {
+      text: aiSummary,
+      source: 'ai',
+    };
+  }
+
+  return {
+    text: extractTextFromMarkdown(post.body, maxLength),
+    source: 'auto',
+  };
 }
 
 /**
@@ -97,6 +119,8 @@ export async function getSortedPosts(): Promise<CollectionEntry<'blog'>[]> {
     const sortedPosts = [...posts].sort((a: BlogPost, b: BlogPost) => {
       return b.data.date.getTime() - a.data.date.getTime();
     });
+
+    validateSummaryDataSlugs(summaries as SummariesData, sortedPosts);
 
     return sortedPosts;
   });
@@ -147,28 +171,26 @@ export async function getPostCount() {
 }
 
 /**
- * 获取分类下的所有文章
- * @param categoryName 分类名
+ * Get posts under a category path. Descendant category paths are included.
+ * @param categoryPath Full category name path
  * @returns 文章列表
  */
-export async function getPostsByCategory(categoryName: string): Promise<BlogPost[]> {
-  return memoize('postsByCat', categoryName, async () => {
+export async function getPostsByCategoryPath(categoryPath: string[]): Promise<BlogPost[]> {
+  const key = buildCategoryLink(categoryPath);
+  return memoize('postsByCatPath', key, async () => {
     const posts = await getSortedPosts();
-    return posts.filter((post) => {
-      const { categories } = post.data;
-      if (!categories?.length) return false;
+    return posts.filter((post) => isPostInCategoryPath(post, categoryPath));
+  });
+}
 
-      const firstCategory = categories[0];
-      // 处理两种分类格式
-      if (Array.isArray(firstCategory)) {
-        // ['笔记', '算法']
-        return firstCategory.includes(categoryName);
-      } else if (typeof firstCategory === 'string') {
-        // '工具'
-        return firstCategory === categoryName;
-      }
-      return false;
-    });
+/**
+ * Get posts whose configured category path contains a category name.
+ * This exists for legacy featuredSeries.categoryName configuration.
+ */
+export async function getPostsByCategoryName(categoryName: string): Promise<BlogPost[]> {
+  return memoize('postsByCatName', categoryName, async () => {
+    const posts = await getSortedPosts();
+    return posts.filter((post) => isPostInCategoryName(post, categoryName));
   });
 }
 
@@ -176,48 +198,13 @@ export async function getPostsByCategory(categoryName: string): Promise<BlogPost
  * Get the last (deepest) category of a post
  */
 export function getPostLastCategory(post: BlogPost): { link: string; name: string } {
-  const { categories } = post.data;
-  if (!categories?.length) return { link: '', name: '' };
+  const [firstCategoryPath] = getCategoryPaths(post.data.categories);
+  if (!firstCategoryPath?.length) return { link: '', name: '' };
 
-  const firstCategory = categories[0];
-  if (Array.isArray(firstCategory)) {
-    if (!firstCategory.length) return { link: '', name: '' };
-    return {
-      link: buildCategoryPath(firstCategory),
-      name: firstCategory[firstCategory.length - 1],
-    };
-  } else if (typeof firstCategory === 'string') {
-    return {
-      link: buildCategoryPath(firstCategory),
-      name: firstCategory,
-    };
-  }
-
-  return { link: '', name: '' };
-}
-
-/**
- * Fisher-Yates 洗牌算法
- * 相比 sort(() => Math.random() - 0.5)，能产生均匀分布的随机排列
- */
-function shuffleArray<T>(array: T[]): T[] {
-  const result = [...array];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-}
-
-/**
- * 获取随机文章
- * @param count 文章数量
- * @returns 随机文章列表
- */
-export async function getRandomPosts(count: number = 10): Promise<BlogPost[]> {
-  const posts = await getSortedPosts();
-  const shuffled = shuffleArray(posts);
-  return shuffled.slice(0, Math.min(count, posts.length));
+  return {
+    link: buildCategoryPath(firstCategoryPath),
+    name: firstCategoryPath[firstCategoryPath.length - 1],
+  };
 }
 
 /**
@@ -226,10 +213,10 @@ export async function getRandomPosts(count: number = 10): Promise<BlogPost[]> {
  * @returns 系列文章列表（按日期排序，最新的在前）
  */
 export async function getSeriesPosts(post: BlogPost): Promise<BlogPost[]> {
-  const lastCategory = getPostLastCategory(post);
-  if (!lastCategory.name) return [];
+  const [firstCategoryPath] = getCategoryPaths(post.data.categories);
+  if (!firstCategoryPath?.length) return [];
 
-  return await getPostsByCategory(lastCategory.name);
+  return await getPostsByCategoryPath(firstCategoryPath);
 }
 
 /**
@@ -268,17 +255,17 @@ export async function getAdjacentSeriesPosts(currentPost: BlogPost): Promise<{
  * @param categoryName 分类名
  * @returns 是否属于该分类
  */
-function isPostInCategory(post: BlogPost, categoryName: string): boolean {
-  const { categories } = post.data;
-  if (!categories?.length) return false;
+function isPathPrefix(path: string[], prefix: string[]): boolean {
+  if (prefix.length > path.length) return false;
+  return prefix.every((name, index) => path[index] === name);
+}
 
-  const firstCategory = categories[0];
-  if (Array.isArray(firstCategory)) {
-    return firstCategory.includes(categoryName);
-  } else if (typeof firstCategory === 'string') {
-    return firstCategory === categoryName;
-  }
-  return false;
+function isPostInCategoryPath(post: BlogPost, categoryPath: string[]): boolean {
+  return getCategoryPaths(post.data.categories).some((postCategoryPath) => isPathPrefix(postCategoryPath, categoryPath));
+}
+
+function isPostInCategoryName(post: BlogPost, categoryName: string): boolean {
+  return getCategoryPaths(post.data.categories).some((categoryPath) => categoryPath.includes(categoryName));
 }
 
 // =============================================================================
@@ -312,7 +299,7 @@ export async function getPostsBySeriesSlug(slug: string): Promise<BlogPost[]> {
   const series = getSeriesBySlug(slug);
   if (!series) return [];
 
-  return await getPostsByCategory(series.categoryName);
+  return await getPostsByCategoryName(series.categoryName);
 }
 
 /**
@@ -334,7 +321,7 @@ export async function getNonFeaturedPosts(): Promise<BlogPost[]> {
   }
 
   const allPosts = await getSortedPosts();
-  return allPosts.filter((post) => !categoryNames.some((catName) => isPostInCategory(post, catName)));
+  return allPosts.filter((post) => !categoryNames.some((catName) => isPostInCategoryName(post, catName)));
 }
 
 /**
@@ -370,7 +357,7 @@ export async function getHomeHighlightedPosts(): Promise<BlogPost[]> {
 
   const posts: BlogPost[] = [];
   for (const series of highlightedSeries) {
-    const seriesPosts = await getPostsByCategory(series.categoryName);
+    const seriesPosts = await getPostsByCategoryName(series.categoryName);
     if (seriesPosts[0]) {
       posts.push(seriesPosts[0]);
     }
@@ -401,12 +388,12 @@ export async function getHomePagePosts(): Promise<{
   // 单次遍历所有文章
   for (const post of allPosts) {
     // 检查是否属于任何 featured 系列
-    const isFeatured = categoryNames.some((catName) => isPostInCategory(post, catName));
+    const isFeatured = categoryNames.some((catName) => isPostInCategoryName(post, catName));
 
     if (isFeatured) {
       // 检查是否属于高亮系列，并记录最新文章
       for (const series of highlightedSeries) {
-        if (isPostInCategory(post, series.categoryName)) {
+        if (isPostInCategoryName(post, series.categoryName)) {
           if (!seriesLatestMap.has(series.categoryName)) {
             seriesLatestMap.set(series.categoryName, post);
           }

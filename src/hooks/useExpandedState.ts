@@ -33,7 +33,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { Heading } from './useHeadingTree';
-import { findHeadingById, getParentIds, getSiblingIds } from './useHeadingTree';
+import { applyAccordion, findHeadingById, getParentIds } from './useHeadingTree';
 
 export interface UseExpandedStateOptions {
   /** Heading tree */
@@ -97,45 +97,7 @@ export function useExpandedState({
         }
 
         if (allHeadingsToProcess.length > 0) {
-          setExpandedIds((prev) => {
-            const newSet = new Set(prev);
-
-            // For each parent level, apply accordion effect
-            const parentsByLevel: { [level: number]: string[] } = {};
-
-            // Group parents by level
-            allHeadingsToProcess.forEach((parentId) => {
-              const parentHeading = findHeadingById(headings, parentId);
-              if (parentHeading) {
-                if (!parentsByLevel[parentHeading.level]) {
-                  parentsByLevel[parentHeading.level] = [];
-                }
-                parentsByLevel[parentHeading.level].push(parentId);
-              }
-            });
-
-            // For each level, close siblings and open the required parent
-            Object.keys(parentsByLevel).forEach((levelStr) => {
-              const level = parseInt(levelStr, 10);
-              const parentsAtLevel = parentsByLevel[level];
-
-              parentsAtLevel.forEach((parentId) => {
-                const parentHeading = findHeadingById(headings, parentId);
-                if (parentHeading) {
-                  // Close siblings at this level
-                  const siblingIds = getSiblingIds(parentHeading, headings);
-                  siblingIds.forEach((siblingId) => {
-                    newSet.delete(siblingId);
-                  });
-
-                  // Open this parent
-                  newSet.add(parentId);
-                }
-              });
-            });
-
-            return newSet;
-          });
+          setExpandedIds((prev) => applyAccordion(prev, headings, allHeadingsToProcess));
         }
       }
     }

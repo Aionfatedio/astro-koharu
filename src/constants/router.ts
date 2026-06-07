@@ -1,7 +1,8 @@
 // Import YAML config directly - processed by @rollup/plugin-yaml
 
+import { normalizeSiteYamlConfig, RESERVED_ROUTE_SLUGS } from '@lib/config/normalize';
 import type { RouterItem } from '@lib/config/types';
-import yamlConfig from '../../config/site.yaml';
+import rawYamlConfig from '../../config/site.yaml';
 
 export type Router = RouterItem;
 
@@ -18,26 +19,7 @@ export enum Routes {
 
 // Reserved routes that cannot be used as series slugs
 // Includes: static routes, Astro internals, and potentially dangerous paths
-export const RESERVED_ROUTES = new Set([
-  // Static pages
-  'about',
-  'categories',
-  'tags',
-  'friends',
-  'post',
-  'posts',
-  'archives',
-  '404',
-  // Special files
-  'rss.xml',
-  'sitemap.xml',
-  'robots.txt',
-  'favicon.ico',
-  // Astro internals (prevent potential conflicts)
-  '_astro',
-  '@fs',
-  'api',
-]);
+export const RESERVED_ROUTES = new Set<string>(RESERVED_ROUTE_SLUGS);
 
 /**
  * Get the URL path for a featured series
@@ -57,7 +39,4 @@ export function isReservedSlug(slug: string): boolean {
   return RESERVED_ROUTES.has(slug.toLowerCase());
 }
 
-export const routers: Router[] = yamlConfig.navigation ?? [
-  { name: 'Home', path: Routes.Home, icon: 'fa6-solid:house-chimney' },
-  { name: 'About', path: Routes.About, icon: 'fa6-regular:circle-user' },
-];
+export const routers: Router[] = normalizeSiteYamlConfig(rawYamlConfig).navigation;

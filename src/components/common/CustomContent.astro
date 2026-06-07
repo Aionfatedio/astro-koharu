@@ -79,11 +79,15 @@ const finalConfig = { ...defaultContentConfig, ...config };
       });
     }
 
-    // Add smooth scroll to anchor links
+    // Add smooth scroll to anchor links.
+    // Guard with a dataset flag so re-running enhanceContent (e.g. after
+    // content:decrypted) never binds a second listener to the same element.
     if (config.smoothScroll) {
       const anchorLinks = contentContainer.querySelectorAll('a.anchor-link[href^="#"]');
       anchorLinks.forEach((link: Element) => {
         const anchor = link as HTMLAnchorElement;
+        if (anchor.dataset.koharuScrollBound) return;
+        anchor.dataset.koharuScrollBound = 'true';
         anchor.addEventListener('click', (e) => {
           e.preventDefault();
           const targetId = anchor.getAttribute('href')?.substring(1);
@@ -121,9 +125,11 @@ const finalConfig = { ...defaultContentConfig, ...config };
     // Inject open-in-new-tab button into iframe-embed containers
     enhanceIframes(contentContainer);
 
-    // Tab group switching logic
+    // Tab group switching logic (dataset-guarded against duplicate binding)
     const tabHeaders = contentContainer.querySelectorAll<HTMLElement>('.tab-header[role="tab"]');
     tabHeaders.forEach((header) => {
+      if (header.dataset.koharuTabBound) return;
+      header.dataset.koharuTabBound = 'true';
       header.addEventListener('click', () => {
         const groupId = header.dataset.tabGroup;
         const tabIndex = header.dataset.tabIndex;
@@ -147,6 +153,8 @@ const finalConfig = { ...defaultContentConfig, ...config };
     // Blur spoiler click-to-reveal (default spoilers handled by spoilerjs)
     const blurSpoilers = contentContainer.querySelectorAll<HTMLElement>('.spoiler.blur');
     blurSpoilers.forEach((spoiler) => {
+      if (spoiler.dataset.koharuSpoilerBound) return;
+      spoiler.dataset.koharuSpoilerBound = 'true';
       spoiler.addEventListener('click', () => spoiler.classList.toggle('revealed'));
     });
 

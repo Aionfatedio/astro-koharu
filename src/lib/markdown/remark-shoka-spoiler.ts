@@ -40,13 +40,17 @@ export function remarkShokaSpoiler() {
           parts.push({ type: 'text', value: text.slice(lastIndex, match.index) });
         }
 
-        // Check for trailing {attrs}
+        // Check for trailing {attrs}. Only consume the {...} when it yields at
+        // least one valid class; otherwise leave it as literal text.
         let extraClasses: string[] = [];
         const afterMatch = text.slice(match.index + match[0].length);
         const attrMatch = TRAILING_ATTRS.exec(afterMatch);
         if (attrMatch) {
-          extraClasses = extractClasses(attrMatch[1]);
-          SPOILER_REGEX.lastIndex += attrMatch[0].length;
+          const classes = extractClasses(attrMatch[1]);
+          if (classes.length > 0) {
+            extraClasses = classes;
+            SPOILER_REGEX.lastIndex += attrMatch[0].length;
+          }
         }
 
         const safeContent = escapeHtml(match[1]);

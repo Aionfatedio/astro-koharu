@@ -7,16 +7,13 @@ import { Icon } from 'astro-icon/components';
 
 const title = '404 - 页面未找到';
 const description = '抱歉，您访问的页面不存在';
-
-// Debug flag: Set to true to pause animation at the "Cat" shape for inspection
-const DEBUG_CAT_STATE = false;
 ---
 
 <Layout title={title} description={description}>
   <TwoColumnLayout>
     <Cover slot="cover" title="404" />
     <HomeSider slot="sider" />
-      <div class:list={['cat-404-container', { 'debug-paused': DEBUG_CAT_STATE }]}>
+      <div class="cat-404-container">
         <svg class="cat-404" viewBox="0 0 600 350" xmlns="http://www.w3.org/2000/svg">
           <defs>
              <filter id="soft-glow" x="-50%" y="-50%" width="200%" height="200%">
@@ -139,12 +136,6 @@ const DEBUG_CAT_STATE = false;
     max-width: 500px;
     height: auto;
     overflow: visible;
-  }
-
-  /* Debug State: Pause everything at 3s (50% mark) where the cat is fully formed */
-  .debug-paused * {
-    animation-play-state: paused !important;
-    animation-delay: -3s !important; /* Force jump to mid-animation */
   }
 
   /* --- ANIMATIONS --- */
