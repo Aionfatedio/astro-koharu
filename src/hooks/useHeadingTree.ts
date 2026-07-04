@@ -176,7 +176,7 @@ export function getParentIds(heading: Heading): string[] {
 /**
  * Get all siblings of a heading (headings at the same level with the same parent)
  */
-export function getSiblingIds(targetHeading: Heading, allHeadings: Heading[]): string[] {
+function getSiblingIds(targetHeading: Heading, allHeadings: Heading[]): string[] {
   const siblings: string[] = [];
 
   if (!targetHeading.parent) {

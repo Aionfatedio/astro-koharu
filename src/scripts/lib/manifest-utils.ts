@@ -1,6 +1,7 @@
 import type { Dirent } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import chalk from 'chalk';
 
 export function isErrnoException(error: unknown, code: string): boolean {
   return typeof error === 'object' && error !== null && 'code' in error && (error as NodeJS.ErrnoException).code === code;
@@ -74,4 +75,17 @@ export async function writeJsonFile(filePath: string, data: unknown): Promise<vo
 export function toPublicUrl(filePath: string): string {
   const relative = path.relative('public', filePath);
   return `/${relative.split(path.sep).join('/')}`;
+}
+
+/** Read a media base directory's entries, creating it (with a notice) when missing. */
+export async function readBaseDirents(baseDir: string, label: string): Promise<Dirent[]> {
+  try {
+    return await readDirents(baseDir);
+  } catch (error) {
+    if (!isErrnoException(error, 'ENOENT')) throw error;
+    console.log(chalk.yellow(`${label} directory not found: ${baseDir}`));
+    console.log(chalk.dim('Creating directory...'));
+    await ensureDirectory(baseDir);
+    return [];
+  }
 }

@@ -52,7 +52,7 @@ export function getPostDescription(post: BlogPost, maxLength: number = 150): str
  * @param slug 文章 slug（通常是 post.data.link 或 post.slug）
  * @returns AI 摘要文本，如果不存在则返回 null
  */
-export function getPostSummary(slug: string): string | null {
+function getPostSummary(slug: string): string | null {
   const data = summaries as SummariesData;
   return data[slug]?.summary ?? null;
 }
@@ -124,42 +124,6 @@ export async function getSortedPosts(): Promise<CollectionEntry<'blog'>[]> {
 
     return sortedPosts;
   });
-}
-
-/**
- * Get a single post by its collection ID.
- * Builds an id→post Map once, then lookups are O(1).
- */
-export async function getPostById(id: string): Promise<CollectionEntry<'blog'> | undefined> {
-  const map = await memoize('postByIdMap', '__all__', async () => {
-    const posts = await getSortedPosts();
-    return new Map(posts.map((p) => [p.id, p]));
-  });
-  return map.get(id);
-}
-
-/**
- * Get posts separated by sticky status
- * @returns Object containing sticky and non-sticky posts, both sorted by date (newest first)
- */
-export async function getPostsBySticky(): Promise<{
-  stickyPosts: CollectionEntry<'blog'>[];
-  nonStickyPosts: CollectionEntry<'blog'>[];
-}> {
-  const posts = await getSortedPosts();
-
-  const stickyPosts: CollectionEntry<'blog'>[] = [];
-  const nonStickyPosts: CollectionEntry<'blog'>[] = [];
-
-  for (const post of posts) {
-    if (post.data?.sticky) {
-      stickyPosts.push(post);
-    } else {
-      nonStickyPosts.push(post);
-    }
-  }
-
-  return { stickyPosts, nonStickyPosts };
 }
 
 /**
@@ -281,32 +245,10 @@ export function getEnabledSeries(): FeaturedSeriesItem[] {
 }
 
 /**
- * 根据 slug 查找 Featured Series
- * @param slug 系列 slug
- * @returns 系列配置或 undefined
- */
-export function getSeriesBySlug(slug: string): FeaturedSeriesItem | undefined {
-  const normalizedSlug = slug.trim().toLowerCase();
-  return siteConfig.featuredSeries.find((series) => series.slug.toLowerCase() === normalizedSlug && series.enabled !== false);
-}
-
-/**
- * 获取某个 Featured Series 的所有文章
- * @param slug 系列 slug
- * @returns 文章列表（按日期排序，最新的在前）
- */
-export async function getPostsBySeriesSlug(slug: string): Promise<BlogPost[]> {
-  const series = getSeriesBySlug(slug);
-  if (!series) return [];
-
-  return await getPostsByCategoryName(series.categoryName);
-}
-
-/**
  * 获取所有 Featured Series 的分类名
  * @returns 分类名列表
  */
-export function getFeaturedCategoryNames(): string[] {
+function getFeaturedCategoryNames(): string[] {
   return getEnabledSeries().map((series) => series.categoryName);
 }
 
@@ -322,48 +264,6 @@ export async function getNonFeaturedPosts(): Promise<BlogPost[]> {
 
   const allPosts = await getSortedPosts();
   return allPosts.filter((post) => !categoryNames.some((catName) => isPostInCategoryName(post, catName)));
-}
-
-/**
- * 获取非 Featured Series 文章，按置顶状态分组
- * @returns 置顶文章和非置顶的普通文章（互斥，不重叠）
- */
-export async function getNonFeaturedPostsBySticky(): Promise<{
-  stickyPosts: BlogPost[];
-  regularPosts: BlogPost[];
-}> {
-  const nonFeaturedPosts = await getNonFeaturedPosts();
-
-  const stickyPosts: BlogPost[] = [];
-  const regularPosts: BlogPost[] = [];
-
-  for (const post of nonFeaturedPosts) {
-    if (post.data?.sticky) {
-      stickyPosts.push(post);
-    } else {
-      regularPosts.push(post);
-    }
-  }
-
-  return { stickyPosts, regularPosts };
-}
-
-/**
- * 获取所有 highlightOnHome=true 系列的最新文章
- * @returns 最新文章列表（每个系列一篇）
- */
-export async function getHomeHighlightedPosts(): Promise<BlogPost[]> {
-  const highlightedSeries = getEnabledSeries().filter((series) => series.highlightOnHome !== false);
-
-  const posts: BlogPost[] = [];
-  for (const series of highlightedSeries) {
-    const seriesPosts = await getPostsByCategoryName(series.categoryName);
-    if (seriesPosts[0]) {
-      posts.push(seriesPosts[0]);
-    }
-  }
-
-  return posts;
 }
 
 /**

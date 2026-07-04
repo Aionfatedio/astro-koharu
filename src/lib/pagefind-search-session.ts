@@ -52,7 +52,7 @@ export function readPagefindSearchSession(): PagefindSearchSession {
   return parsed;
 }
 
-export function writePagefindSearchSession(session: PagefindSearchSession): void {
+function writePagefindSearchSession(session: PagefindSearchSession): void {
   assertSearchSession(session);
   getSessionStorage().setItem(STORAGE_KEY, JSON.stringify(session));
 }

@@ -47,6 +47,19 @@ function getLeftClip(index: number): boolean {
     </div>
   )
 }
+
+<script>
+  import { cleanupPostCardNavigation, initPostCardNavigation } from '@lib/post-card-navigation';
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPostCardNavigation, { once: true });
+  } else {
+    initPostCardNavigation();
+  }
+
+  document.addEventListener('astro:page-load', initPostCardNavigation);
+  document.addEventListener('astro:before-swap', cleanupPostCardNavigation);
+</script>
 {
   posts && posts?.length > 0 && (
     <>

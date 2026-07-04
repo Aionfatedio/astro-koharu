@@ -1,8 +1,4 @@
 // Types
-
-// Creators
-export { FriendCreator } from './friend-creator';
-export { PostCreator } from './post-creator';
 export type { CategoryTreeItem, ContentCreator, CreatorProps, FriendData, PostData } from './types';
 
 import { FriendCreator } from './friend-creator';

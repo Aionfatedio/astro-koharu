@@ -4,7 +4,7 @@ import strip from 'strip-markdown';
 import { transliterateSlugValue } from '../../lib/slug-core';
 
 /** Blog content root and glob, shared by the build-time generators. */
-export const CONTENT_ROOT = path.join('src', 'content', 'blog');
+const CONTENT_ROOT = path.join('src', 'content', 'blog');
 export const CONTENT_GLOB = 'src/content/blog/**/*.md';
 
 /**

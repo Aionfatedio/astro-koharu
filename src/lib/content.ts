@@ -9,15 +9,11 @@
 // Category Utilities
 // =============================================================================
 export {
-  addCategoryRecursively,
-  buildCategoryLink,
   buildCategoryPath,
   getCategoryByLink,
   getCategoryLinks,
   getCategoryList,
-  getCategoryNameByLink,
   getCategoryPaths,
-  getCategorySlug,
   getParentCategory,
 } from './content/categories';
 export type { PostSummarySource, ResolvedPostSummary } from './content/posts';
@@ -25,35 +21,22 @@ export type { PostSummarySource, ResolvedPostSummary } from './content/posts';
 // Post Utilities
 // =============================================================================
 export {
-  // Core post functions
-  getAdjacentSeriesPosts,
   // Featured series functions
   getEnabledSeries,
-  getFeaturedCategoryNames,
-  getHomeHighlightedPosts,
   getHomePagePosts,
   getNonFeaturedPosts,
-  getNonFeaturedPostsBySticky,
-  getPostById,
   getPostCount,
   getPostDescription,
-  getPostDescriptionWithSummary,
   getPostLastCategory,
-  getPostReadingTime,
-  getPostSummary,
   getPostsByCategoryName,
   getPostsByCategoryPath,
-  getPostsBySeriesSlug,
-  getPostsBySticky,
-  getSeriesBySlug,
-  getSeriesPosts,
   getSortedPosts,
   resolvePostSummary,
 } from './content/posts';
 // =============================================================================
 // Tag Utilities
 // =============================================================================
-export { buildTagPath, getAllTags, normalizeTag, tagToSlug } from './content/tags';
+export { buildTagPath, getAllTags, normalizeTag } from './content/tags';
 // =============================================================================
 // Types
 // =============================================================================

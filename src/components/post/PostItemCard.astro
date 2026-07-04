@@ -77,7 +77,9 @@ const pageStatsConfig = createArticleStatsConfig(href);
   class={cn(
     'hover:shadow-card-darker group text-card-foreground shadow-card relative flex rounded-lg bg-white transition-shadow md:flex-col dark:bg-transparent',
     'post-item-card',
+    isSimple && 'cursor-pointer',
   )}
+  data-post-card-href={isSimple ? href : undefined}
 >
   {
     !hideCover && (
@@ -120,7 +122,10 @@ const pageStatsConfig = createArticleStatsConfig(href);
     >
       {
         categoryStr && (
-          <a href={categoryLink} class="flex-center hover:text-blue text-muted-foreground shrink-0 text-xs whitespace-nowrap transition duration-300">
+          <a
+            href={categoryLink}
+            class="flex-center hover:text-blue text-muted-foreground shrink-0 text-xs whitespace-nowrap transition duration-300"
+          >
             <Icon name="gg:flag" />
             {categoryStr}
           </a>
@@ -139,14 +144,23 @@ const pageStatsConfig = createArticleStatsConfig(href);
           <Icon name="fa6-solid:pen-nib" />
           {wordCount} 字
         </p>
-        <button
-          class="flex-center gap-1 whitespace-nowrap md:hidden"
-          title={`预计阅读时长: ${readingTime}`}
-          data-tooltip-placement="top"
-        >
-          <Icon name="fa6-solid:clock" />
-          {readingTime}
-        </button>
+        {
+          isSimple ? (
+            <span class="flex-center gap-1 whitespace-nowrap md:hidden" title={`预计阅读时长: ${readingTime}`} data-tooltip-placement="top">
+              <Icon name="fa6-solid:clock" />
+              {readingTime}
+            </span>
+          ) : (
+            <button
+              class="flex-center gap-1 whitespace-nowrap md:hidden"
+              title={`预计阅读时长: ${readingTime}`}
+              data-tooltip-placement="top"
+            >
+              <Icon name="fa6-solid:clock" />
+              {readingTime}
+            </button>
+          )
+        }
 
         {pageStatsConfig && (
           <span class="flex-center gap-1 whitespace-nowrap">
@@ -212,25 +226,29 @@ const pageStatsConfig = createArticleStatsConfig(href);
         </ScrollableRow>
       )
     }
-    <a
-      href={href}
-      aria-label="more info"
-      class={cn('absolute -bottom-1', hideCover ? '-right-1' : leftClip ? '-right-1' : '-left-1', 'md:left-auto md:-right-1')}
-    >
-      <Button
-        className={cn(
-          'bg-gradient-shoka-button rounded-2xl transition-all hover:translate-y-1 hover:scale-105 md:h-7 md:px-2 md:py-1 md:text-xs',
-          hideCover
-            ? 'rounded-se-none rounded-es-none hover:translate-x-1'
-            : leftClip
-              ? 'rounded-se-none rounded-es-none hover:translate-x-1'
-              : 'rounded-ss-none rounded-ee-none hover:-translate-x-1',
-          'md:rounded-ss-2xl md:rounded-se-none md:rounded-ee-2xl md:rounded-es-none md:hover:translate-x-1',
-        )}
-      >
-        more...
-      </Button>
-    </a>
+    {
+      !isSimple && (
+        <a
+          href={href}
+          aria-label="more info"
+          class={cn('absolute -bottom-1', hideCover ? '-right-1' : leftClip ? '-right-1' : '-left-1', 'md:left-auto md:-right-1')}
+        >
+          <Button
+            className={cn(
+              'bg-gradient-shoka-button rounded-2xl transition-all hover:translate-y-1 hover:scale-105 md:h-7 md:px-2 md:py-1 md:text-xs',
+              hideCover
+                ? 'rounded-se-none rounded-es-none hover:translate-x-1'
+                : leftClip
+                  ? 'rounded-se-none rounded-es-none hover:translate-x-1'
+                  : 'rounded-ss-none rounded-ee-none hover:-translate-x-1',
+              'md:rounded-ss-2xl md:rounded-se-none md:rounded-ee-2xl md:rounded-es-none md:hover:translate-x-1',
+            )}
+          >
+            more...
+          </Button>
+        </a>
+      )
+    }
   </div>
 </div>
 

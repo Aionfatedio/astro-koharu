@@ -42,7 +42,7 @@ function getSlugToPostMap(allPosts: BlogPost[]): Map<string, BlogPost> {
  * @param count Number of related posts to return
  * @returns Array of similar post data with similarity scores
  */
-export function getRelatedPostSlugs(currentSlug: string, count: number = 5): SimilarPost[] {
+function getRelatedPostSlugs(currentSlug: string, count: number = 5): SimilarPost[] {
   const exactMatch = similarityData[currentSlug];
   return exactMatch ? exactMatch.slice(0, count) : [];
 }

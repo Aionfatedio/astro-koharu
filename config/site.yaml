@@ -570,9 +570,12 @@ bgm:
     - title: Love BGM
       list:
         - https://music.163.com/playlist?id=711433805
-    - title: Love MMD
+    - title: Love Pure
       list:
-        - https://y.qq.com/n/ryqq/playlist/9456006219
+        - https://music.163.com/#/playlist?id=8896913899
+    - title: Love Truth
+      list:
+        - https://music.163.com/#/playlist?id=8896626451
     - title: 本地音乐
       list:
         - /music/playlist

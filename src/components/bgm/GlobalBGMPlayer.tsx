@@ -15,6 +15,7 @@ import { FloatingFocusManager, useDismiss, useFloating, useInteractions, useRole
 import { useAudioPlayer } from '@hooks/useAudioPlayer';
 import { useMediaQuery } from '@hooks/useMediaQuery';
 import { Icon } from '@iconify/react';
+import { applyCloudLyrics, getCloudLyricsSourceKey, loadCloudLyricsIndex } from '@lib/cloud-lyrics';
 import type { BgmAudioGroup } from '@lib/config/types';
 import type { MetingSong } from '@lib/meting';
 import { resolvePlaylist } from '@lib/meting';
@@ -56,15 +57,29 @@ export default function GlobalBGMPlayer({ audioGroups, metingApi }: GlobalBGMPla
 
     async function resolve() {
       try {
-        const results = await Promise.all(audioGroups.map((group) => resolvePlaylist(group.list, metingApi)));
+        // Kick off the lyrics index alongside playlist resolution — it's only
+        // needed once tracks are back, so don't serialize the network round-trips.
+        const cloudLyricsIndexPromise = loadCloudLyricsIndex();
+        const results = await Promise.all(
+          audioGroups.map(async (group) => {
+            const sourceResults = await Promise.all(
+              group.list.map(async (url) => {
+                const sourceTracks = await resolvePlaylist([url], metingApi);
+                return applyCloudLyrics(sourceTracks, await cloudLyricsIndexPromise, getCloudLyricsSourceKey(url));
+              }),
+            );
+            return sourceResults.flat();
+          }),
+        );
 
         if (!cancelled) {
           const allTracks: MetingSong[] = [];
           const resolvedGroups: PlaylistGroup[] = [];
           for (let i = 0; i < results.length; i++) {
+            const resolvedTracks = results[i];
             const startIndex = allTracks.length;
-            allTracks.push(...results[i]);
-            resolvedGroups.push({ title: audioGroups[i].title, startIndex, count: results[i].length });
+            allTracks.push(...resolvedTracks);
+            resolvedGroups.push({ title: audioGroups[i].title, startIndex, count: resolvedTracks.length });
           }
           setTracks(allTracks);
           setGroups(resolvedGroups);

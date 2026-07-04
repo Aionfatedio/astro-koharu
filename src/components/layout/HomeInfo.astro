@@ -42,14 +42,16 @@ const filteredRouters = filterNavItems(routers, configuredSeriesSlugs, enabledSe
 
 <div class={cn('flex flex-col items-center md:py-2', className)} data-home-info-container={uniqueId}>
   <div class="relative h-40 w-40 rounded-full" style={getLqipStyle(displayAvatar)}>
-    <img
-      transition:name="page-home-info-avatar"
-      class="shadow-card-darker hover:animate-shake h-full w-full rounded-full transition"
-      src={displayAvatar}
-      alt={`${displayName ?? ''} avatar`}
-      loading="eager"
-      fetchpriority="high"
-    />
+    <a href="/about" aria-label="关于" class="block h-full w-full rounded-full">
+      <img
+        transition:name="page-home-info-avatar"
+        class="shadow-card-darker h-full w-full rounded-full transition hover:opacity-90"
+        src={displayAvatar}
+        alt={`${displayName ?? ''} avatar`}
+        loading="eager"
+        fetchpriority="high"
+      />
+    </a>
     {!artistProfile && christmasConfig.enabled && christmasConfig.features.christmasHat && <ChristmasHat />}
   </div>
 

@@ -9,7 +9,7 @@ import { BACKUP_DIR, BACKUP_FILE_EXTENSION } from '../constants';
  * @param allowedDir 允许的目录
  * @returns 是否在允许目录内
  */
-export function isPathWithinDir(targetPath: string, allowedDir: string): boolean {
+function isPathWithinDir(targetPath: string, allowedDir: string): boolean {
   const resolvedTarget = path.resolve(targetPath);
   const resolvedDir = path.resolve(allowedDir);
   return resolvedTarget.startsWith(`${resolvedDir}${path.sep}`) || resolvedTarget === resolvedDir;
@@ -18,7 +18,7 @@ export function isPathWithinDir(targetPath: string, allowedDir: string): boolean
 /**
  * 验证路径是否在备份目录内
  */
-export function isPathWithinBackupDir(targetPath: string): boolean {
+function isPathWithinBackupDir(targetPath: string): boolean {
   return isPathWithinDir(targetPath, BACKUP_DIR);
 }
 

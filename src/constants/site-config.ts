@@ -118,7 +118,7 @@ export const commentConfig: CommentConfig = yamlConfig.comment;
 export const contentConfig: ContentConfig = yamlConfig.content;
 
 // Map YAML analytics config
-export const analyticsConfig: AnalyticsConfig = yamlConfig.analytics;
+const analyticsConfig: AnalyticsConfig = yamlConfig.analytics;
 
 const _umami = analyticsConfig?.umami;
 

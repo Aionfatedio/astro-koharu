@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import path from 'node:path';
-import { DEFAULT_LLM_MODEL, GENERATE_ITEMS, type GenerateType, LLM_API_URL } from '../constants/generate';
+import { GENERATE_ITEMS, type GenerateType, LLM_API_URL } from '../constants/generate';
 import { PROJECT_ROOT } from '../constants/paths';
 
 export interface RunScriptResult {
@@ -19,7 +19,7 @@ export interface GenerateOptions {
  * Run a TypeScript script using npx tsx
  * Note: Uses spawn without shell for security (avoids command injection)
  */
-export function runScript(scriptPath: string, args: string[] = []): Promise<RunScriptResult> {
+function runScript(scriptPath: string, args: string[] = []): Promise<RunScriptResult> {
   return new Promise((resolve) => {
     const fullPath = path.join(PROJECT_ROOT, scriptPath);
     const child = spawn('npx', ['tsx', fullPath, ...args], {
@@ -97,5 +97,3 @@ export async function runGenerateAll(options: GenerateOptions = {}): Promise<Map
 
   return results;
 }
-
-export { DEFAULT_LLM_MODEL, type GenerateType, GENERATE_ITEMS };

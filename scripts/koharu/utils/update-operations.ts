@@ -91,7 +91,7 @@ export function checkGitStatus(): GitStatusInfo {
 /**
  * 检查是否已配置 upstream remote
  */
-export function hasUpstreamRemote(): boolean {
+function hasUpstreamRemote(): boolean {
   return Boolean(gitSafe(`remote get-url ${UPSTREAM_REMOTE}`));
 }
 
@@ -99,14 +99,14 @@ export function hasUpstreamTrackingRef(): boolean {
   return Boolean(gitSafe(`show-ref --verify refs/remotes/${UPSTREAM_REMOTE}/${MAIN_BRANCH}`));
 }
 
-export function getUpstreamRemoteUrl(): string | null {
+function getUpstreamRemoteUrl(): string | null {
   return gitSafe(`remote get-url ${UPSTREAM_REMOTE}`);
 }
 
 /**
  * 添加 upstream remote
  */
-export function addUpstreamRemote(): boolean {
+function addUpstreamRemote(): boolean {
   try {
     git(`remote add ${UPSTREAM_REMOTE} ${UPSTREAM_URL}`);
     return true;

@@ -9,6 +9,7 @@
  * Extracted from SearchDialog to keep component under 300 lines.
  */
 
+import { runSearchHighlight } from '@lib/search-highlight';
 import { closeModal } from '@store/modal';
 import { useEffect, useRef } from 'react';
 
@@ -22,6 +23,35 @@ function getSelectableItems(): HTMLElement[] {
     return [...results, loadMoreBtn];
   }
   return results;
+}
+
+function normalizePathname(pathname: string): string {
+  const normalized = pathname.replace(/\/+$/, '');
+  return normalized || '/';
+}
+
+function isCurrentPageSearchResult(link: HTMLAnchorElement): boolean {
+  const targetUrl = new URL(link.href, window.location.href);
+
+  return (
+    targetUrl.origin === window.location.origin &&
+    normalizePathname(targetUrl.pathname) === normalizePathname(window.location.pathname) &&
+    targetUrl.searchParams.has('q')
+  );
+}
+
+function activateCurrentPageSearchResult(link: HTMLAnchorElement): boolean {
+  if (!isCurrentPageSearchResult(link)) return false;
+
+  const targetUrl = new URL(link.href, window.location.href);
+
+  closeModal();
+  if (targetUrl.href !== window.location.href) {
+    window.history.pushState(window.history.state, '', targetUrl.href);
+  }
+  runSearchHighlight();
+
+  return true;
 }
 
 export function useSearchKeyboardNav(isOpen: boolean) {
@@ -86,6 +116,8 @@ export function useSearchKeyboardNav(isOpen: boolean) {
 
       const link = selectedItem.querySelector('.pagefind-ui__result-link') as HTMLAnchorElement;
       if (link?.href) {
+        if (activateCurrentPageSearchResult(link)) return;
+
         closeModal();
         window.location.href = link.href;
       }
@@ -114,14 +146,28 @@ export function useSearchKeyboardNav(isOpen: boolean) {
     // container so dynamically loaded results ("load more") are handled too.
     const handleResultClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      // Native link clicks and the "load more" button keep their default behavior
-      if (target.closest('.pagefind-ui__result-link') || target.closest('.pagefind-ui__button')) return;
+      // The "load more" button keeps its default behavior
+      if (target.closest('.pagefind-ui__button')) return;
+      const clickedLink = target.closest('.pagefind-ui__result-link') as HTMLAnchorElement | null;
+      if (clickedLink) {
+        if (activateCurrentPageSearchResult(clickedLink)) {
+          e.preventDefault();
+        }
+        return;
+      }
       // Don't hijack an in-progress text selection inside the results
       if (window.getSelection()?.toString()) return;
       const link = target
         .closest('.pagefind-ui__result')
         ?.querySelector('.pagefind-ui__result-link') as HTMLAnchorElement | null;
-      link?.click();
+      if (!link) return;
+
+      if (activateCurrentPageSearchResult(link)) {
+        e.preventDefault();
+        return;
+      }
+
+      link.click();
     };
 
     // Mutation observer: clear selection when results change

@@ -153,15 +153,3 @@ export function useKeyboardShortcut(options: KeyboardShortcutOptions): void {
     };
   }, [enabled, preventDefault, stopPropagation]);
 }
-
-/**
- * Hook for Escape key handling (common pattern)
- */
-export function useEscapeKey(handler: () => void, enabled = true): void {
-  useKeyboardShortcut({
-    key: 'Escape',
-    handler,
-    enabled,
-    ignoreInputs: false, // Escape should work even in inputs
-  });
-}

@@ -2,14 +2,13 @@
  * Category-related utility functions
  */
 
-import { categoryMap } from '@constants/category';
 import { memoize } from './cache';
 import { buildCategoryLink, getCategoryPaths, getCategorySlug } from './category-path';
 import { getSortedPosts } from './posts';
 import type { Category, CategoryListResult } from './types';
 
 // Re-export pure path utilities (defined in category-path.ts to break circular dependency)
-export { buildCategoryLink, buildCategoryPath, getCategoryPaths, getCategorySlug } from './category-path';
+export { buildCategoryPath, getCategoryPaths } from './category-path';
 
 function createCategory(path: string[]): Category {
   const name = path[path.length - 1];
@@ -83,16 +82,6 @@ export async function getCategoryList(): Promise<CategoryListResult> {
 }
 
 /**
- * 递归添加子分类 有副作用的函数 如 ['分类1', '分类2', '分类3'] 创建一级分类 '分类1'、二级分类 '分类2'、三级分类 '分类3'
- * @param rootCategories 根分类
- * @param parentNames 父分类名 ['分类1', '分类2']
- * @param name 子分类名 '分类3'
- */
-export function addCategoryRecursively(rootCategories: Category[], parentNames: string[], name: string) {
-  ensureCategoryPath(rootCategories, [...parentNames, name]);
-}
-
-/**
  * 获取分类完整链接
  * @param categories 分类
  * @param parentLink 父分类链接
@@ -109,25 +98,6 @@ export function getCategoryLinks(categories?: Category[], parentLink?: string): 
     }
   });
   return res;
-}
-
-/**
- * Get category name by link
- * @param link categories/xxx/front-end
- * @returns 前端
- */
-export function getCategoryNameByLink(link: string): string {
-  if (!link) return '';
-
-  const cleanLink = link.replace(/^\/+|\/+$/g, '');
-  if (!cleanLink) return '';
-
-  const segments = cleanLink.split('/').filter(Boolean);
-  if (segments.length === 0) return '';
-
-  const lastSegment = decodeURIComponent(segments[segments.length - 1]);
-  const match = Object.entries(categoryMap).find(([, slug]) => slug === lastSegment);
-  return match?.[0] ?? '';
 }
 
 /**

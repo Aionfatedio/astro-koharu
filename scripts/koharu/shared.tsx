@@ -9,9 +9,9 @@
  */
 
 // Common types
-export type { BackupItem, BackupType, GenerateType } from './constants';
+export type { BackupItem, GenerateType } from './constants';
 // Common constants
-export { AUTO_EXIT_DELAY, BACKUP_DIR, PROJECT_ROOT } from './constants';
+export { AUTO_EXIT_DELAY, BACKUP_DIR } from './constants';
 
 // Hooks
 export { usePressAnyKey, useRetimer } from './hooks';
@@ -25,7 +25,6 @@ export {
   formatSize,
   getBackupList,
   getRestorePreview,
-  getVersion,
   parseArgs,
   restoreBackup,
   runBackup,

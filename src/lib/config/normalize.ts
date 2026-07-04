@@ -34,7 +34,7 @@ export const RESERVED_ROUTE_SLUGS = [
   'api',
 ] as const;
 
-export const DEFAULT_CONTENT_CONFIG: ContentConfig = {
+const DEFAULT_CONTENT_CONFIG: ContentConfig = {
   addBlankTarget: true,
   smoothScroll: true,
   addHeadingLevel: true,
@@ -61,7 +61,7 @@ export const DEFAULT_CONTENT_CONFIG: ContentConfig = {
   enableIconifyInline: true,
 };
 
-export const DEFAULT_CHRISTMAS_CONFIG: ChristmasConfig = {
+const DEFAULT_CHRISTMAS_CONFIG: ChristmasConfig = {
   enabled: false,
   features: {
     snowfall: true,
@@ -81,18 +81,18 @@ export const DEFAULT_CHRISTMAS_CONFIG: ChristmasConfig = {
   },
 };
 
-export const DEFAULT_DEV_CONFIG: DevConfig = {
+const DEFAULT_DEV_CONFIG: DevConfig = {
   localProjectPath: '',
   contentRelativePath: 'src/content/blog',
   editors: [],
 };
 
-export const DEFAULT_NAVIGATION: RouterItem[] = [
+const DEFAULT_NAVIGATION: RouterItem[] = [
   { name: 'Home', path: '/', icon: 'fa6-solid:house-chimney' },
   { name: 'About', path: '/about', icon: 'fa6-regular:circle-user' },
 ];
 
-export const DEFAULT_FRIENDS_CONFIG: FriendsConfig = {
+const DEFAULT_FRIENDS_CONFIG: FriendsConfig = {
   intro: {
     title: 'Friends',
     subtitle: '',

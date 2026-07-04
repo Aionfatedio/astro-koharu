@@ -44,7 +44,7 @@ export interface ModalState {
 /**
  * Single source of truth for modal state
  */
-export const $activeModal = atom<ModalState>({ type: null });
+const $activeModal = atom<ModalState>({ type: null });
 
 // Computed helpers for convenience
 export const $isDrawerOpen = computed($activeModal, (m) => m.type === 'drawer');
@@ -83,7 +83,7 @@ export function closeModal(): void {
 /**
  * Toggle a modal (open if closed, close if open)
  */
-export function toggleModal(type: ModalType): void {
+function toggleModal(type: ModalType): void {
   if ($activeModal.get().type === type) {
     closeModal();
   } else {
@@ -92,13 +92,5 @@ export function toggleModal(type: ModalType): void {
 }
 
 // Convenience functions for specific modals
-export const openDrawer = () => openModal('drawer');
 export const closeDrawer = () => closeModal();
 export const toggleDrawer = () => toggleModal('drawer');
-
-export const openSearch = () => openModal('search');
-export const closeSearch = () => closeModal();
-export const toggleSearch = () => toggleModal('search');
-
-export const openCodeFullscreen = (data: CodeBlockData) => openModal('codeFullscreen', data);
-export const closeCodeFullscreen = () => closeModal();

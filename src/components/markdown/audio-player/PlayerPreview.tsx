@@ -7,7 +7,7 @@
  */
 
 import { usePlaybackLrcIndex } from '@hooks/usePlaybackTime';
-import type { MetingSong } from '@lib/meting';
+import { type MetingSong, normalizeMetingResourceUrl } from '@lib/meting';
 import type { PlaybackTimeStore } from '@lib/playback-time-store';
 import { cn } from '@lib/utils';
 import { memo, useEffect, useMemo, useState } from 'react';
@@ -38,9 +38,10 @@ function useLrcText(lrcSource: string | undefined): string {
       return;
     }
 
-    if (lrcSource.startsWith('http') || lrcSource.startsWith('/')) {
+    const normalizedLrcSource = normalizeMetingResourceUrl(lrcSource);
+    if (normalizedLrcSource.startsWith('http') || normalizedLrcSource.startsWith('/')) {
       let cancelled = false;
-      fetch(lrcSource)
+      fetch(normalizedLrcSource)
         .then((r) => r.text())
         .then((t) => {
           if (!cancelled) setText(t);
@@ -53,7 +54,7 @@ function useLrcText(lrcSource: string | undefined): string {
       };
     }
 
-    setText(lrcSource);
+    setText(normalizedLrcSource);
   }, [lrcSource]);
 
   return text;
@@ -112,6 +113,7 @@ export const PlayerPreview = memo(function PlayerPreview({
             lines={wordLrcLines}
             currentIndex={currentLrcIndex}
             timeStore={timeStore}
+            playing={playing}
             lrcLineHeight={lrcLineHeight}
             lrcContainerHeight={lrcContainerHeight}
           />

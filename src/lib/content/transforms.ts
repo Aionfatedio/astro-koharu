@@ -57,7 +57,7 @@ const fieldExtractors: { [K in keyof PostFieldMap]: (post: BlogPost) => PostFiel
  * @example pickPost(post, ['slug', 'link', 'title'])
  * @example pickPost(post, ['slug', 'link', 'title', 'categoryName'])
  */
-export function pickPost<K extends keyof PostFieldMap>(post: BlogPost, keys: readonly K[]): Pick<PostFieldMap, K> {
+function pickPost<K extends keyof PostFieldMap>(post: BlogPost, keys: readonly K[]): Pick<PostFieldMap, K> {
   const result = {} as Pick<PostFieldMap, K>;
   for (const key of keys) {
     result[key] = fieldExtractors[key](post);
@@ -70,7 +70,7 @@ export function pickPost<K extends keyof PostFieldMap>(post: BlogPost, keys: rea
  * @example pickPosts(posts, ['slug', 'link', 'title'])
  * @example pickPosts(posts, ['slug', 'link', 'title', 'categoryName'])
  */
-export function pickPosts<K extends keyof PostFieldMap>(posts: BlogPost[], keys: readonly K[]): Pick<PostFieldMap, K>[] {
+function pickPosts<K extends keyof PostFieldMap>(posts: BlogPost[], keys: readonly K[]): Pick<PostFieldMap, K>[] {
   return posts.map((post) => pickPost(post, keys));
 }
 
@@ -107,12 +107,6 @@ export const toPostRef = (post: BlogPost) => pickPost(post, POST_REF_KEYS);
  */
 export const toPostRefWithCategory = (post: BlogPost) => pickPost(post, POST_REF_WITH_CATEGORY_KEYS);
 
-/**
- * 转换为卡片数据（卡片展示所需字段）
- */
-export const toPostCardData = (post: BlogPost) => pickPost(post, POST_CARD_DATA_KEYS);
-
 // 批量转换便捷函数
 export const toPostRefs = (posts: BlogPost[]) => pickPosts(posts, POST_REF_KEYS);
-export const toPostRefsWithCategory = (posts: BlogPost[]) => pickPosts(posts, POST_REF_WITH_CATEGORY_KEYS);
 export const toPostCardDataList = (posts: BlogPost[]) => pickPosts(posts, POST_CARD_DATA_KEYS);

@@ -112,6 +112,7 @@
 .lrc-word {
   display: inline-block;
   position: relative;
+  white-space: pre;
   --word-progress: 0%;
   /* Gradient: highlight → 10% feather → muted-fg (grey).
    * The 10% soft edge masks frame-rate micro-jitter. */
@@ -135,10 +136,23 @@
   filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.15));
 }
 
-/* Word-by-word line — override p.current color/text-shadow since gradient handles it */
+/* Word-by-word line — override p.current color/text-shadow since gradient handles it.
+ * Non-scrolling lines KEEP the default `.audio-player-lrc p` line-change transition
+ * (scale/opacity), so row-to-row transitions stay smooth as before. */
 .audio-player-lrc p.lrc-word-line.current {
   color: transparent;
   text-shadow: none;
+}
+
+/* Only the line that actually overflows scrolls horizontally (JS toggles .is-scrolling).
+ * For that line only: disable the per-line transition so the rAF-driven translateX is
+ * smooth, drop the p.current scale()/translateX(4px) so scroll math stays in layout
+ * space, and let the moved-out text render (clipped by the .audio-player-lrc box). */
+.audio-player-lrc p.lrc-word-line.is-scrolling {
+  transition: none;
+  transform: none;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 /* =============================================================================

@@ -40,11 +40,30 @@ declare global {
 
 const nextFrame = (): Promise<void> => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
-async function highlightAndScroll(): Promise<void> {
-  if (!new URLSearchParams(window.location.search).has(HIGHLIGHT_PARAM)) return;
+let initialized = false;
+let releaseActiveCentering: (() => void) | null = null;
 
+function clearExistingHighlights(body: Element): void {
+  const highlights = body.querySelectorAll<HTMLElement>('.pagefind-highlight');
+
+  highlights.forEach((highlight) => {
+    const parent = highlight.parentNode;
+    highlight.replaceWith(document.createTextNode(highlight.textContent ?? ''));
+    parent?.normalize();
+  });
+}
+
+async function highlightAndScroll(): Promise<void> {
   const body = document.querySelector(PAGEFIND_BODY);
   if (!body) return;
+
+  // Always tear down first: navigating (or popping history) to a URL WITHOUT the
+  // highlight param must clear leftover marks from the previous state.
+  releaseActiveCentering?.();
+  releaseActiveCentering = null;
+  clearExistingHighlights(body);
+
+  if (!new URLSearchParams(window.location.search).has(HIGHLIGHT_PARAM)) return;
 
   // Pagefind's highlighter lives in the build-time /pagefind bundle, so its path is
   // resolved at runtime and must bypass Vite's static import analysis. Importing it
@@ -77,11 +96,25 @@ async function highlightAndScroll(): Promise<void> {
     observer.disconnect();
     for (const ev of RELEASE_EVENTS) window.removeEventListener(ev, release);
     document.removeEventListener('astro:before-swap', release);
+    if (releaseActiveCentering === release) {
+      releaseActiveCentering = null;
+    }
   };
+  releaseActiveCentering = release;
   for (const ev of RELEASE_EVENTS) window.addEventListener(ev, release, { passive: true, once: true });
   document.addEventListener('astro:before-swap', release, { once: true });
 }
 
+export function runSearchHighlight(): void {
+  void highlightAndScroll();
+}
+
 export function initSearchHighlight(): void {
-  document.addEventListener('astro:page-load', highlightAndScroll);
+  if (initialized) return;
+
+  initialized = true;
+  document.addEventListener('astro:page-load', runSearchHighlight);
+  // The search dialog pushState()s a `?q=` URL for same-page results; back/forward
+  // must re-sync (clear or re-apply) highlights to match the restored URL.
+  window.addEventListener('popstate', runSearchHighlight);
 }

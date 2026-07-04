@@ -7,6 +7,7 @@
 
 const DEFAULT_API = 'https://163.hyc.moe/';
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+const DEFAULT_API_HOST = '163.hyc.moe';
 
 export interface MetingSong {
   name: string;
@@ -54,6 +55,35 @@ function getCacheKey(server: string, type: string, id: string): string {
   return `meting:${server}:${type}:${id}`;
 }
 
+/** Avoid CORS failures from the public Meting API's HTTP -> HTTPS redirect. */
+export function normalizeMetingResourceUrl(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return trimmed;
+
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol === 'http:' && url.hostname === DEFAULT_API_HOST) {
+      url.protocol = 'https:';
+      return url.toString();
+    }
+
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  } catch {
+    // Relative local paths and inline lyrics are valid for this app; leave them untouched.
+  }
+
+  return value;
+}
+
+function normalizeMetingSong(song: MetingSong): MetingSong {
+  return {
+    ...song,
+    url: normalizeMetingResourceUrl(song.url),
+    pic: song.pic ? normalizeMetingResourceUrl(song.pic) : '',
+    lrc: song.lrc ? normalizeMetingResourceUrl(song.lrc) : '',
+  };
+}
+
 function getFromCache(key: string): MetingSong[] | null {
   try {
     const raw = localStorage.getItem(key);
@@ -63,18 +93,35 @@ function getFromCache(key: string): MetingSong[] | null {
       localStorage.removeItem(key);
       return null;
     }
-    return entry.data;
+    // Normalize on read (cheap) instead of writing back — a write here would
+    // refresh `timestamp` and let stale CDN-signed URLs outlive the TTL forever.
+    return entry.data.filter(isMetingSong).map(normalizeMetingSong);
   } catch {
     return null;
   }
 }
 
+function purgeMetingCache(): void {
+  const keys: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key?.startsWith('meting:')) keys.push(key);
+  }
+  for (const key of keys) localStorage.removeItem(key);
+}
+
 function setCache(key: string, data: MetingSong[]): void {
+  const raw = JSON.stringify({ data, timestamp: Date.now() } satisfies CacheEntry);
   try {
-    const entry: CacheEntry = { data, timestamp: Date.now() };
-    localStorage.setItem(key, JSON.stringify(entry));
+    localStorage.setItem(key, raw);
   } catch {
-    // localStorage full or unavailable — non-critical, skip silently
+    // Quota exceeded — the cache is disposable, so evict all meting entries and retry once.
+    try {
+      purgeMetingCache();
+      localStorage.setItem(key, raw);
+    } catch {
+      // localStorage unavailable — non-critical, skip silently
+    }
   }
 }
 
@@ -85,12 +132,12 @@ function isMetingSong(obj: unknown): obj is MetingSong {
 }
 
 /** Fetch songs from Meting API for a single parsed URL. */
-export async function fetchMeting(server: string, type: string, id: string, apiUrl?: string): Promise<MetingSong[]> {
+async function fetchMeting(server: string, type: string, id: string, apiUrl?: string): Promise<MetingSong[]> {
   const cacheKey = getCacheKey(server, type, id);
   const cached = getFromCache(cacheKey);
   if (cached) return cached;
 
-  const url = new URL(apiUrl || DEFAULT_API);
+  const url = new URL(normalizeMetingResourceUrl(apiUrl || DEFAULT_API));
   const params = new URLSearchParams({ server, type, id });
   url.search = params.toString();
   const response = await fetch(url);
@@ -98,7 +145,7 @@ export async function fetchMeting(server: string, type: string, id: string, apiU
 
   const data: unknown = await response.json();
   if (!Array.isArray(data)) return [];
-  const songs = data.filter(isMetingSong) as MetingSong[];
+  const songs = data.filter(isMetingSong).map(normalizeMetingSong);
   if (songs.length > 0) setCache(cacheKey, songs);
   return songs;
 }
@@ -134,7 +181,7 @@ async function fetchLocalPlaylist(basePath: string): Promise<MetingSong[]> {
       console.warn(`[Meting] Invalid local playlist manifest: ${manifestUrl}`);
       return [];
     }
-    return manifest.tracks.filter(isMetingSong);
+    return manifest.tracks.filter(isMetingSong).map(normalizeMetingSong);
   } catch (error) {
     console.warn(`[Meting] Failed to parse local playlist manifest: ${manifestUrl}`, error);
     return [];
