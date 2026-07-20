@@ -30,7 +30,7 @@ export function SingleChoiceQuiz({ quiz }: { quiz: ParsedQuiz }) {
       <fieldset className="space-y-2 border-none p-0" aria-label="单选题选项">
         {quiz.options.map((option, index) => (
           <QuizOption
-            // biome-ignore lint/suspicious/noArrayIndexKey: Options are static
+            // biome-ignore lint/suspicious/noArrayIndexKey: Quiz options are static and may have duplicate HTML
             key={index}
             index={index}
             html={option.html}

@@ -38,20 +38,18 @@ function useLrcText(lrcSource: string | undefined): string {
       return;
     }
 
+    // Local mod: normalize Meting URLs (http->https) and also fetch root-relative
+    // paths — cloud lyrics live at /music/cloud-lyrics/*.lrc.
     const normalizedLrcSource = normalizeMetingResourceUrl(lrcSource);
     if (normalizedLrcSource.startsWith('http') || normalizedLrcSource.startsWith('/')) {
-      let cancelled = false;
-      fetch(normalizedLrcSource)
+      const controller = new AbortController();
+      fetch(normalizedLrcSource, { signal: controller.signal })
         .then((r) => r.text())
-        .then((t) => {
-          if (!cancelled) setText(t);
-        })
-        .catch(() => {
-          if (!cancelled) setText('');
+        .then(setText)
+        .catch((error: unknown) => {
+          if (!(error instanceof DOMException && error.name === 'AbortError')) setText('');
         });
-      return () => {
-        cancelled = true;
-      };
+      return () => controller.abort();
     }
 
     setText(normalizedLrcSource);

@@ -89,7 +89,7 @@ const SOURCE_CONFIG: Record<SummarySource, { label: string; icon: ReactNode }> =
 function SummaryPanel({ summary, source = 'ai', typingSpeed = 25, className }: SummaryPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  const [hasAnimated, setHasAnimated] = useState(false);
+  const hasAnimatedRef = useRef(false);
   const animationRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
   const textRef = useRef<HTMLSpanElement | null>(null);
@@ -112,10 +112,10 @@ function SummaryPanel({ summary, source = 'ai', typingSpeed = 25, className }: S
     if (!textRef.current) return;
 
     // 如果用户偏好减少动画，或已经播放过动画，直接显示全部
-    if (prefersReducedMotion || hasAnimated) {
+    if (prefersReducedMotion || hasAnimatedRef.current) {
       textRef.current.textContent = summary;
       setIsTyping(false);
-      setHasAnimated(true);
+      hasAnimatedRef.current = true;
       return;
     }
 
@@ -135,12 +135,12 @@ function SummaryPanel({ summary, source = 'ai', typingSpeed = 25, className }: S
           textRef.current.textContent = summary;
         }
         setIsTyping(false);
-        setHasAnimated(true);
+        hasAnimatedRef.current = true;
       }
     };
 
     animationRef.current = requestAnimationFrame(animate);
-  }, [summary, typingSpeed, prefersReducedMotion, hasAnimated]);
+  }, [summary, typingSpeed, prefersReducedMotion]);
 
   // 展开/收起
   const handleToggle = useCallback(() => {

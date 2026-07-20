@@ -1,6 +1,19 @@
 .prose {
-  /* override the max-width of the prose */
-  max-width: none;
+  /* Reader variables are set by src/store/settings.ts and the inline Layout.astro script. */
+  font-size: var(--reader-font-size, 1rem);
+  line-height: var(--reader-line-height, 1.8);
+
+  /* Preserve the original full-width layout until the reader chooses a custom measure.
+     JavaScript converts that measure to px so differently sized children share one width. */
+  width: 100%;
+  max-width: var(--reader-measure, none);
+  margin-inline: auto;
+
+  /* Progressive CJK typography enhancements. */
+  word-break: auto-phrase;
+  line-break: strict;
+  hanging-punctuation: first allow-end;
+  text-spacing-trim: space-start;
 
   a {
     @apply text-primary hover:text-blue no-underline transition-colors duration-300 hover:underline;
@@ -377,11 +390,96 @@
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     --markdown-scrollbar-inline-offset: 1rem;
-    font-size: 0.875rem;
+    /* The parent pre already carries Typography's relative code scale. */
+    font-size: inherit;
     line-height: 1.7;
     /* 覆盖 Typography 默认值 */
     background-color: transparent;
     color: inherit;
+  }
+
+  /* Collapsible code blocks; long blocks are wrapped in their initial state during highlighting. */
+
+  /* Keep the grid wrapper so expanded blocks retain their existing layout. */
+  .code-block-wrapper > pre {
+    display: grid;
+    grid-template-rows: 1fr;
+  }
+
+  .code-block-wrapper > pre > code {
+    min-height: 0;
+  }
+
+  /* Keep an eight-line preview so collapsed blocks still reveal useful context. */
+  .code-block-wrapper.code-collapsed > pre {
+    border-top-width: 0;
+  }
+
+  .code-block-wrapper.code-collapsed > pre > code {
+    max-height: calc(13.6em + 2rem);
+    overflow: hidden;
+  }
+
+  /* Reserve the toolbar row before the idle-hydrated controls mount. */
+  .code-block-wrapper.code-collapsed > .code-block-wrapper-toolbar-mount {
+    min-height: 2.625rem;
+  }
+
+  /* Toolbar-shaped skeleton until hydration fills the mount (mirrors MacToolbar chrome). */
+  .code-block-wrapper.code-collapsed > .code-block-wrapper-toolbar-mount:empty {
+    border: 1px solid hsl(var(--border));
+    border-bottom: 0;
+    border-radius: 0.75rem 0.75rem 0 0;
+    background-color: hsl(var(--muted) / 0.5);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  }
+
+  /* Make the full toolbar a collapse toggle. */
+  .code-block-wrapper.code-collapsible .code-block-wrapper-toolbar-mount > div {
+    cursor: pointer;
+  }
+
+  .code-block-expand-overlay {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+    display: flex;
+    height: 4.5rem;
+    cursor: pointer;
+    align-items: flex-end;
+    justify-content: center;
+    border: 0;
+    border-radius: 0 0 0.75rem 0.75rem;
+    padding-bottom: 0.5rem;
+    background: linear-gradient(to bottom, transparent, hsl(var(--card) / 0.9) 60%, hsl(var(--card)));
+    color: hsl(var(--muted-foreground));
+  }
+
+  .code-block-expand-overlay-icon {
+    display: flex;
+    width: 1.75rem;
+    height: 1.75rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid hsl(var(--border));
+    border-radius: 9999px;
+    background-color: hsl(var(--card) / 0.85);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.12);
+    transition:
+      color 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  .code-block-expand-overlay:hover .code-block-expand-overlay-icon {
+    color: hsl(var(--primary));
+    transform: translateY(0.125rem);
+  }
+
+  .code-block-expand-overlay:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: -2px;
   }
 
   /* 移除 pre code 的 Typography ::before/::after */
@@ -442,6 +540,7 @@
 /* ========== Code/Mermaid/Infographic wrapper layout ========== */
 
 .code-block-wrapper {
+  position: relative;
   margin-bottom: 1.25rem;
 }
 
@@ -720,7 +819,7 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   --markdown-scrollbar-inline-offset: 0.75rem;
-  font-size: 0.875rem;
+  font-size: 0.875em;
   line-height: 1.7;
   font-family: var(--font-mono);
   white-space: pre-wrap;
@@ -769,7 +868,7 @@
   user-select: none;
 }
 
-/* ========================================
+/* =================================
    PhotoSwipe Customization
    ======================================== */
 
@@ -866,4 +965,43 @@
 .artist-score:hover::before,
 .artist-score:focus-visible::before {
   opacity: 1;
+}
+
+/* Reader font presets */
+
+/* The default rounded preset inherits the existing Han Chan and Gen Jyuu rules. */
+/* The system preset preserves Gen Jyuu on Japanese pages. */
+html[data-font-preset="system"]:not(:lang(ja)) .prose,
+html[data-font-preset="system"]:not(:lang(ja)) .prose :is(h1, h2, h3, h4, h5, h6) {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC",
+    sans-serif;
+}
+
+html[data-font-preset="serif"] .prose,
+html[data-font-preset="serif"] .prose :is(h1, h2, h3, h4, h5, h6) {
+  font-family: "Songti SC", "Noto Serif CJK SC", "Noto Serif SC", "Source Han Serif SC", serif;
+}
+
+html[data-font-preset="wenkai"] .prose,
+html[data-font-preset="wenkai"] .prose :is(h1, h2, h3, h4, h5, h6) {
+  font-family: "LXGW WenKai", "LXGW WenKai Screen", "寒蝉全圆体", serif;
+}
+
+html[data-reader-font="local"]:not(:lang(ja)) .prose,
+html[data-reader-font="local"]:not(:lang(ja)) .prose :is(h1, h2, h3, h4, h5, h6) {
+  font-family:
+    var(--reader-font-family), "寒蝉全圆体", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei",
+    sans-serif;
+}
+
+html[data-reader-font="local"]:lang(ja) .prose,
+html[data-reader-font="local"]:lang(ja) .prose :is(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--reader-font-family), "Gen Jyuu Gothic P", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+}
+
+/* Reader text justification */
+
+html.reader-justify .prose {
+  text-align: justify;
 }

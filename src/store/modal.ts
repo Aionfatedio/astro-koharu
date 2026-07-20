@@ -34,7 +34,8 @@ export interface DiagramFullscreenData {
   source: string;
 }
 
-export type ModalType = 'drawer' | 'search' | 'codeFullscreen' | 'diagramFullscreen' | null;
+// Local note: upstream also has an 'imageLightbox' modal here — we keep PhotoSwipe, so it is not ported.
+export type ModalType = 'drawer' | 'search' | 'codeFullscreen' | 'diagramFullscreen' | 'settings' | null;
 
 export interface ModalState {
   type: ModalType;
@@ -56,6 +57,7 @@ export const $diagramFullscreenData = computed($activeModal, (m) =>
   m.type === 'diagramFullscreen' ? (m.data as DiagramFullscreenData) : null,
 );
 export const $isAnyModalOpen = computed($activeModal, (m) => m.type !== null);
+export const $isSettingsOpen = computed($activeModal, (m) => m.type === 'settings');
 
 /**
  * Open a modal with optional data
@@ -65,8 +67,9 @@ export function openModal<T extends ModalType>(
   data?: T extends 'codeFullscreen' ? CodeBlockData : T extends 'diagramFullscreen' ? DiagramFullscreenData : never,
 ): void {
   $activeModal.set({ type, data });
-  if (type && typeof document !== 'undefined') {
-    document.body.style.overflow = 'hidden';
+  // Settings stays non-modal, so switching from another modal must release its scroll lock.
+  if (typeof document !== 'undefined') {
+    document.body.style.overflow = type && type !== 'settings' ? 'hidden' : '';
   }
 }
 
@@ -94,3 +97,4 @@ function toggleModal(type: ModalType): void {
 // Convenience functions for specific modals
 export const closeDrawer = () => closeModal();
 export const toggleDrawer = () => toggleModal('drawer');
+export const toggleSettings = () => toggleModal('settings');

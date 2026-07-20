@@ -116,7 +116,7 @@ export async function getSortedPosts(): Promise<CollectionEntry<'blog'>[]> {
     });
 
     // 使用浅拷贝避免原地修改 Astro 内部缓存的数组
-    const sortedPosts = [...posts].sort((a: BlogPost, b: BlogPost) => {
+    const sortedPosts = posts.toSorted((a: BlogPost, b: BlogPost) => {
       return b.data.date.getTime() - a.data.date.getTime();
     });
 

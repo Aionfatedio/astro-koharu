@@ -62,8 +62,6 @@ const Navigator = memo(function Navigator({ currentPath }: NavigatorProps) {
   const isTablet = useIsTablet();
   const isPostPageMobile = isTablet && currentPath.startsWith('/post/');
 
-  const scrollEndTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isScrollingRef = useRef(false);
   const firstScrollRef = useRef(true);
 
   // Apply with-background class based on scroll position
@@ -84,18 +82,9 @@ const Navigator = memo(function Navigator({ currentPath }: NavigatorProps) {
 
     // Post page mobile: keep header visible during scroll
     if (isPostPageMobile) {
-      if (scrollEndTimerRef.current) {
-        clearTimeout(scrollEndTimerRef.current);
-      }
-      isScrollingRef.current = true;
-
       // Ensure header is visible
       siteHeader?.classList.remove('-translate-y-full');
       mobileMenuContainer?.classList.remove('-translate-y-full');
-
-      scrollEndTimerRef.current = setTimeout(() => {
-        isScrollingRef.current = false;
-      }, 800);
       return;
     }
 
@@ -108,15 +97,6 @@ const Navigator = memo(function Navigator({ currentPath }: NavigatorProps) {
       mobileMenuContainer?.classList.remove('-translate-y-full');
     }
   }, [direction, isPostPageMobile]);
-
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (scrollEndTimerRef.current) {
-        clearTimeout(scrollEndTimerRef.current);
-      }
-    };
-  }, []);
 
   return (
     <div className="flex grow tablet:grow-0 items-center">
