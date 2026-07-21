@@ -10,7 +10,7 @@ description: "关于我？"
 
 {% media video %}
 - name: "测试视频"
-url: /media/Helltaker 腰振りモーションEX_chr2.mp4
+url: "/media/Helltaker 腰振りモーションEX_chr2.mp4"
 {% endmedia %}
 
 <div class="iframe-embed no-scrollbar" style="height: 600px">
