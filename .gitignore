@@ -34,8 +34,6 @@ pnpm-debug.log*
 
 # Transformers.js model cache
 .cache/*
-# Keep OG data cache for Vercel builds
-!.cache/og-data.json
 
 # Backup files
 backups/

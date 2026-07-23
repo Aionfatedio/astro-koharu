@@ -62,8 +62,7 @@ function loadCache(): CacheData {
 
 /**
  * Save cache to file system.
- * Prunes expired entries before writing to keep the file lean (important
- * because og-data.json is committed to git for Vercel build caching).
+ * Prunes expired entries before writing to keep the local cache lean.
  */
 function saveCache(cache: CacheData, successTtl: number): void {
   try {
