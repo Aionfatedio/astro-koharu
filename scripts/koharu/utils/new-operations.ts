@@ -26,7 +26,7 @@ async function ensureDirectory(dirPath: string): Promise<void> {
 /**
  * Load the site configuration from YAML
  */
-async function loadSiteConfig(): Promise<Record<string, unknown>> {
+export async function loadSiteConfig(): Promise<Record<string, unknown>> {
   const content = await fs.promises.readFile(SITE_CONFIG_PATH, 'utf-8');
   const parsed = YAML.parse(content);
   if (!parsed || typeof parsed !== 'object') {
@@ -38,7 +38,7 @@ async function loadSiteConfig(): Promise<Record<string, unknown>> {
 /**
  * Get category map from site config
  */
-async function getCategoryMap(): Promise<Record<string, string>> {
+export async function getCategoryMap(): Promise<Record<string, string>> {
   const config = await loadSiteConfig();
   return (config.categoryMap as Record<string, string>) || {};
 }
@@ -113,7 +113,7 @@ export async function getCategoryTree(): Promise<CategoryTreeItem[]> {
 /**
  * Format a date for frontmatter
  */
-function formatDate(date: Date = new Date()): string {
+export function formatDate(date: Date = new Date()): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
@@ -145,7 +145,7 @@ function yamlQuote(value: string): string {
 /**
  * Generate frontmatter YAML string for a post
  */
-function generatePostFrontmatter(data: PostData): string {
+export function generatePostFrontmatter(data: PostData): string {
   const lines: string[] = ['---'];
 
   lines.push(`title: ${yamlQuote(data.title)}`);

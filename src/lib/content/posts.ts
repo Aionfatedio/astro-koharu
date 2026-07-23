@@ -44,12 +44,12 @@ type SummariesData = Record<string, { title: string; summary: string }>;
  */
 export function getPostDescription(post: BlogPost, maxLength: number = 150): string {
   if (post.data.password) return '本文已加密，请输入密码后查看。';
-  return post.data.description || extractTextFromMarkdown(post.body, maxLength);
+  return post.data.description || extractTextFromMarkdown(post.body ?? '', maxLength);
 }
 
 /**
  * 获取文章的 AI 摘要
- * @param slug 文章 slug（通常是 post.data.link 或 post.slug）
+ * @param slug 文章公开 slug（通常来自 post.data.link 或 post.id）
  * @returns AI 摘要文本，如果不存在则返回 null
  */
 function getPostSummary(slug: string): string | null {
@@ -67,7 +67,7 @@ function getPostSummary(slug: string): string | null {
 export function getPostDescriptionWithSummary(post: BlogPost, maxLength: number = 150): string {
   if (post.data.password) return '本文已加密，请输入密码后查看。';
   const slug = getPostSlug(post);
-  return post.data.description || getPostSummary(slug) || extractTextFromMarkdown(post.body, maxLength);
+  return post.data.description || getPostSummary(slug) || extractTextFromMarkdown(post.body ?? '', maxLength);
 }
 
 export type PostSummarySource = 'description' | 'ai' | 'auto';
@@ -99,7 +99,7 @@ export function resolvePostSummary(post: BlogPost, maxLength: number = 200): Res
   }
 
   return {
-    text: extractTextFromMarkdown(post.body, maxLength),
+    text: extractTextFromMarkdown(post.body ?? '', maxLength),
     source: 'auto',
   };
 }
@@ -124,6 +124,18 @@ export async function getSortedPosts(): Promise<CollectionEntry<'blog'>[]> {
 
     return sortedPosts;
   });
+}
+
+/**
+ * Get one post by its Content Layer ID.
+ * The lookup map is built once and shared by all post pages in the build.
+ */
+export async function getPostById(id: string): Promise<CollectionEntry<'blog'> | undefined> {
+  const map = await memoize('postByIdMap', '__all__', async () => {
+    const posts = await getSortedPosts();
+    return new Map(posts.map((post) => [post.id, post]));
+  });
+  return map.get(id);
 }
 
 /**
@@ -198,7 +210,7 @@ export async function getAdjacentSeriesPosts(currentPost: BlogPost): Promise<{
     return { prevPost: null, nextPost: null };
   }
 
-  const currentIndex = seriesPosts.findIndex((post) => post.slug === currentPost.slug);
+  const currentIndex = seriesPosts.findIndex((post) => post.id === currentPost.id);
 
   if (currentIndex === -1) {
     return { prevPost: null, nextPost: null };

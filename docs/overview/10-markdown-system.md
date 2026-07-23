@@ -54,7 +54,7 @@ markdown: {
 
 ### Content Collections 配置
 
-博客文章使用 Astro Content Collections 管理，Schema 定义在 `src/content/config.ts:4-21`：
+博客文章使用 Astro Content Collections 管理，Schema 定义在 `src/content.config.ts:4-21`：
 
 ```typescript
 const blogCollection = defineCollection({
@@ -495,7 +495,7 @@ const jsonLd = {
 
 - `astro.config.mjs:15-37` - Markdown 主配置
 - `tailwind.config.mjs:138` - Typography 插件
-- `src/content/config.ts` - Content Collections Schema
+- `src/content.config.ts` - Content Collections Schema
 
 **样式文件：**
 

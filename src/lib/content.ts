@@ -25,6 +25,7 @@ export {
   getEnabledSeries,
   getHomePagePosts,
   getNonFeaturedPosts,
+  getPostById,
   getPostCount,
   getPostDescription,
   getPostLastCategory,

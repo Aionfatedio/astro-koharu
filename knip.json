@@ -2,8 +2,10 @@
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "ignoreExportsUsedInFile": {
     "interface": true,
-    "type": true
+    "type": true,
+    "function": true
   },
+  "entry": ["scripts/koharu/utils/index.ts"],
   "tags": ["-lintignore"],
   "ignore": ["public/**", "cms/**", "src/components/ui/**", "src/constants/design-tokens.ts", "src/layouts/PageLayout.astro"],
   "ignoreDependencies": ["@iconify-json/*", "ffprobe-static"]

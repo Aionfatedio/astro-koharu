@@ -50,7 +50,7 @@ astro-koharu is an Astro-based blog rebuilt from Hexo, inspired by the Shoka the
 
 ## Development Commands
 
-Package manager: **pnpm** (`pnpm@10.12.1`)
+Package manager: **pnpm** (`pnpm@11.16.0`)
 
 ```bash
 # Development
@@ -69,6 +69,7 @@ pnpm koharu              # Interactive menu
 pnpm koharu backup       # Backup blog content and config (--full for complete backup)
 pnpm koharu restore      # Restore from backup (--latest, --dry-run, --force)
 pnpm koharu update       # Update theme from upstream (--check, --skip-backup, --force, --rebase, --clean)
+pnpm koharu migrate      # Migrate legacy post links (--dry-run, --force)
 pnpm koharu generate     # Generate content assets (interactive menu)
 pnpm koharu generate lqips        # Generate LQIP image placeholders
 pnpm koharu generate similarities # Generate semantic similarity vectors
@@ -83,9 +84,9 @@ pnpm koharu list         # List all backups
 ## Architecture
 
 ### Tech Stack
-- **Framework**: Astro 5.x with React integration
+- **Framework**: Astro 6.4.8 with React integration
 - **Styling**: Tailwind CSS 4.x with plugins
-- **Content**: Astro Content Collections (`src/content/blog/`)
+- **Content**: Astro 6 Content Layer (`src/content.config.ts` + `src/content/blog/`)
 - **Animations**: Motion (Framer Motion successor)
 - **State**: Nanostores
 - **Search**: Pagefind (static)
@@ -136,7 +137,7 @@ pages/ → components/ → hooks/ → lib/ → constants/
 
 ### Key Concepts
 
-**Content System**: Blog posts in `src/content/blog/` using Astro Content Collections. Hierarchical categories supporting `'工具'` or `['笔记', '前端', 'React']`.
+**Content System**: Blog posts in `src/content/blog/` use the Astro 6 `glob()` loader. Public links come from `data.link`; run `pnpm koharu migrate` when upgrading legacy `slug` frontmatter. Hierarchical categories support `'工具'` or `['笔记', '前端', 'React']`.
 
 **Featured Series**: Special category-based content series with dedicated pages and homepage highlights. Configured via `featuredSeries` in `config/site.yaml`. Each series requires a unique `slug` (must not conflict with reserved routes) and `categoryName`. Supports multiple series, individual enable/disable, and homepage highlight control. Dynamic routes generated at `[seriesSlug].astro`.
 

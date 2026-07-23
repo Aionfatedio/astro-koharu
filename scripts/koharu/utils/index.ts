@@ -2,7 +2,7 @@
 export { type ParsedArgs, parseArgs } from './args';
 
 // Backup utilities
-export { type BackupInfo, getBackupList } from './backup';
+export { type BackupInfo, getBackupList, getRestorableBackupList, parseBackupManifest } from './backup';
 
 // Backup operations
 export { type BackupOutput, type BackupResult, runBackup } from './backup-operations';
@@ -14,10 +14,63 @@ export { type DeleteResult, deleteBackups } from './clean-operations';
 export { formatSize } from './format';
 
 // Generate operations
-export type { GenerateOptions, RunScriptResult } from './generate-operations';
+export {
+  checkLlmServer,
+  type GenerateOptions,
+  type RunScriptResult,
+  runGenerate,
+  runGenerateAll,
+  runScript,
+} from './generate-operations';
+// New operations
+export {
+  appendFriend,
+  createPost,
+  formatDate,
+  generatePostFrontmatter,
+  generateSlug,
+  getCategoryMap,
+  getCategoryTree,
+  isValidUrl,
+  loadSiteConfig,
+  postExists,
+} from './new-operations';
 // Restore operations
-export { getRestorePreview, type RestorePreviewItem, restoreBackup } from './restore-operations';
+export {
+  getRestorePreview,
+  type RestoreOptions,
+  type RestoreOutput,
+  type RestorePreview,
+  type RestorePreviewItem,
+  restoreBackup,
+} from './restore-operations';
 // Tar utilities
-export { tarExtractManifest } from './tar';
+export { tarCreate, tarExtract, tarExtractManifest, tarList } from './tar';
+// Update state machine
+export { statusEffects } from './update-effects';
+// Update operations
+export {
+  abortMerge,
+  addUpstreamRemote,
+  checkGitStatus,
+  cleanRestore,
+  ensureUpstreamRemote,
+  fetchUpstream,
+  getUpdateInfo,
+  hasUpstreamMergeHistory,
+  hasUpstreamRemote,
+  installDeps,
+  mergeUpstream,
+} from './update-operations';
+export { createInitialState, updateReducer } from './update-reducer';
 // Validation utilities
-export { validateBackupFilePath } from './validation';
+export {
+  isPathWithinBackupDir,
+  isPathWithinDir,
+  isValidBackupFile,
+  validateBackupArchive,
+  validateBackupFilePath,
+  validatePathInBackupDir,
+} from './validation';
+// Version utilities
+export { getVersion } from './version';

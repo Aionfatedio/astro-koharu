@@ -105,7 +105,11 @@ export function remarkComicDirective() {
 
       // Transform directive node into HTML
       directive.data ??= {};
-      const data = directive.data;
+      const data = directive.data as typeof directive.data & {
+        hName?: string;
+        hProperties?: Record<string, unknown>;
+        hChildren?: ElementContent[];
+      };
 
       data.hName = 'div';
       data.hProperties = {

@@ -7,7 +7,7 @@ import Layout from '@layouts/Layout.astro';
 import TwoColumnLayout from '@layouts/TwoColumnLayout.astro';
 import { getPostLastCategory, getSortedPosts, normalizeTag } from '@lib/content';
 import { displayDate } from '@lib/date';
-import { encodeSlug } from '@lib/route';
+import { encodeSlug, getPostSlug } from '@lib/route';
 
 export async function getStaticPaths() {
   const posts = await getSortedPosts();
@@ -63,7 +63,7 @@ const hasPosts = posts.length > 0;
                   >
                     {name}
                   </a>
-                  <a href={`/post/${encodeSlug(post?.data?.link ?? post.slug)}`} class="dashed-border md:absolute md:top-7 md:left-7">
+                  <a href={`/post/${encodeSlug(getPostSlug(post))}`} class="dashed-border md:absolute md:top-7 md:left-7">
                     {post?.data?.title}
                   </a>
                 </p>

@@ -8,6 +8,7 @@
  */
 
 import { LazyMotionProvider } from '@components/common/LazyMotionProvider';
+import { preloadSettingsPanel } from '@components/settings/SettingsPanel';
 import { bgmConfig, christmasConfig } from '@constants/site-config';
 import { useIsMounted } from '@hooks/useIsMounted';
 import { Icon } from '@iconify/react';
@@ -28,6 +29,7 @@ interface FloatingButtonProps {
   title: string;
   children: React.ReactNode;
   className?: string;
+  onIntent?: () => void;
   /** Optional data attribute for identifying BGM toggle button */
   dataBgmToggle?: boolean;
   /** Optional data attribute for identifying settings toggle button */
@@ -56,6 +58,7 @@ function FloatingButton({
   title,
   children,
   className,
+  onIntent,
   dataBgmToggle,
   dataSettingsToggle,
 }: FloatingButtonProps) {
@@ -65,6 +68,9 @@ function FloatingButton({
     <button
       type="button"
       onClick={onClick}
+      onPointerEnter={onIntent}
+      onPointerDown={onIntent}
+      onFocus={onIntent}
       className={cn(
         'rounded-full bg-background/80 p-2 opacity-80 shadow-lg backdrop-blur-sm transition-all duration-200 hover:bg-background hover:opacity-100',
         className,
@@ -135,7 +141,13 @@ export default function FloatingGroup() {
                   <Icon icon={isBgmPanelOpen ? 'ri:music-2-fill' : 'ri:music-2-line'} className="h-5 w-5" />
                 </FloatingButton>
               )}
-              <FloatingButton onClick={toggleSettings} ariaLabel="设置" title="设置" dataSettingsToggle>
+              <FloatingButton
+                onClick={toggleSettings}
+                onIntent={preloadSettingsPanel}
+                ariaLabel="设置"
+                title="设置"
+                dataSettingsToggle
+              >
                 <Icon icon={isSettingsOpen ? 'ri:settings-3-fill' : 'ri:settings-3-line'} className="h-5 w-5" />
               </FloatingButton>
               <FloatingButton onClick={scrollToTop} ariaLabel="回到顶部" title="回到顶部">

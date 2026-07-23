@@ -40,13 +40,15 @@ src/content/
 
 ## Schema 定义
 
-### 配置文件 `src/content/config.ts`
+### 配置文件 `src/content.config.ts`
 
 ```typescript
 import type { BlogSchema } from 'types/blog';
 import { defineCollection, z } from 'astro:content';
+import { glob } from 'astro/loaders';
 
 const blogCollection = defineCollection({
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/blog' }),
   schema: z.object({
     // 必填字段
     title: z.string(),              // 文章标题
@@ -75,6 +77,8 @@ export const collections = {
   blog: blogCollection,
 };
 ```
+
+Astro 6 使用 Content Layer 的 `glob()` loader，文章的文件路径进入 `post.id`；公开 URL 由 `data.link` 决定，缺少 `link` 的旧文章需先运行 `pnpm koharu migrate`。
 
 ### Schema 字段说明
 
@@ -471,7 +475,7 @@ export async function getAdjacentSeriesPosts(currentPost: BlogPost): Promise<{
   }
 
   const currentIndex = seriesPosts.findIndex(
-    (post) => post.slug === currentPost.slug
+    (post) => getPostSlug(post) === currentPost.slug
   );
 
   if (currentIndex === -1) {
@@ -587,7 +591,7 @@ date: 2024-02-20
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                    Schema 验证                              │
-│   src/content/config.ts → z.object({...})                  │
+│   src/content.config.ts → z.object({...})                  │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -643,7 +647,7 @@ date: 2024-02-20
 
 | 文件                            | 说明                |
 | ------------------------------- | ------------------- |
-| `src/content/config.ts`         | Schema 定义         |
+| `src/content.config.ts`         | Schema 定义         |
 | `src/content/blog/`             | 博客文章目录        |
 | `src/lib/content/posts.ts`      | 文章查询函数        |
 | `src/lib/content/categories.ts` | 分类处理函数        |

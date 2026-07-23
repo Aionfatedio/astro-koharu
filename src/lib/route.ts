@@ -8,9 +8,9 @@ function isBlogPost(param: BlogPost | PostRef): param is BlogPost {
   return 'collection' in param;
 }
 
-/** Get the URL slug for a BlogPost (link override > transliterated slug) */
+/** Get the public URL slug for an Astro Content Layer entry. */
 export function getPostSlug(post: BlogPost): string {
-  return post.data.link ?? transliterateSlug(post.slug);
+  return post.data.link ?? transliterateSlug(post.id);
 }
 
 /**

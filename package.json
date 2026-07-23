@@ -1,10 +1,14 @@
 {
   "name": "astro-koharu",
   "type": "module",
-  "version": "4.2.1",
+  "version": "5.0.0",
+  "packageManager": "pnpm@11.16.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "predev": "pnpm generate:media --target videos,music",
-    "dev": "astro dev",
+    "dev": "pnpm koharu migrate --check && astro dev",
     "generate:lqips": "npx tsx src/scripts/generateLqips.ts",
     "generate:similarities": "npx tsx src/scripts/generateSimilarities.ts",
     "generate:similarities:gpu": "npx tsx src/scripts/generateSimilarities.ts --device gpu",
@@ -16,7 +20,7 @@
     "generate:videos": "pnpm generate:media --target videos",
     "generate:all": "pnpm generate:lqips && pnpm generate:summaries && pnpm generate:similarities && pnpm generate:media",
     "prebuild": "pnpm generate:media --target videos,music",
-    "build": "astro build",
+    "build": "pnpm koharu migrate --check && astro build",
     "preview": "astro preview",
     "astro": "astro",
     "check": "astro check",
@@ -32,15 +36,22 @@
     "prepare": "husky",
     "knip": "knip",
     "koharu": "npx tsx scripts/koharu.tsx",
+    "migrate": "pnpm koharu migrate",
     "save-slugs": "npx tsx scripts/save-slugs.ts",
+    "test:migrate": "tsx --test scripts/koharu/utils/*.test.ts",
     "cms": "cd cms && pnpm dev",
-    "cms:install": "cd cms && pnpm install"
+    "cms:install": "pnpm --dir cms install",
+    "docker:up": "docker compose --env-file ./.env -f docker/docker-compose.yml up -d --build",
+    "docker:down": "docker compose -f docker/docker-compose.yml down",
+    "docker:logs": "docker compose -f docker/docker-compose.yml logs -f",
+    "docker:rebuild": "bash docker/rebuild.sh"
   },
   "dependencies": {
     "@antv/infographic": "^0.2.4",
-    "@astrojs/react": "^4.4.2",
-    "@astrojs/rss": "^4.0.14",
-    "@astrojs/sitemap": "^3.7.0",
+    "@astrojs/markdown-remark": "7.2.0",
+    "@astrojs/react": "^5.0.7",
+    "@astrojs/rss": "^4.0.19",
+    "@astrojs/sitemap": "^3.7.3",
     "@floating-ui/react": "^0.27.16",
     "@giscus/react": "^3.1.0",
     "@hookform/resolvers": "^5.2.2",
@@ -63,13 +74,13 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@waline/client": "^3.8.0",
-    "@yeskunall/astro-umami": "0.0.4",
+    "@yeskunall/astro-umami": "0.0.9",
     "artplayer": "^5.4.0",
-    "astro": "^5.16.6",
+    "astro": "6.4.8",
     "astro-icon": "^1.1.5",
-    "astro-loading-indicator": "^0.7.1",
-    "astro-mermaid": "^1.2.0",
-    "astro-pagefind": "^1.8.5",
+    "astro-loading-indicator": "^0.9.0",
+    "astro-mermaid": "^2.1.0",
+    "astro-pagefind": "^1.8.6",
     "astro-robots-txt": "^1.0.0",
     "astro-seo": "^1.1.0",
     "astro-tooltips": "^0.6.2",
@@ -121,7 +132,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.6",
+    "@astrojs/check": "^0.9.9",
     "@biomejs/biome": "^2.3.10",
     "@huggingface/transformers": "^3.8.1",
     "@iconify/react": "^5.2.1",
@@ -141,6 +152,7 @@
     "chalk": "^5.6.2",
     "glob": "^13.0.0",
     "gray-matter": "^4.0.3",
+    "github-slugger": "^2.0.0",
     "husky": "^9.1.7",
     "ink": "^6.6.0",
     "knip": "^5.71.0",
@@ -149,8 +161,8 @@
     "transliteration": "^2.6.1",
     "remark": "^15.0.1",
     "sharp": "^0.34.5",
-    "shiki": "^3.22.0",
-    "sonda": "^0.10.1",
+    "shiki": "^4.3.1",
+    "sonda": "^0.14.0",
     "strip-markdown": "^6.0.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
@@ -165,6 +177,5 @@
     "*.{md,mdx}": [
       "lint-md --fix"
     ]
-  },
-  "packageManager": "pnpm@10.12.1+sha512.f0dda8580f0ee9481c5c79a1d927b9164f2c478e90992ad268bbb2465a736984391d6333d2c327913578b2804af33474ca554ba29c04a8b13060a717675ae3ac"
+  }
 }

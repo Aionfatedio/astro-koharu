@@ -32,7 +32,7 @@
 
 ## 部署
 
-支持 **Vercel**、**Cloudflare Pages**、**Netlify** 等主流平台自动部署，会根据环境自动选择适配器，未识别平台则使用 Node.js 保底适配器（适合 Docker 或自托管）。
+输出为纯静态 `dist/`，可部署到 **Vercel**、**Cloudflare Pages**、**Netlify**、GitHub Pages 或任意静态文件服务器，无需 adapter。
 
 ### 一键部署
 
@@ -57,6 +57,8 @@ docker compose --env-file ./.env -f docker/docker-compose.yml up -d --build
 
 ### 本地开发
 
+开始前请确保已安装 Node.js 22.12.0 或更高版本，以及 pnpm 11.16.0。
+
 1. 克隆项目到本地
 
 ```bash
@@ -78,10 +80,10 @@ pnpm dev
 
 ## 功能特性
 
-- 基于 Astro 5.x，静态站点生成，性能优异
+- 基于 Astro 6.x，静态站点生成，性能优异
 - 优雅的深色/浅色主题切换
 - 基于 Pagefind 的无后端全站搜索
-- **可更换评论系统**：支持 Waline（推荐）、Giscus、Remark42 三种评论组件，配置文件一键切换，主题自动跟随
+- **可更换评论系统**：支持 Waline（推荐）、Giscus、Remark42、Twikoo 四种评论组件，配置文件一键切换，主题自动跟随
 - 完整的 Markdown 增强功能（GFM、代码高亮、自动目录、Mermaid 图表、Infographic 信息图）
 - **Shoka 兼容 Markdown 语法**：文字特效（下划线/高亮/上下标/颜色）、隐藏文字（Spoiler）、注音标注（Ruby）、提醒块、折叠块、标签卡、友链卡片、音视频播放器、练习题系统（单选/多选/判断/填空）、数学公式（KaTeX）、代码块增强（title/mark/command）—— 所有功能均可独立开关
 - 灵活的多级分类与标签系统
@@ -114,6 +116,7 @@ pnpm koharu new          # 新建内容（文章/友链）
 pnpm koharu backup       # 备份博客内容和配置
 pnpm koharu restore      # 从备份恢复
 pnpm koharu update       # 更新主题
+pnpm koharu migrate      # 迁移 Astro 6 文章链接
 pnpm koharu generate     # 生成内容资产 (LQIP, 相似度, AI 摘要)
 pnpm koharu clean        # 清理旧备份
 pnpm koharu list         # 查看所有备份
@@ -199,6 +202,15 @@ pnpm koharu update --dry-run
 >
 > CLI 更新命令是对 git 操作的封装，熟悉 git 的用户也可以直接使用 `git merge`/`git rebase` 手动操作。
 
+升级到 Astro 6 的版本后，先预览并执行一次文章链接迁移：
+
+```bash
+pnpm koharu migrate --dry-run
+pnpm koharu migrate --force
+```
+
+迁移会把旧 frontmatter `slug` 转换为 `link`，缺少链接的文章按原文件路径生成稳定链接；重复链接或异常 frontmatter 会阻止整批写入。`pnpm dev` 与 `pnpm build` 都会先执行只读迁移检查。
+
 ### 内容生成
 
 ```bash
@@ -223,7 +235,7 @@ pnpm koharu generate all          # 生成全部
 - 分类映射（中文分类名 → URL slug）
 - 友链列表
 - 公告系统
-- **评论系统**（Waline / Giscus / Remark42，推荐使用 Waline）
+- **评论系统**（Waline / Giscus / Remark42 / Twikoo，推荐使用 Waline）
 - 数据统计（Umami）
 - 圣诞特辑开关
 - 开发工具配置（`config/site.yaml` 的 `dev` 部分，用于本地编辑器跳转）
@@ -236,7 +248,7 @@ pnpm koharu generate all          # 生成全部
 
 ```yaml
 comment:
-  provider: waline # 'waline' | 'giscus' | 'remark42' | 'none'
+  provider: waline # 'waline' | 'giscus' | 'remark42' | 'twikoo' | 'none'
   waline:
     serverURL: https://your-waline-server.vercel.app
     # ... 其他配置

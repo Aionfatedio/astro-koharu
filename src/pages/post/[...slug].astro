@@ -1,4 +1,5 @@
 ---
+import { render } from 'astro:content';
 import CustomContent from '@components/common/CustomContent.astro';
 import HomeSider from '@components/layout/HomeSider.astro';
 import SummaryPanel, { type SummarySource } from '@components/post/SummaryPanel';
@@ -9,7 +10,14 @@ import { CONTENT_PADDING } from '@constants/layout';
 import { siteConfig } from '@constants/site-config';
 import Layout from '@layouts/Layout.astro';
 import TwoColumnLayout from '@layouts/TwoColumnLayout.astro';
-import { buildCategoryPath, getCategoryPaths, getPostDescription, getSortedPosts, resolvePostSummary } from '@lib/content';
+import {
+  buildCategoryPath,
+  getCategoryPaths,
+  getPostById,
+  getPostDescription,
+  getSortedPosts,
+  resolvePostSummary,
+} from '@lib/content';
 import { formatForSeo } from '@lib/date';
 import { getPostSlug } from '@lib/route';
 import { getOgImageUrl } from '@lib/seo/og-image';
@@ -25,12 +33,20 @@ export async function getStaticPaths() {
     const link = getPostSlug(post);
     return {
       params: { slug: link },
-      props: { post, postId: post.id },
+      props: { postId: post.id },
     };
   });
 }
-const { post, postId } = Astro.props;
-const { Content } = await post.render();
+const { postId } = Astro.props;
+const post = await getPostById(postId);
+if (!post) throw new Error(`Post not found: ${postId}`);
+
+const normalizedPostFilePath = post.filePath?.replaceAll('\\', '/');
+const contentRoot = 'src/content/blog/';
+const postRelativePath = normalizedPostFilePath?.startsWith(contentRoot)
+  ? normalizedPostFilePath.slice(contentRoot.length)
+  : undefined;
+const { Content } = await render(post);
 const { title, categories = [], tags = [], date, math: postMath, keywords: postKeywords = [] } = post?.data ?? {};
 
 // 画师概览：查找画师数据（匹配失败则回退为 null，显示站点概览）
@@ -158,7 +174,11 @@ const summarySource = (resolvedSummary?.source ?? null) as SummarySource | null;
             ))
           }
         </div>
-        {import.meta.env.DEV && <EditButton client:only="react" postId={postId} />}
+        {
+          import.meta.env.DEV && postRelativePath && (
+            <EditButton client:only="react" postRelativePath={postRelativePath} />
+          )
+        }
       </nav>
       {
         !post.data.password && summaryText && summarySource && (

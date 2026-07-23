@@ -49,7 +49,7 @@ import { isSettingVisible, SETTINGS_REGISTRY, type SettingItem, type SettingSect
 const SECTIONS: SettingSection[] = ['reader', 'general'];
 const loadLocalFontPicker = () => import('./LocalFontPicker');
 
-function preloadLocalFontPicker() {
+function preloadLocalFontPicker(): void {
   void loadLocalFontPicker();
 }
 

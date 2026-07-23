@@ -1,7 +1,7 @@
 # llm.md — astro-koharu 魔改仓库 AI 交接文档
 
 > 本文档面向接手本仓库维护（尤其是上游同步）的 AI 助手。请完整阅读后再动手。
-> 最后更新：2026-07-20（完成 v4.2.1 同步后）
+> 最后更新：2026-07-23（完成 v5.0.0 同步）
 
 ---
 
@@ -9,10 +9,10 @@
 
 - **本仓库**：`Aionfatedio/astro-koharu`（origin）——重度魔改的个人博客
 - **上游**：`https://github.com/cosZone/astro-koharu`（remote 名 `upstream`）
-- 框架：Astro 5.x + React 19 + Tailwind CSS 4 + Nanostores + Motion（LazyMotion `m.` 按需加载）
-- 包管理器：**pnpm**；`cms/` 是**独立子包**（自带 package.json / pnpm-lock.yaml / node_modules）
-- 当前版本：**4.2.1**（package.json version 与上游已同步版本保持一致）
-- 已同步至上游：**v4.2.1**（2026-07-20，提交 `mod v4.2.1`）
+- 框架：Astro 6.4.8（Content Layer）+ React 19 + Tailwind CSS 4 + Nanostores + Motion（LazyMotion `m.` 按需加载）
+- 包管理器：**pnpm 11.16.0**；`cms/` 是**独立子包**（自带 package.json / pnpm-lock.yaml / node_modules）
+- 当前版本：**5.0.0**（package.json version 与上游已同步版本保持一致）
+- 已同步至上游：**v5.0.0**（2026-07-23，提交 `mod v5.0.0`）
 
 ## 2. 铁律（违反 = 同步失败）
 
@@ -21,6 +21,7 @@
 3. **静态站点部署**，无服务端逻辑。不引入 adapter（上游文档也已转向纯静态 `dist/`）。需要服务端支持的安全方案倾向跳过。
 4. 用户偏好**简洁方案**，避免过度复杂；交流用中文。
 5. 动手前创建备份分支（`backup/pre-v<版本>-sync`），提交当前工作区。
+6. 根 `pnpm-workspace.yaml` 只包含 `.`；CMS 通过自身 `cms/pnpm-workspace.yaml` 与 `pnpm --dir cms install` 独立安装。
 
 ## 3. 本地魔改总账（同步时必须逐项保护）
 
@@ -65,9 +66,15 @@
 ### 3.5 已删除（上游还有，本地永不恢复）
 `src/i18n/**`、`src/pages/[lang]/**`、`src/pages/_shared/utils.ts`、`src/components/bangumi/`、`src/components/markdown/ImageLightbox.tsx`、`src/hooks/useVideoPlayer.ts`、`src/hooks/useTranslation`、`src/content/blog/tools/astro-koharu-guide.md`（上游示例文章）、ICP 备案配置、`src/lib/crypto/index.ts` 桶（rehype 直接从 `../crypto/encrypt` 导入）
 
+### 3.6 v5.0.0 架构同步要点
+- Astro 6 Content Layer 使用 `src/content.config.ts` 与 `glob()` loader；文章公开地址统一来自 `data.link`，禁止恢复 `CollectionEntry.slug` 作为路由来源。
+- `scripts/koharu migrate` 在构建前检查并把旧 `slug` 迁移为 `link`；迁移具备快照、原子写入、重复链接检测、符号链接拒绝和失败回滚。
+- v5 CLI 的备份/恢复/更新状态机直接同步；本地删除所有语言分支与翻译分支，迁移配置仅保留 `site.enableSlugTransliteration`。
+- `pnpm-workspace.yaml` 明确允许根依赖所需的构建脚本（esbuild、sharp、re2、onnxruntime-node 等），避免 pnpm 11 非交互安装中断。
+
 ## 4. 上游同步方法论（实测有效，照此执行）
 
-**背景**：merge-base 停在上游 v2.6.3——历史同步全是手工 squash（`mod vX.Y.Z` 单亲提交），**直接 `git merge` 会重放几十个版本，绝对不可行**。
+**背景**：历史同步全是手工 squash（`mod vX.Y.Z` 单亲提交），**直接 `git merge` 会重放大量版本，绝对不可行**。
 
 标准流程（净增量三方应用）：
 
@@ -98,7 +105,7 @@ git show v<新>:src/i18n/translations/zh.ts > /tmp/zh.ts   # 中文参照表
 # 无参 t('key') → 'zh 值'；带参 t('key', {x}) → 手工模板字符串
 # 最后全局验证：grep -rn "useTranslation" src cms/src 必须为 0
 
-# 5. 依赖：pnpm install（根）+ cd cms && pnpm install（子包）
+# 5. 依赖：根目录 pnpm install；CMS 用 pnpm --dir cms install
 
 # 6. 验证（全绿才算完）：pnpm lint:fix → pnpm check → pnpm knip → pnpm build
 #    + §6 魔改点回归抽查
@@ -129,6 +136,8 @@ git show v<新>:src/i18n/translations/zh.ts > /tmp/zh.ts   # 中文参照表
 6. **knip 误报 `src/layouts/PageLayout.astro`**：它被 `about.md`/`music.md` 的 frontmatter `layout:` 字符串引用，knip 和不含 `*.md` 的 grep 都看不见（已在 knip.json ignore）。**删任何"死文件"前必须 `grep --include="*.md"` 并跑 `pnpm build` 验证**。
 7. **cms 是独立子包**：根 knip 已 ignore `cms/**`；cms 依赖声明在 `cms/package.json`，不要往根 package.json 塞 cms 专用依赖。
 8. `git apply --3way` 是全有或全无：patch 里任何一个文件本地不存在就整体失败，先剔除再应用。
+9. Windows 下 GNU tar 的列表输出带 CRLF，归档条目解析必须使用 `split(/\\r?\\n/)`，否则 manifest 会被误判为缺失或重复。
+10. pnpm 11 非交互安装会阻止依赖构建脚本；根项目通过 `allowBuilds` 明确白名单，CMS 仍保持独立安装。
 
 ## 7. 验证清单（同步完成的定义）
 
@@ -172,6 +181,7 @@ git show v<新>:src/i18n/translations/zh.ts > /tmp/zh.ts   # 中文参照表
 | v3.3.1 | TOC 高亮闪烁修复、Meting API 可配置端点 |
 | v4.1.0 | link-embed 配置透传；BREAKING: previewCacheTime 秒→天；跳过 react-grab 移除 |
 | v4.2.1 | 设置中心（中文化）、LazyMotion 迁移、Tweet 加固（取代本地 normalizeTweet 补丁）、代码块折叠、CMS 拆分+undici；恢复 zod3/react-hook-form 等 |
+| v5.0.0 | Astro 6.4.8 Content Layer、link 迁移 CLI、备份/恢复安全快照、Spoiler fallback、Twikoo 加载状态、Mermaid 集成升级；保留本地云歌词、PhotoSwipe、艺术家与停用友链等魔改 |
 
 ## 10. 其他背景
 
@@ -179,4 +189,4 @@ git show v<新>:src/i18n/translations/zh.ts > /tmp/zh.ts   # 中文参照表
 - 评论系统支持 remark42/giscus/waline/twikoo
 - localStorage meting 缓存 24h TTL；OG 缓存分级 TTL（成功 30 天/失败 1 天），`.cache/og-data.json` 跟随提交
 - knip 配置豁免：`public/**`、`cms/**`、`src/components/ui/**`（shadcn 兜底件）、`design-tokens.ts`（令牌参考）、`PageLayout.astro`（md frontmatter 引用）、`@iconify-json/*`、`ffprobe-static`
-- 备份分支 `backup/pre-v4.2.1-sync` 尚在，确认稳定后可删
+- 备份分支 `backup/pre-v5.0.0-sync` 尚在，确认稳定后可删

@@ -9,13 +9,23 @@
  */
 
 // Common types
-export type { BackupItem, GenerateType } from './constants';
+export type { BackupItem, BackupType, GenerateType } from './constants';
 // Common constants
 export { AUTO_EXIT_DELAY, BACKUP_DIR } from './constants';
 
 // Hooks
 export { usePressAnyKey, useRetimer } from './hooks';
-export type { BackupInfo, BackupOutput, BackupResult, DeleteResult, ParsedArgs, RestorePreviewItem } from './utils';
+export type {
+  BackupInfo,
+  BackupOutput,
+  BackupResult,
+  DeleteResult,
+  ParsedArgs,
+  RestoreOptions,
+  RestoreOutput,
+  RestorePreview,
+  RestorePreviewItem,
+} from './utils';
 // Common utilities
 // Backup operations
 // Restore operations
@@ -24,6 +34,7 @@ export {
   deleteBackups,
   formatSize,
   getBackupList,
+  getRestorableBackupList,
   getRestorePreview,
   parseArgs,
   restoreBackup,
@@ -31,3 +42,4 @@ export {
   tarExtractManifest,
   validateBackupFilePath,
 } from './utils';
+export type { ContentMigrationPlan } from './utils/migration-operations';
