@@ -58,6 +58,30 @@ interface ContainerOptions {
 const MAX_CONTAINER_DEPTH = 10;
 
 /**
+ * Parse media YAML while accepting the legacy form where properties after the
+ * first list item were not indented. Existing Hexo posts use both forms.
+ */
+function parseMediaItems(yamlLines: string[]): MediaItem[] {
+  const source = yamlLines.join('\n');
+  const parseList = (value: string): MediaItem[] | null => {
+    const data = YAML.load(value);
+    return Array.isArray(data) ? (data as MediaItem[]) : null;
+  };
+
+  try {
+    const data = parseList(source);
+    if (data) return data;
+  } catch {
+    // Retry below after normalizing legacy list-item indentation.
+  }
+
+  const normalized = yamlLines.map((line) => (/^[\w-]+\s*:/.test(line) ? `  ${line}` : line)).join('\n');
+  const data = parseList(normalized);
+  if (!data) throw new Error('Media YAML must be a list');
+  return data;
+}
+
+/**
  * Process container syntax (:::, +++, ;;;) and Hexo tags in raw markdown text.
  * Returns the text with containers/tags replaced by HTML blocks.
  */
@@ -300,17 +324,15 @@ function processContainers(text: string, opts: ContainerOptions = {}, _depth = 0
       if (i < lines.length) i++; // skip endmedia
 
       try {
-        const data = YAML.load(yamlLines.join('\n')) as MediaItem[];
-        if (Array.isArray(data)) {
-          if (mediaType === 'audio') {
-            output.push('');
-            output.push(renderAudioMedia(data));
-            output.push('');
-          } else {
-            output.push('');
-            output.push(renderVideoMedia(data));
-            output.push('');
-          }
+        const data = parseMediaItems(yamlLines);
+        if (mediaType === 'audio') {
+          output.push('');
+          output.push(renderAudioMedia(data));
+          output.push('');
+        } else {
+          output.push('');
+          output.push(renderVideoMedia(data));
+          output.push('');
         }
       } catch {
         output.push(`<!-- Failed to parse media YAML -->`);
