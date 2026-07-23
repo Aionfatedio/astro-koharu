@@ -249,6 +249,8 @@ export default defineConfig({
       sourcemap: isAnalyze,
     },
     plugins: [yaml(), conditionalSnowfall(), svgr(), tailwindcss()],
+    // Astro's static renderer resolves this browser-only package through the
+    // Vite resolver; keep it bundled so its CSS imports are transformed.
     resolve: {
       noExternal: ['react-tweet'],
     },

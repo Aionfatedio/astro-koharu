@@ -2,7 +2,7 @@
  * Post-related utility functions
  */
 
-import { type CollectionEntry, getCollection } from 'astro:content';
+import { type CollectionEntry, getCollection, getEntry } from 'astro:content';
 
 import summaries from '@assets/summaries.json';
 import { siteConfig } from '@constants/site-config';
@@ -128,14 +128,11 @@ export async function getSortedPosts(): Promise<CollectionEntry<'blog'>[]> {
 
 /**
  * Get one post by its Content Layer ID.
- * The lookup map is built once and shared by all post pages in the build.
+ * Content Layer performs a direct entry lookup, avoiding a full collection
+ * query/sort for every post page.
  */
 export async function getPostById(id: string): Promise<CollectionEntry<'blog'> | undefined> {
-  const map = await memoize('postByIdMap', '__all__', async () => {
-    const posts = await getSortedPosts();
-    return new Map(posts.map((post) => [post.id, post]));
-  });
-  return map.get(id);
+  return getEntry('blog', id);
 }
 
 /**
@@ -192,7 +189,7 @@ export async function getSeriesPosts(post: BlogPost): Promise<BlogPost[]> {
   const [firstCategoryPath] = getCategoryPaths(post.data.categories);
   if (!firstCategoryPath?.length) return [];
 
-  return await getPostsByCategoryPath(firstCategoryPath);
+  return getPostsByCategoryPath(firstCategoryPath);
 }
 
 /**
@@ -260,8 +257,19 @@ export function getEnabledSeries(): FeaturedSeriesItem[] {
  * 获取所有 Featured Series 的分类名
  * @returns 分类名列表
  */
-function getFeaturedCategoryNames(): string[] {
-  return getEnabledSeries().map((series) => series.categoryName);
+function getFeaturedCategoryNames(): Set<string> {
+  return new Set(getEnabledSeries().map((series) => series.categoryName));
+}
+
+function getPostCategoryNames(post: BlogPost): Set<string> {
+  return new Set(getCategoryPaths(post.data.categories).flat());
+}
+
+function hasAnyCategoryName(postCategoryNames: Set<string>, categoryNames: Set<string>): boolean {
+  for (const categoryName of categoryNames) {
+    if (postCategoryNames.has(categoryName)) return true;
+  }
+  return false;
 }
 
 /**
@@ -270,12 +278,12 @@ function getFeaturedCategoryNames(): string[] {
  */
 export async function getNonFeaturedPosts(): Promise<BlogPost[]> {
   const categoryNames = getFeaturedCategoryNames();
-  if (categoryNames.length === 0) {
-    return await getSortedPosts();
+  if (categoryNames.size === 0) {
+    return getSortedPosts();
   }
 
   const allPosts = await getSortedPosts();
-  return allPosts.filter((post) => !categoryNames.some((catName) => isPostInCategoryName(post, catName)));
+  return allPosts.filter((post) => !hasAnyCategoryName(getPostCategoryNames(post), categoryNames));
 }
 
 /**
@@ -299,13 +307,14 @@ export async function getHomePagePosts(): Promise<{
 
   // 单次遍历所有文章
   for (const post of allPosts) {
+    const postCategoryNames = getPostCategoryNames(post);
     // 检查是否属于任何 featured 系列
-    const isFeatured = categoryNames.some((catName) => isPostInCategoryName(post, catName));
+    const isFeatured = hasAnyCategoryName(postCategoryNames, categoryNames);
 
     if (isFeatured) {
       // 检查是否属于高亮系列，并记录最新文章
       for (const series of highlightedSeries) {
-        if (isPostInCategoryName(post, series.categoryName)) {
+        if (postCategoryNames.has(series.categoryName)) {
           if (!seriesLatestMap.has(series.categoryName)) {
             seriesLatestMap.set(series.categoryName, post);
           }
@@ -316,7 +325,7 @@ export async function getHomePagePosts(): Promise<{
       continue;
     }
 
-    if (post.data?.sticky) {
+    if (post.data.sticky) {
       stickyPosts.push(post);
     } else {
       regularPosts.push(post);

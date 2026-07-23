@@ -117,6 +117,9 @@ const ogImage = getOgImageUrl(post?.data.cover, Astro.site);
       // 主题系统 - 立即执行以防止 FOUC（无样式内容闪烁）
       // 优先级：1. 用户手动选择 > 2. 系统偏好
       (function() {
+        var runtime = window.__koharuLayoutRuntime || (window.__koharuLayoutRuntime = {});
+
+        if (!runtime.theme) {
         function getTheme() {
           // 用户明确选择了主题
           if (localStorage.theme === 'dark') return 'dark';
@@ -131,21 +134,22 @@ const ogImage = getOgImageUrl(post?.data.cover, Astro.site);
           root.dataset.theme = theme; // For astro-mermaid autoTheme
         }
 
-        // 立即应用主题
-        applyTheme(getTheme());
-
         // 监听系统主题偏好变化
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+        var mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        mediaQuery.addEventListener('change', function() {
           // 仅当用户未明确选择主题时自动切换
           if (!('theme' in localStorage)) {
-            applyTheme(getTheme());
+            runtime.theme.apply();
           }
         });
 
         // View Transition 切换页面后重新应用主题（在 DOM 渲染前）
-        document.addEventListener('astro:after-swap', function() {
-          applyTheme(getTheme());
-        });
+        runtime.theme = { apply: function() { applyTheme(getTheme()); } };
+        document.addEventListener('astro:after-swap', runtime.theme.apply);
+        }
+
+        // 立即应用主题；页面切换时复用同一组全局监听器。
+        runtime.theme.apply();
       })();
     </script>
     <script is:inline define:vars={{ christmasFeatureEnabled: christmasConfig.enabled }}>
@@ -170,6 +174,12 @@ const ogImage = getOgImageUrl(post?.data.cover, Astro.site);
       // Apply settings immediately to prevent a flash of default reader styles.
       // Defaults and keys are injected from src/store/settings-constants.ts (single source of truth).
       (function () {
+        var runtime = window.__koharuLayoutRuntime || (window.__koharuLayoutRuntime = {});
+        if (runtime.settings) {
+          runtime.settings.apply();
+          return;
+        }
+
         function readPositiveNumber(key, fallback) {
           var stored = parseFloat(localStorage.getItem(key));
           return isFinite(stored) && stored > 0 ? stored : fallback;
@@ -237,10 +247,9 @@ const ogImage = getOgImageUrl(post?.data.cover, Astro.site);
         }
 
         // Apply before the first frame.
-        applySettings();
-
-        // Reapply before Astro renders the swapped page.
-        document.addEventListener('astro:after-swap', applySettings);
+        runtime.settings = { apply: applySettings };
+        document.addEventListener('astro:after-swap', runtime.settings.apply);
+        runtime.settings.apply();
       })();
     </script>
 
@@ -278,12 +287,15 @@ const ogImage = getOgImageUrl(post?.data.cover, Astro.site);
         }
       }
 
-      let codepenScriptLoaded = false;
+      let codepenScriptPromise: Promise<void> | null = null;
 
       function loadCodePenScript() {
-        return new Promise<void>((resolve, reject) => {
+        if (window.__CPEmbed) return Promise.resolve();
+        if (codepenScriptPromise) return codepenScriptPromise;
+
+        const promise = new Promise<void>((resolve, reject) => {
           // Check if already loaded
-          if (codepenScriptLoaded || window.__CPEmbed) {
+          if (window.__CPEmbed) {
             resolve();
             return;
           }
@@ -292,12 +304,17 @@ const ogImage = getOgImageUrl(post?.data.cover, Astro.site);
           script.src = 'https://cpwebassets.codepen.io/assets/embed/ei.js';
           script.async = true;
           script.onload = () => {
-            codepenScriptLoaded = true;
             resolve();
           };
           script.onerror = reject;
           document.head.appendChild(script);
         });
+
+        codepenScriptPromise = promise.catch((error) => {
+          codepenScriptPromise = null;
+          throw error;
+        });
+        return codepenScriptPromise;
       }
 
       async function initializeCodePenEmbeds() {
@@ -334,7 +351,7 @@ const ogImage = getOgImageUrl(post?.data.cover, Astro.site);
     <div class="flex min-h-screen flex-col text-black dark:text-white">
       <Header isPostPage={isPostPage} tocNumbering={post?.data.tocNumbering ?? true} />
       <main class="relative flex grow flex-col gap-4">
-        {(<slot />)}
+        <slot />
       </main>
       {bgmConfig.enabled && bgmConfig.audio.length > 0 && (
         <div transition:persist="global-bgm">

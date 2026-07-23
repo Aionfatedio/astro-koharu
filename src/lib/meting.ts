@@ -97,6 +97,11 @@ function getFromCache(key: string): MetingSong[] | null {
     // refresh `timestamp` and let stale CDN-signed URLs outlive the TTL forever.
     return entry.data.filter(isMetingSong).map(normalizeMetingSong);
   } catch {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // Ignore storage failures; the cache is disposable.
+    }
     return null;
   }
 }
@@ -144,7 +149,7 @@ async function fetchMeting(server: string, type: string, id: string, apiUrl?: st
   if (!response.ok) throw new Error(`Meting API error: ${response.status}`);
 
   const data: unknown = await response.json();
-  if (!Array.isArray(data)) return [];
+  if (!Array.isArray(data)) throw new Error('Meting API returned an invalid playlist.');
   const songs = data.filter(isMetingSong).map(normalizeMetingSong);
   if (songs.length > 0) setCache(cacheKey, songs);
   return songs;
@@ -170,22 +175,12 @@ async function fetchLocalPlaylist(basePath: string): Promise<MetingSong[]> {
   const normalizedPath = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;
   const manifestUrl = `${normalizedPath}/manifest.json`;
 
-  try {
-    const response = await fetch(manifestUrl);
-    if (!response.ok) {
-      console.warn(`[Meting] Failed to load local playlist manifest: ${manifestUrl} (${response.status})`);
-      return [];
-    }
-    const manifest: LocalManifest = await response.json();
-    if (!Array.isArray(manifest.tracks)) {
-      console.warn(`[Meting] Invalid local playlist manifest: ${manifestUrl}`);
-      return [];
-    }
-    return manifest.tracks.filter(isMetingSong).map(normalizeMetingSong);
-  } catch (error) {
-    console.warn(`[Meting] Failed to parse local playlist manifest: ${manifestUrl}`, error);
-    return [];
-  }
+  const response = await fetch(manifestUrl);
+  if (!response.ok) throw new Error(`Local playlist manifest failed: ${manifestUrl} (${response.status})`);
+
+  const manifest: LocalManifest = await response.json();
+  if (!Array.isArray(manifest.tracks)) throw new Error(`Invalid local playlist manifest: ${manifestUrl}`);
+  return manifest.tracks.filter(isMetingSong).map(normalizeMetingSong);
 }
 
 /** Resolve multiple music URLs into a flat song list. */
@@ -206,5 +201,16 @@ export async function resolvePlaylist(urls: string[], apiUrl?: string): Promise<
     }),
   );
 
-  return results.flatMap((r) => (r.status === 'fulfilled' ? r.value : []));
+  const failures = results.filter((result): result is PromiseRejectedResult => result.status === 'rejected');
+  const tracks = results.flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
+
+  if (failures.length > 0 && tracks.length === 0) {
+    const reason = failures[0].reason;
+    throw reason instanceof Error ? reason : new Error('Failed to resolve playlist.');
+  }
+  if (failures.length > 0) {
+    console.warn(`[Meting] Skipped ${failures.length} playlist source(s) after resolution errors.`);
+  }
+
+  return tracks;
 }

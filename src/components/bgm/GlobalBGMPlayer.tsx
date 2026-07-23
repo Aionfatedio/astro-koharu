@@ -53,6 +53,7 @@ export default function GlobalBGMPlayer({ audioGroups, metingApi }: GlobalBGMPla
     resolvedRetryRef.current = retryKey;
 
     let cancelled = false;
+    let settled = false;
     setLoading(true);
     setError(null);
 
@@ -85,11 +86,13 @@ export default function GlobalBGMPlayer({ audioGroups, metingApi }: GlobalBGMPla
           setTracks(allTracks);
           setGroups(resolvedGroups);
           setLoading(false);
+          settled = true;
         }
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Failed to load playlist');
           setLoading(false);
+          settled = true;
         }
       }
     }
@@ -97,6 +100,11 @@ export default function GlobalBGMPlayer({ audioGroups, metingApi }: GlobalBGMPla
     resolve();
     return () => {
       cancelled = true;
+      if (!settled && resolvedRetryRef.current === retryKey) {
+        // Allow a later reopen to retry a request that was cancelled while the
+        // panel was closing.
+        resolvedRetryRef.current = -1;
+      }
     };
   }, [panelOpen, audioGroups, retryKey, metingApi]);
 
@@ -118,8 +126,8 @@ export default function GlobalBGMPlayer({ audioGroups, metingApi }: GlobalBGMPla
     outsidePressEvent: 'mousedown',
     // Exclude the BGM toggle button in FloatingGroup to prevent toggle/dismiss race
     outsidePress: (event) => {
-      const target = event.target as HTMLElement;
-      return !target.closest('[data-bgm-toggle]');
+      const target = event.target;
+      return !(target instanceof Element && target.closest('[data-bgm-toggle]'));
     },
   });
   const role = useRole(context, { role: 'dialog' });

@@ -114,7 +114,7 @@ function createHeadingStore(offsetTop: number) {
     }
 
     visibleHeadings.clear();
-    currentHeading = null;
+    updateHeading(null);
 
     const article = document.querySelector('article');
     if (!article) {
@@ -185,7 +185,7 @@ function createHeadingStore(offsetTop: number) {
   // Handle Astro page transitions
   const handlePageLoad = () => {
     visibleHeadings.clear();
-    currentHeading = null;
+    updateHeading(null);
     requestAnimationFrame(() => {
       setupObserver();
     });
@@ -221,6 +221,7 @@ function createHeadingStore(offsetTop: number) {
           }
           visibleHeadings.clear();
           cachedHeadings = [];
+          currentHeading = null;
         }
       };
     },

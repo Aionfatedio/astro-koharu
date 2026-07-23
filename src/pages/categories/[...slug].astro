@@ -10,7 +10,7 @@ import { getCategoryByLink, getCategoryLinks, getCategoryList } from '@lib/conte
 // 获取分类页面
 export async function getStaticPaths() {
   const { categories } = await getCategoryList();
-  const links = getCategoryLinks(categories, '');
+  const links = getCategoryLinks(categories);
   return links.map((link) => {
     const category = getCategoryByLink(categories, link);
     return {

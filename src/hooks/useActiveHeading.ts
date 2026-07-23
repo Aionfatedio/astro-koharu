@@ -50,6 +50,12 @@ function createActiveHeadingStore(offsetTop: number) {
     });
   };
 
+  const updateActiveId = (nextId: string) => {
+    if (activeId === nextId) return;
+    activeId = nextId;
+    notifyListeners();
+  };
+
   // Determine active heading from visible headings
   const updateActiveHeading = () => {
     if (visibleHeadings.size === 0) return;
@@ -65,10 +71,7 @@ function createActiveHeadingStore(offsetTop: number) {
       }
     });
 
-    if (activeId !== closestId) {
-      activeId = closestId;
-      notifyListeners();
-    }
+    updateActiveId(closestId);
   };
 
   // Setup Intersection Observer
@@ -100,10 +103,7 @@ function createActiveHeadingStore(offsetTop: number) {
         // During programmatic scroll, lock to clicked heading to prevent flickering
         const locked = getLockedHeadingId();
         if (locked) {
-          if (activeId !== locked) {
-            activeId = locked;
-            notifyListeners();
-          }
+          updateActiveId(locked);
           return;
         }
         updateActiveHeading();
@@ -130,10 +130,7 @@ function createActiveHeadingStore(offsetTop: number) {
           const heading = headingArray[i];
           const rect = heading.getBoundingClientRect();
           if (rect.top < offsetTop && heading.id) {
-            if (activeId !== heading.id) {
-              activeId = heading.id;
-              notifyListeners();
-            }
+            updateActiveId(heading.id);
             break;
           }
         }
@@ -143,7 +140,7 @@ function createActiveHeadingStore(offsetTop: number) {
 
   // Handle Astro page transitions
   const handlePageLoad = () => {
-    activeId = '';
+    updateActiveId('');
     visibleHeadings.clear();
     // Delay setup to ensure DOM is ready
     requestAnimationFrame(() => {

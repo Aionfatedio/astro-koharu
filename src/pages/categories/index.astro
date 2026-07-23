@@ -8,7 +8,7 @@ import TwoColumnLayout from '@layouts/TwoColumnLayout.astro';
 import { getCategoryLinks, getCategoryList } from '@lib/content';
 
 const { categories, countMap } = await getCategoryList();
-const links = getCategoryLinks(categories, '');
+const links = getCategoryLinks(categories);
 ---
 
 <Layout title={`全部分类 | ${seoConfig.title}`}>

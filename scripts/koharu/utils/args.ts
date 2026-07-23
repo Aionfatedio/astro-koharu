@@ -29,6 +29,81 @@ export interface ParsedArgs {
  */
 const GENERATE_TYPES = ['lqips', 'similarities', 'summaries', 'all'] as const;
 const NEW_TYPES = ['post', 'friend'] as const;
+const BOOLEAN_FLAGS = {
+  '--full': 'full',
+  '--latest': 'latest',
+  '--list': 'list',
+  '--dry-run': 'dryRun',
+  '--force': 'force',
+  '--help': 'help',
+  '-h': 'help',
+  '--check': 'check',
+  '--skip-backup': 'skipBackup',
+  '--rebase': 'rebase',
+  '--clean': 'clean',
+} as const satisfies Record<string, keyof ParsedArgs>;
+const VALUE_FLAGS = {
+  '--keep': (args: ParsedArgs, value: string) => {
+    const keep = Number.parseInt(value, 10);
+    if (!Number.isNaN(keep) && keep > 0) args.keep = keep;
+  },
+  '--model': (args: ParsedArgs, value: string) => {
+    args.model = value;
+  },
+  '--tag': (args: ParsedArgs, value: string) => {
+    args.tag = value;
+  },
+} as const;
+
+function getOptionValue(argv: string[], index: number): string | null {
+  const value = argv[index + 1];
+  return value && !value.startsWith('-') ? value : null;
+}
+
+function assignPositionalArg(args: ParsedArgs, arg: string): void {
+  if (!args.command) {
+    args.command = arg;
+    return;
+  }
+
+  if (args.command === 'generate' && !args.generateType) {
+    if (GENERATE_TYPES.includes(arg as (typeof GENERATE_TYPES)[number])) {
+      args.generateType = arg as GenerateType | 'all';
+    }
+    return;
+  }
+
+  if (args.command === 'new' && !args.newType) {
+    if (NEW_TYPES.includes(arg as (typeof NEW_TYPES)[number])) {
+      args.newType = arg as CreatorType;
+    }
+    return;
+  }
+
+  args.backupFile = arg;
+}
+
+function applyArg(args: ParsedArgs, argv: string[], index: number): number {
+  const arg = argv[index];
+  const booleanKey = BOOLEAN_FLAGS[arg as keyof typeof BOOLEAN_FLAGS];
+  if (booleanKey) {
+    args[booleanKey] = true;
+    return 0;
+  }
+
+  const valueHandler = VALUE_FLAGS[arg as keyof typeof VALUE_FLAGS];
+  if (valueHandler) {
+    const value = getOptionValue(argv, index);
+    if (value !== null) {
+      valueHandler(args, value);
+      return 1;
+    }
+    return 0;
+  }
+
+  if (!arg.startsWith('-')) assignPositionalArg(args, arg);
+  return 0;
+}
 
 export function parseArgs(argv: string[] = process.argv.slice(2)): ParsedArgs {
   const args: ParsedArgs = {
@@ -52,56 +127,7 @@ export function parseArgs(argv: string[] = process.argv.slice(2)): ParsedArgs {
   };
 
   for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i];
-    if (arg === '--full') {
-      args.full = true;
-    } else if (arg === '--latest') {
-      args.latest = true;
-    } else if (arg === '--list') {
-      args.list = true;
-    } else if (arg === '--dry-run') {
-      args.dryRun = true;
-    } else if (arg === '--force') {
-      args.force = true;
-    } else if (arg === '--help' || arg === '-h') {
-      args.help = true;
-    } else if (arg === '--keep' && argv[i + 1]) {
-      const n = Number.parseInt(argv[i + 1], 10);
-      if (!Number.isNaN(n) && n > 0) {
-        args.keep = n;
-      }
-      i++;
-    } else if (arg === '--model' && argv[i + 1]) {
-      args.model = argv[i + 1];
-      i++;
-    } else if (arg === '--check') {
-      args.check = true;
-    } else if (arg === '--skip-backup') {
-      args.skipBackup = true;
-    } else if (arg === '--tag' && argv[i + 1]) {
-      args.tag = argv[i + 1];
-      i++;
-    } else if (arg === '--rebase') {
-      args.rebase = true;
-    } else if (arg === '--clean') {
-      args.clean = true;
-    } else if (!arg.startsWith('--') && !arg.startsWith('-')) {
-      if (!args.command) {
-        args.command = arg;
-      } else if (args.command === 'generate' && !args.generateType) {
-        // For generate command, second positional arg is the type
-        if (GENERATE_TYPES.includes(arg as (typeof GENERATE_TYPES)[number])) {
-          args.generateType = arg as GenerateType | 'all';
-        }
-      } else if (args.command === 'new' && !args.newType) {
-        // For new command, second positional arg is the content type
-        if (NEW_TYPES.includes(arg as (typeof NEW_TYPES)[number])) {
-          args.newType = arg as CreatorType;
-        }
-      } else {
-        args.backupFile = arg;
-      }
-    }
+    i += applyArg(args, argv, i);
   }
 
   return args;

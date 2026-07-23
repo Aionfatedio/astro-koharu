@@ -59,8 +59,7 @@ export async function getCategoryList(): Promise<CategoryListResult> {
     const countMap: { [key: string]: number } = {};
     const resCategories: Category[] = [];
 
-    for (let i = 0; i < allBlogPosts.length; ++i) {
-      const post = allBlogPosts[i];
+    for (const post of allBlogPosts) {
       const { catalog, categories } = post.data;
       if (!catalog || !categories?.length) {
         continue;
@@ -69,10 +68,11 @@ export async function getCategoryList(): Promise<CategoryListResult> {
       for (const categoryPath of getCategoryPaths(categories)) {
         ensureCategoryPath(resCategories, categoryPath);
 
-        for (let j = 0; j < categoryPath.length; ++j) {
-          const partialPath = categoryPath.slice(0, j + 1);
+        const partialPath: string[] = [];
+        for (const categoryName of categoryPath) {
+          partialPath.push(categoryName);
           const link = buildCategoryLink(partialPath);
-          countMap[link] = (countMap[link] || 0) + 1;
+          countMap[link] = (countMap[link] ?? 0) + 1;
         }
       }
     }
@@ -84,20 +84,11 @@ export async function getCategoryList(): Promise<CategoryListResult> {
 /**
  * 获取分类完整链接
  * @param categories 分类
- * @param parentLink 父分类链接
  * @returns 分类链接
  */
-export function getCategoryLinks(categories?: Category[], parentLink?: string): string[] {
+export function getCategoryLinks(categories?: Category[]): string[] {
   if (!categories?.length) return [];
-  const res: string[] = [];
-  categories.forEach((category: Category) => {
-    res.push(parentLink ? `${parentLink}/${category.slug}` : category.link);
-    if (category?.children?.length) {
-      const children = getCategoryLinks(category?.children, category.link);
-      res.push(...children);
-    }
-  });
-  return res;
+  return categories.flatMap((category) => [category.link, ...getCategoryLinks(category.children)]);
 }
 
 /**
@@ -118,18 +109,12 @@ export function getParentCategory(category: Category | null, categories: Categor
   for (const c of categories) {
     if (!c.children?.length) continue;
 
-    // 直接检查当前层级
     if (c.children.some((child) => child.link === category.link)) {
       return c;
     }
 
-    // 递归检查子分类
-    for (const child of c.children) {
-      if (child.children?.length) {
-        const result = getParentCategory(category, [child]);
-        if (result) return result;
-      }
-    }
+    const result = getParentCategory(category, c.children);
+    if (result) return result;
   }
   return null;
 }

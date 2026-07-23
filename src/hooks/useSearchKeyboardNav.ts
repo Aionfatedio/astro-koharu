@@ -61,6 +61,12 @@ export function useSearchKeyboardNav(isOpen: boolean) {
 
   useEffect(() => {
     if (!isOpen) {
+      document
+        .querySelectorAll<HTMLElement>('.pagefind-ui__result[data-selected], .pagefind-ui__button[data-selected]')
+        .forEach((item) => {
+          item.removeAttribute('data-selected');
+        });
+      selectedIndexRef.current = -1;
       observerRef.current?.disconnect();
       observerRef.current = null;
       return;

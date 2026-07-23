@@ -1,33 +1,27 @@
 ---
-import { getCollection } from 'astro:content';
 import HomeSider from '@components/layout/HomeSider.astro';
 import Cover from '@components/ui/cover/Cover.astro';
 import { CONTENT_PADDING } from '@constants/layout';
 import { siteConfig } from '@constants/site-config';
 import TwoColumnLayout from '@layouts/TwoColumnLayout.astro';
+import { getSortedPosts } from '@lib/content';
 import { displayDate } from '@lib/date';
 import { encodeSlug, getPostSlug } from '@lib/route';
 import Layout from '../layouts/Layout.astro';
 
-const posts = await getCollection('blog', ({ data }) => {
-  // 在生产环境中，过滤掉草稿
-  return import.meta.env.PROD ? data.draft !== true : true;
-});
+const posts = await getSortedPosts();
 
 // 按年份对文章进行分组
-const postsByYear = posts
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
-  .reduce(
-    (acc, post) => {
-      const year = new Date(post.data.date).getFullYear();
-      if (!acc[year]) {
-        acc[year] = [];
-      }
-      acc[year].push(post);
-      return acc;
-    },
-    {} as Record<number, typeof posts>,
-  );
+const postsByYear = posts.reduce(
+  (acc, post) => {
+    const year = post.data.date.getFullYear();
+    const yearPosts = acc[year] ?? [];
+    yearPosts.push(post);
+    acc[year] = yearPosts;
+    return acc;
+  },
+  {} as Record<number, typeof posts>,
+);
 
 const years = Object.keys(postsByYear).sort((a, b) => Number(b) - Number(a));
 ---

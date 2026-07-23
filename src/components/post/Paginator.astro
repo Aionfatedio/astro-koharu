@@ -1,11 +1,10 @@
 ---
 import { Button } from '@components/ui/button';
-import type { Page } from 'astro';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import type { BlogPost } from 'types/blog';
+import type { PaginationInfo } from 'types/pagination';
 
 interface Props {
-  page: Page<BlogPost>;
+  page: PaginationInfo;
   baseUrl?: string; // 分页基础路径，默认为 '/posts'
   isHomePage?: boolean; // 是否是首页
 }

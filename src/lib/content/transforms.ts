@@ -11,7 +11,7 @@ import { getPostDescriptionWithSummary, getPostLastCategory, getPostReadingTime 
 
 /**
  * BlogPost 可提取的字段映射
- * - 直接字段：从 post.slug 或 post.data.xxx 直接取
+ * - 直接字段：从 Content Layer entry 的 id/data.xxx 直接取
  * - 计算字段：需要调用函数计算
  */
 export type PostFieldMap = {
@@ -38,13 +38,13 @@ export type PostFieldMap = {
 const fieldExtractors: { [K in keyof PostFieldMap]: (post: BlogPost) => PostFieldMap[K] } = {
   // 直接字段
   slug: (p) => getPostSlug(p),
-  link: (p) => p.data?.link,
+  link: (p) => p.data.link,
   title: (p) => p.data.title,
   date: (p) => p.data.date,
-  cover: (p) => p.data?.cover,
-  tags: (p) => p.data?.tags,
-  categories: (p) => p.data?.categories,
-  draft: (p) => p.data?.draft,
+  cover: (p) => p.data.cover,
+  tags: (p) => p.data.tags,
+  categories: (p) => p.data.categories,
+  draft: (p) => p.data.draft,
   // 计算字段
   categoryName: (p) => getPostLastCategory(p).name || undefined,
   description: (p) => getPostDescriptionWithSummary(p),

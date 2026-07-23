@@ -47,7 +47,7 @@ const postRelativePath = normalizedPostFilePath?.startsWith(contentRoot)
   ? normalizedPostFilePath.slice(contentRoot.length)
   : undefined;
 const { Content } = await render(post);
-const { title, categories = [], tags = [], date, math: postMath, keywords: postKeywords = [] } = post?.data ?? {};
+const { title, categories = [], tags = [], date, math: postMath, keywords: postKeywords = [] } = post.data;
 
 // 画师概览：查找画师数据（匹配失败则回退为 null，显示站点概览）
 const artistProfile = post.data.artist ? getArtistById(post.data.artist) : null;

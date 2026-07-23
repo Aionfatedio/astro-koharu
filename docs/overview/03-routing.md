@@ -97,7 +97,7 @@ export async function getStaticPaths() {
   const { categories } = await getCategoryList();
 
   // 2. 生成所有分类的 URL 链接
-  const links = getCategoryLinks(categories, '');
+  const links = getCategoryLinks(categories);
   // links = ['life', 'note', 'note/front-end', 'note/front-end/react', ...]
 
   // 3. 为每个链接生成页面

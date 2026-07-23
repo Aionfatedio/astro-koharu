@@ -1,15 +1,15 @@
 ---
 import EmptySvg from '@components/svg/EmptySvg';
 import { contentConfig, defaultCoverList } from '@constants/site-config';
-import type { Page } from 'astro';
 import { shuffle } from 'es-toolkit';
-import type { BlogPost, PostCardData } from 'types/blog';
+import type { PostCardData } from 'types/blog';
+import type { PaginationInfo } from 'types/pagination';
 import Paginator from './Paginator.astro';
 import PostItemCard from './PostItemCard.astro';
 
 interface Props {
   posts?: PostCardData[];
-  page?: Page<BlogPost>;
+  page?: PaginationInfo;
   showPaginator?: boolean;
   baseUrl?: string; // 分页基础路径
   isHomePage?: boolean; // 是否是首页

@@ -28,16 +28,12 @@ interface AudioPlayerProps {
   element: HTMLElement;
 }
 
-async function resolveGroupsSequentially(
-  groups: AudioGroup[],
-  apiUrl: string | undefined,
-  index = 0,
-  resolved: MetingSong[][] = [],
-): Promise<MetingSong[][]> {
-  if (index >= groups.length) return resolved;
-
-  const songs = await resolvePlaylist(groups[index].list, apiUrl);
-  return resolveGroupsSequentially(groups, apiUrl, index + 1, [...resolved, songs]);
+async function resolveGroupsSequentially(groups: AudioGroup[], apiUrl: string | undefined): Promise<MetingSong[][]> {
+  const resolved: MetingSong[][] = [];
+  for (const group of groups) {
+    resolved.push(await resolvePlaylist(group.list, apiUrl));
+  }
+  return resolved;
 }
 
 export function AudioPlayer({ element }: AudioPlayerProps) {

@@ -8,8 +8,7 @@ import Layout from '@layouts/Layout.astro';
 import TwoColumnLayout from '@layouts/TwoColumnLayout.astro';
 import { getHomePagePosts } from '@lib/content';
 import { toPostCardDataList } from '@lib/content/transforms';
-import type { Page } from 'astro';
-import type { BlogPost } from 'types/blog';
+import type { PaginationInfo } from 'types/pagination';
 import CategoryCards from '@/components/post/CategoryCards.astro';
 import Divider from '@/components/ui/divider';
 
@@ -25,12 +24,7 @@ const regularPostsSlice = regularPosts.slice(0, pageSize);
 const posts = toPostCardDataList(regularPostsSlice);
 const totalRegularPosts = regularPosts.length;
 
-const page: Page<BlogPost> = {
-  data: regularPostsSlice,
-  start: 0,
-  end: Math.min(pageSize - 1, regularPostsSlice.length - 1),
-  size: pageSize,
-  total: totalRegularPosts,
+const page: PaginationInfo = {
   currentPage: 1,
   lastPage: Math.ceil(totalRegularPosts / pageSize),
   url: {
