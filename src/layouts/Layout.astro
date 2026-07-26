@@ -12,6 +12,20 @@ interface Props {
   /** Override the canonical URL for pages whose public URL differs from the request URL. */
   canonical?: string;
   keywords?: string[];
+  /** Page-specific Open Graph values. Relative images are resolved against Astro.site. */
+  openGraph?: {
+    title?: string;
+    description?: string;
+    image?: string;
+    type?: 'website' | 'article';
+    url?: string;
+  };
+  /** Robots directive for dynamic or otherwise non-indexable pages. */
+  robots?: string;
+  /** Alternate RSS feeds. Omit to keep the site's default RSS link. */
+  rssFeeds?: Array<{ href: string; title: string }>;
+  /** Disable locale hreflang links for a canonical route that is not duplicated per locale. */
+  includeLocaleAlternates?: boolean;
 }
 
 import { ClientRouter } from 'astro:transitions';
@@ -53,6 +67,9 @@ const {
   artistProfile,
   canonical,
   keywords: keywordsOverride,
+  openGraph: openGraphOverride,
+  robots,
+  rssFeeds: rssFeedsOverride,
 } = Astro.props;
 // TODO: siderType should be custom in router file, not in layout
 
@@ -63,7 +80,20 @@ const isPostPage = Astro.url.pathname.startsWith('/post/');
 const keywords = keywordsOverride || siteConfig.keywords || [siteConfig.title];
 
 // OGP image: use post cover if available, otherwise use default from config, fallback to avatar
-const ogImage = getOgImageUrl(post?.data.cover, Astro.site);
+const defaultOgImage = getOgImageUrl(post?.data.cover, Astro.site);
+const resolveAbsoluteUrl = (value: string | undefined) => (value ? new URL(value, Astro.site).href : undefined);
+const ogImage = resolveAbsoluteUrl(openGraphOverride?.image) ?? defaultOgImage;
+
+const rssFeeds = rssFeedsOverride ?? [
+  {
+    href: new URL('/rss.xml', Astro.site).href,
+    title: siteConfig.title,
+  },
+];
+const canonicalHref = canonical ?? Astro.url.href;
+const openGraphTitle = openGraphOverride?.title ?? title;
+const openGraphDescription = openGraphOverride?.description ?? description;
+const openGraphUrl = resolveAbsoluteUrl(openGraphOverride?.url) ?? canonicalHref;
 ---
 
 <!doctype html>
@@ -87,23 +117,23 @@ const ogImage = getOgImageUrl(post?.data.cover, Astro.site);
     <SEO
       title={title}
       description={description}
-      canonical={canonical ?? Astro.url.href}
+      canonical={canonicalHref}
       openGraph={{
         basic: {
-          title: title,
-          type: 'website',
+          title: openGraphTitle,
+          type: openGraphOverride?.type ?? 'website',
           image: ogImage || '',
-          url: canonical ?? Astro.url.href,
+          url: openGraphUrl,
         },
         optional: {
           siteName: siteConfig.name,
-          description: description,
+          description: openGraphDescription,
         },
       }}
       twitter={{
         card: ogImage ? 'summary_large_image' : 'summary',
-        title: title,
-        description: description,
+        title: openGraphTitle,
+        description: openGraphDescription,
         ...(ogImage && { image: ogImage }),
       }}
       extend={{
@@ -112,8 +142,11 @@ const ogImage = getOgImageUrl(post?.data.cover, Astro.site);
     />
     {/* astro-seo 暂不支持管理 keywords */}
     <meta name="keywords" content={keywords.join(', ')} />
+    {robots && <meta name="robots" content={robots} />}
 
-    <link rel="alternate" type="application/rss+xml" title={siteConfig.title} href={`${Astro.site}rss.xml`} />
+    {rssFeeds.map((feed) => (
+      <link rel="alternate" type="application/rss+xml" title={feed.title} href={feed.href} />
+    ))}
 
     <script is:inline>
       // 主题系统 - 立即执行以防止 FOUC（无样式内容闪烁）

@@ -1,5 +1,6 @@
 // Import YAML config directly - processed by @rollup/plugin-yaml
 
+import { normalizeMomentsConfig, resolveMomentsNavigation } from '@lib/config/moments';
 import { normalizeSiteYamlConfig } from '@lib/config/normalize';
 import type {
   AnalyticsConfig,
@@ -9,6 +10,7 @@ import type {
   DevConfig,
   FeaturedCategory,
   FeaturedSeriesItem,
+  RouterItem,
   SiteBasicConfig,
 } from '@lib/config/types';
 import { createUmamiStatsConfig } from '@lib/umami-stats';
@@ -16,6 +18,8 @@ import type { UmamiStatsConfig } from '@/types/umami-stats';
 import rawYamlConfig from '../../config/site.yaml';
 
 const yamlConfig = normalizeSiteYamlConfig(rawYamlConfig);
+
+import { DEFAULT_ROUTERS, RESERVED_ROUTES } from './router';
 
 /**
  * Runtime site configuration
@@ -144,6 +148,16 @@ export const bgmConfig: { enabled: boolean; metingApi?: string; audio: BgmAudioG
   metingApi: yamlConfig.bgm.metingApi,
   audio: yamlConfig.bgm.audio,
 };
+
+/** Validated opt-in moments configuration. Disabled when the YAML section is absent. */
+export const momentsConfig = normalizeMomentsConfig(yamlConfig.moments, {
+  reservedRoutes: RESERVED_ROUTES,
+  localeCodes: [],
+  seriesSlugs: siteConfig.featuredSeries.flatMap((series) => (series.enabled !== false ? [series.slug] : [])),
+});
+
+/** Navigation with Moments placeholders resolved and the default entry injected when needed. */
+export const routers: RouterItem[] = resolveMomentsNavigation(yamlConfig.navigation ?? DEFAULT_ROUTERS, momentsConfig);
 
 // Map YAML dev tools config with defaults (dev only)
 export const devConfig: DevConfig = yamlConfig.dev;

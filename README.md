@@ -32,7 +32,7 @@
 
 ## 部署
 
-输出为纯静态 `dist/`，可部署到 **Vercel**、**Cloudflare Pages**、**Netlify**、GitHub Pages 或任意静态文件服务器，无需 adapter。
+默认输出纯静态站，可直接部署到 **Vercel**、**Netlify**、nginx 等平台。只有启用可选的“碎碎念”动态归档时，才需要 Astro Node standalone 部署；两种模式的配置见[部署架构](./docs/overview/11-deployment-adapters.md)。
 
 ### 一键部署
 
@@ -54,6 +54,8 @@
 ```bash
 docker compose --env-file ./.env -f docker/docker-compose.yml up -d --build
 ```
+
+启用“碎碎念”后请改用 `pnpm docker:up:dynamic`。该功能默认关闭，完整配置与真实链路验收见[碎碎念指南](./docs/features/moments.md)。
 
 ### 本地开发
 
@@ -89,6 +91,7 @@ pnpm dev
 - 灵活的多级分类与标签系统
 - [可开关] 多系列文章支持（周刊、书摘等自定义系列，支持自定义 URL slug）
   > 💡 **说明**：featuredSeries 适合文章数量较多的分类，将其从首页主列表分离以避免刷屏。系列文章仅最新一篇在首页高亮，其余通过系列专属页面访问，但在归档、分类、标签等页面仍正常展示。
+- [可开关] **碎碎念动态归档**：从 koharu-suite 的公开频道读取消息，提供频道、详情、搜索、cursor 分页和 branded RSS；默认静态部署完全不受影响，详见[配置指南](./docs/features/moments.md)
 - **独立页面系统**：在 `src/pages/` 下创建 `.md` 文件即可添加自定义页面（关于、歌单等），支持自定义封面标题和评论开关
 - 响应式设计
 - 草稿与置顶功能

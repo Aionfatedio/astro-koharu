@@ -14,9 +14,11 @@ import WaveSvg from './wave';
 export interface CoverProps {
   data?: BlogPost;
   title?: string;
+  /** Utility pages can opt into a shorter cover with a neutral loading surface. */
+  compact?: boolean;
 }
 
-const { data, title } = Astro.props as CoverProps;
+const { data, title, compact = false } = Astro.props as CoverProps;
 
 const { date, updated, title: dataTitle, draft } = data?.data ?? {};
 
@@ -24,27 +26,52 @@ const readState = data ? getPostReadingTime(data) : null;
 const isDraft = import.meta.env.DEV && draft === true;
 
 // 获取横幅图片的 LQIP 样式
-const bannerLqipStyle = getLqipStyle('/img/site_header_1920.webp');
+const bannerLqipStyle = compact ? undefined : getLqipStyle('/img/site_header_1920.webp');
 
 const href = data && routeBuilder(Routes.Post, data);
 const pageStatsConfig = href ? createArticleStatsConfig(href) : null;
+const copyLinkLabel = '复制链接';
+const copiedLabel = '已复制';
+const copyFailedLabel = '复制失败，请手动复制';
 ---
 
-<div class="relative flex h-[60dvh] z-0 max-h-200 overflow-hidden">
+<div
+  class:list={[
+    'relative z-0 flex overflow-hidden',
+    compact ? 'h-[42dvh] min-h-72 max-h-120 tablet:h-[36dvh] tablet:min-h-64' : 'h-[60dvh] max-h-200',
+  ]}
+>
   <div class="absolute inset-0 h-full bg-black/40"></div>
-  <div class="absolute inset-0 bottom-[8dvh] flex flex-col items-center justify-center px-5 text-white">
+  <div
+    class:list={[
+      'absolute inset-0 flex flex-col items-center justify-center px-5 text-white',
+      compact ? 'bottom-[4dvh]' : 'bottom-[8dvh]',
+    ]}
+  >
     {
       title ? (
         <h1
-          class={`shadow-text word-break flex items-center gap-2 text-center text-5xl/[1.2] font-bold tracking-widest ${MAX_WIDTH.content}`}
+          class:list={[
+            'shadow-text word-break flex items-center gap-2 text-center font-bold text-balance',
+            MAX_WIDTH.content,
+            compact
+              ? 'text-4xl/[1.15] tracking-[0.08em] tablet:text-3xl/[1.15] tablet:tracking-[0.05em]'
+              : 'text-5xl/[1.2] tracking-widest',
+          ]}
         >
           {title}
-          <Icon
-            name="ri:link"
-            title="复制链接"
-            class="hover:text-primary cursor-pointer transition-colors duration-300"
-            onclick="navigator.clipboard.writeText(window.location.href)"
-          />
+          <button
+            type="button"
+            class="cover-copy-link hover:text-primary inline-flex cursor-pointer items-center rounded-full p-1 transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+            aria-label={copyLinkLabel}
+            title={copyLinkLabel}
+            data-copy-label={copyLinkLabel}
+            data-copied-label={copiedLabel}
+            data-copy-failed-label={copyFailedLabel}
+          >
+            <Icon name="ri:link" class={compact ? 'size-7 tablet:size-6' : undefined} aria-hidden="true" />
+            <span class="sr-only" aria-live="polite"></span>
+          </button>
         </h1>
       ) : data ? (
         <>
@@ -98,7 +125,7 @@ const pageStatsConfig = href ? createArticleStatsConfig(href) : null;
     }
   </div>
   <div
-    class="relative -z-10 h-full min-h-60 w-full"
+    class:list={['relative -z-10 h-full min-h-60 w-full', compact && 'bg-card']}
     transition:persist="page-cover-banner"
     id="banner-box"
     style={bannerLqipStyle}
@@ -116,3 +143,31 @@ const pageStatsConfig = href ? createArticleStatsConfig(href) : null;
   </div>
   <WaveSvg />
 </div>
+
+<script>
+  function installCoverCopyButtons() {
+    document.querySelectorAll<HTMLButtonElement>('.cover-copy-link:not([data-copy-ready])').forEach((button) => {
+      button.dataset.copyReady = 'true';
+      button.addEventListener('click', async () => {
+        const value = window.location.href;
+        try {
+          await navigator.clipboard.writeText(value);
+        } catch {
+          window.prompt(button.dataset.copyFailedLabel ?? button.dataset.copyLabel ?? '', value);
+          return;
+        }
+
+        const status = button.querySelector<HTMLElement>('[aria-live]');
+        if (status) status.textContent = button.dataset.copiedLabel ?? '';
+        button.title = button.dataset.copiedLabel ?? button.title;
+        window.setTimeout(() => {
+          if (status) status.textContent = '';
+          button.title = button.dataset.copyLabel ?? button.title;
+        }, 1800);
+      });
+    });
+  }
+
+  installCoverCopyButtons();
+  document.addEventListener('astro:page-load', installCoverCopyButtons);
+</script>
