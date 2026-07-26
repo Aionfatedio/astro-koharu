@@ -5,7 +5,7 @@
  * search dialog's requirement: keep progress while the page session is alive.
  */
 
-export const PAGEFIND_SEARCH_INPUT_SELECTOR = '.pagefind-ui__search-input';
+export const PAGEFIND_SEARCH_INPUT_SELECTOR = '.pf-searchbox-input';
 export const SEARCH_DIALOG_SCROLL_AREA_ID = 'search-dialog-scroll-area';
 
 const STORAGE_KEY = 'koharu:pagefind-search-session:v1';
@@ -67,7 +67,11 @@ export function updatePagefindSearchSession(patch: Partial<PagefindSearchSession
 }
 
 export function applyPagefindSearchQuery(input: HTMLInputElement, query: string): void {
-  if (input.value === query) return;
+  // An empty restore over an empty input is a no-op. A NON-empty restore must
+  // always dispatch, even when the value already matches: the searchbox's
+  // dropdown state lives outside the input, and re-dispatching `input` is what
+  // makes the component reopen the dropdown and re-run the search.
+  if (input.value === query && query === '') return;
 
   input.value = query;
   input.dispatchEvent(new Event('input', { bubbles: true }));

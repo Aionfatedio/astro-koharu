@@ -15,6 +15,7 @@ interface Props {
 }
 
 import { ClientRouter } from 'astro:transitions';
+import UmamiAnalytics from '@components/analytics/UmamiAnalytics.astro';
 import AnnouncementProvider from '@components/announcement/AnnouncementProvider.astro';
 import GlobalBGMPlayer from '@components/bgm/GlobalBGMPlayer';
 import ChristmasEffects from '@components/christmas/ChristmasEffects.astro';
@@ -79,6 +80,7 @@ const ogImage = getOgImageUrl(post?.data.cover, Astro.site);
     <link rel="stylesheet" href="/fonts/ChillRoundFBold/result.css" media="print" onload="this.setAttribute('media','all')" />
 
     <ClientRouter />
+    <UmamiAnalytics />
     <LoadingIndicator color="#e9536a" />
     <Tooltips />
     <!-- SEO 元数据由 astro-seo 管理 -->

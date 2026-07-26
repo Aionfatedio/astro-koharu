@@ -9,8 +9,8 @@ import { LazyMotionProvider } from '@components/common/LazyMotionProvider';
 import { Dialog, DialogPortal } from '@components/ui/dialog';
 import { useIsMounted } from '@hooks/useIsMounted';
 import { useKeyboardShortcut } from '@hooks/useKeyboardShortcut';
-import { useSearchKeyboardNav } from '@hooks/useSearchKeyboardNav';
-import { SEARCH_DIALOG_SCROLL_AREA_ID } from '@lib/pagefind-search-session';
+import { useSearchResultActivation } from '@hooks/useSearchResultActivation';
+import { PAGEFIND_SEARCH_INPUT_SELECTOR, SEARCH_DIALOG_SCROLL_AREA_ID } from '@lib/pagefind-search-session';
 import { cn } from '@lib/utils';
 import { useStore } from '@nanostores/react';
 import { $isSearchOpen, closeModal, openModal } from '@store/modal';
@@ -38,7 +38,9 @@ function CloseIcon({ className }: { className?: string }) {
 
 export default function SearchDialog() {
   const isOpen = useStore($isSearchOpen);
-  const { containerRef } = useSearchKeyboardNav(isOpen);
+  // Result navigation itself is built into Pagefind Component UI (Arrow/Enter);
+  // this only intercepts results that point at the current page (in-place highlight).
+  useSearchResultActivation(isOpen);
 
   // Cmd/Ctrl + K to open
   useKeyboardShortcut({
@@ -70,7 +72,7 @@ export default function SearchDialog() {
     if (isOpen) {
       window.dispatchEvent(new CustomEvent('search-dialog-open'));
       requestAnimationFrame(() => {
-        const searchInput = document.querySelector('.pagefind-ui__search-input') as HTMLInputElement;
+        const searchInput = document.querySelector(PAGEFIND_SEARCH_INPUT_SELECTOR) as HTMLInputElement | null;
         searchInput?.focus();
       });
     } else {
@@ -160,7 +162,7 @@ export default function SearchDialog() {
                           id={SEARCH_DIALOG_SCROLL_AREA_ID}
                           className="vertical-scrollbar scroll-feather-mask -mx-6 h-[calc(80dvh-140px)] overflow-auto scroll-smooth px-6 pb-8 after:bottom-10 md:-mx-3 md:h-[calc(80dvh-120px)] md:px-3"
                         >
-                          <div id="search-dialog-container" ref={containerRef} />
+                          <div id="search-dialog-container" />
                         </div>
                       </div>
 
