@@ -1,0 +1,145 @@
+/* ==========================================================================
+   [grid mode=carousel] 图片轮播
+   结构由 src/lib/markdown/remark-image-grid.ts 生成，
+   交互见 src/lib/carousel-enhancer.ts，灯箱复用 PhotoSwipe
+   ========================================================================== */
+
+.prose .image-carousel {
+  margin: 1.5rem 0;
+}
+
+.prose .image-carousel__track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  border-radius: 0.5rem;
+}
+
+.prose .image-carousel__track::-webkit-scrollbar {
+  display: none;
+}
+
+.prose .image-carousel__track:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* 一屏只展示一张：slide 是透明分页容器，高度跟随图片真实宽高比 */
+.prose .image-carousel__slide {
+  position: relative;
+  display: flex;
+  flex: 0 0 100%;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  /* 兜底比例：正常由内联 style 提供真实比例，无 |WxH 提示时脚本按加载尺寸回填 */
+  aspect-ratio: 3 / 4;
+  max-height: min(640px, 72vh);
+  scroll-snap-align: center;
+}
+
+/* figure 紧贴图片实际显示尺寸：图片盒 = 可见图像 = 灯箱缩放起点 */
+.prose .image-carousel__slide .markdown-image-wrapper,
+.prose .image-carousel__slide .markdown-image-wrapper.portrait {
+  width: fit-content;
+  max-width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+.prose .image-carousel__slide .markdown-image,
+.prose .image-carousel__slide .markdown-image-wrapper.portrait .markdown-image.loaded {
+  width: auto;
+  max-width: 100%;
+  height: 100%;
+  margin: 0;
+  object-fit: contain;
+}
+
+/* 轮播内不展示图片标题浮层 */
+.prose .image-carousel__slide .markdown-image-caption {
+  display: none;
+}
+
+.prose .image-carousel__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.625rem;
+}
+
+.prose .image-carousel__nav,
+.prose .image-carousel__dot {
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.prose .image-carousel__nav:focus-visible,
+.prose .image-carousel__dot:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+.prose .image-carousel__nav {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  color: hsl(var(--muted-foreground));
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.prose .image-carousel__nav:hover {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--primary));
+}
+
+.prose .image-carousel__dots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.prose .image-carousel__dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 1rem;
+  background-color: hsl(var(--muted-foreground) / 0.35);
+  touch-action: manipulation;
+  transition:
+    width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.15s ease-out;
+}
+
+.prose .image-carousel__dot:hover {
+  background-color: hsl(var(--muted-foreground) / 0.6);
+}
+
+/* 活动圆点拉长为胶囊（Discourse 风格） */
+.prose .image-carousel__dot.active {
+  width: 1.4rem;
+  background-color: hsl(var(--primary));
+}
+
+@media (max-width: 640px) {
+  .prose .image-carousel__track {
+    gap: 0.5rem;
+  }
+}

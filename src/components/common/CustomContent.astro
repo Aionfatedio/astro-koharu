@@ -38,6 +38,7 @@ const finalConfig = { ...defaultContentConfig, ...config };
 {finalConfig.enableTweetEmbed && <EmbedHydrator client:load />}
 
 <script>
+  import { enhanceCarousels, cleanupCarousels } from '@lib/carousel-enhancer';
   import { enhanceImages, cleanupImages } from '@lib/image-enhancer';
   import { enhanceLinkPreviews } from '@lib/link-preview-enhancer';
   import { enhanceVideos, cleanupVideos } from '@lib/video-enhancer';
@@ -154,6 +155,9 @@ const finalConfig = { ...defaultContentConfig, ...config };
     // Enhance images with loading states
     enhanceImages(contentContainer);
 
+    // Enhance [grid mode=carousel] image carousels
+    enhanceCarousels(contentContainer);
+
     // Enhance link preview images with error handling
     enhanceLinkPreviews(contentContainer);
 
@@ -226,6 +230,7 @@ const finalConfig = { ...defaultContentConfig, ...config };
     const contentContainer = document.querySelector('.custom-content');
     if (contentContainer) {
       cleanupImages(contentContainer);
+      cleanupCarousels(contentContainer);
       cleanupVideos(contentContainer);
       cleanupComics(contentContainer);
     }

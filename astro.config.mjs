@@ -28,6 +28,7 @@ import { rehypeShokaAttrs } from './src/lib/markdown/rehype-shoka-attrs.ts';
 import { remarkComicDirective } from './src/lib/markdown/remark-comic-directive.ts';
 import { remarkEncryptedDirective } from './src/lib/markdown/remark-encrypted-directive.ts';
 import { remarkIconifyInline } from './src/lib/markdown/remark-iconify-inline.ts';
+import { remarkImageGrid } from './src/lib/markdown/remark-image-grid.ts';
 import { remarkLinkEmbed } from './src/lib/markdown/remark-link-embed.ts';
 import { remarkScoreInline } from './src/lib/markdown/remark-score-inline.ts';
 import { remarkIns, remarkMark } from './src/lib/markdown/remark-shoka-effects.ts';
@@ -142,6 +143,8 @@ if (contentConfig.enableEncryptedBlock) {
 if (contentConfig.enableComicCard) {
   remarkPlugins.push(remarkComicDirective);
 }
+// Discourse-style [grid mode=carousel] image carousels (always on)
+remarkPlugins.push(remarkImageGrid);
 // Link embed is always on (existing feature)
 remarkPlugins.push([
   remarkLinkEmbed,

@@ -19,14 +19,21 @@ let isOpening = false; // Prevent double-click race condition
 let groupTimer: ReturnType<typeof setTimeout> | undefined;
 
 /**
- * Collect all markdown images in container as PhotoSwipe slide data
+ * Collect markdown images in container as PhotoSwipe slide data.
+ * A carousel ([grid mode=carousel]) forms its own lightbox scope: opening
+ * from a carousel collects only that carousel's images, while the page-wide
+ * collection excludes every carousel image.
  */
 function collectImageSlides(container: Element): SlideData[] {
-  const images = container.querySelectorAll<HTMLImageElement>('.markdown-image.loaded');
+  const scopedToCarousel = container.classList.contains('image-carousel');
+  const images = container.querySelectorAll<HTMLImageElement>('.markdown-image');
   const slides: SlideData[] = [];
 
   images.forEach((img) => {
-    if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+    // Carousel images get their own scoped lightbox; skip them page-wide
+    if (!scopedToCarousel && img.closest('.image-carousel')) return;
+
+    if (img.classList.contains('loaded') && img.naturalWidth > 0 && img.naturalHeight > 0) {
       slides.push({
         src: img.src,
         width: img.naturalWidth,
@@ -37,6 +44,23 @@ function collectImageSlides(container: Element): SlideData[] {
         // Store reference to thumbnail element for zoom animation
         element: img,
       });
+      return;
+    }
+
+    // Carousel slides may still be lazy-loading — fall back to the |WxH
+    // attribute size so every grid image is present in the lightbox
+    if (scopedToCarousel) {
+      const attrWidth = Number(img.getAttribute('width'));
+      const attrHeight = Number(img.getAttribute('height'));
+      if (attrWidth > 0 && attrHeight > 0) {
+        slides.push({
+          src: img.src,
+          width: attrWidth,
+          height: attrHeight,
+          alt: img.alt || '',
+          element: img,
+        });
+      }
     }
   });
 
@@ -79,6 +103,9 @@ async function openPhotoSwipe(container: Element, clickedImg: HTMLImageElement):
       return;
     }
 
+    // Carousel scope: loop within the grid and show prev/next arrows
+    const scopedToCarousel = container.classList.contains('image-carousel');
+
     // Initialize PhotoSwipe
     const pswp = new PhotoSwipe({
       dataSource: slides,
@@ -101,14 +128,14 @@ async function openPhotoSwipe(container: Element, clickedImg: HTMLImageElement):
 
       // === Zoom configuration ===
       allowPanToNext: true,
-      loop: false,
+      loop: scopedToCarousel,
       initialZoomLevel: 'fit',
       secondaryZoomLevel: 1.25,
       maxZoomLevel: 4,
 
       // === UI configuration ===
-      arrowPrev: false,
-      arrowNext: false,
+      arrowPrev: scopedToCarousel,
+      arrowNext: scopedToCarousel,
       zoom: false,
       close: true,
       counter: false,
@@ -116,6 +143,32 @@ async function openPhotoSwipe(container: Element, clickedImg: HTMLImageElement):
 
     // Store instance reference
     photoSwipeInstance = pswp;
+
+    // Correct the zoom-animation origin for letterboxed thumbnails
+    // (object-fit: contain, e.g. carousel slides and portrait rows):
+    // PhotoSwipe assumes the element box equals the displayed image, so
+    // compute the real contained rect from the natural dimensions.
+    pswp.addFilter('thumbBounds', (thumbBounds, itemData) => {
+      // PhotoSwipe's filter signature demands a non-undefined return even though
+      // the incoming value (and its own runtime handling) allows undefined.
+      const passthrough = thumbBounds as NonNullable<typeof thumbBounds>;
+      const element = itemData.element;
+      if (!thumbBounds || !(element instanceof HTMLImageElement)) return passthrough;
+      if (getComputedStyle(element).objectFit !== 'contain') return passthrough;
+
+      const rect = element.getBoundingClientRect();
+      const { naturalWidth, naturalHeight } = element;
+      if (!naturalWidth || !naturalHeight || !rect.width || !rect.height) return passthrough;
+
+      const scale = Math.min(rect.width / naturalWidth, rect.height / naturalHeight);
+      const width = naturalWidth * scale;
+      const height = naturalHeight * scale;
+      return {
+        x: rect.left + (rect.width - width) / 2,
+        y: rect.top + (rect.height - height) / 2,
+        w: width,
+      };
+    });
 
     pswp.on('contentResize', ({ content, width, height }) => {
       if (!content.slide || !content.isImageContent()) {
@@ -126,6 +179,33 @@ async function openPhotoSwipe(container: Element, clickedImg: HTMLImageElement):
       content.slide.container.classList.add('koharu-pswp-image-clip');
       content.slide.container.style.width = `${width}px`;
       content.slide.container.style.height = `${height}px`;
+    });
+
+    // Slides opened via the |WxH attribute fallback (lazy image not loaded
+    // yet) carry the hint size, which caps PhotoSwipe's fit zoom below the
+    // real one. Swap in the natural size once the full image loads so the
+    // zoom matches a direct open of that image.
+    pswp.on('loadComplete', ({ content, slide }) => {
+      const imageEl = content.element;
+      if (!(imageEl instanceof HTMLImageElement) || !imageEl.naturalWidth || !imageEl.naturalHeight) return;
+
+      const baseData = slides[content.index];
+      if (!baseData || (baseData.width === imageEl.naturalWidth && baseData.height === imageEl.naturalHeight)) {
+        return;
+      }
+      baseData.width = imageEl.naturalWidth;
+      baseData.height = imageEl.naturalHeight;
+
+      if (slide) {
+        slide.data.width = imageEl.naturalWidth;
+        slide.data.height = imageEl.naturalHeight;
+        slide.width = imageEl.naturalWidth;
+        slide.height = imageEl.naturalHeight;
+        slide.zoomLevels.update(slide.width, slide.height, slide.panAreaSize);
+        slide.zoomAndPanToInitial();
+        slide.applyCurrentZoomPan();
+        slide.updateContentSize(true);
+      }
     });
 
     // Clean up on destroy
@@ -205,8 +285,9 @@ function handleImageClick(e: Event): void {
   e.preventDefault();
   e.stopPropagation();
 
-  // Find the nearest content container for collecting all images
-  const container = img.closest('.custom-content') ?? img.closest('.prose') ?? document.body;
+  // Carousel images open a lightbox scoped to their own grid;
+  // otherwise collect from the nearest content container
+  const container = img.closest('.image-carousel') ?? img.closest('.custom-content') ?? img.closest('.prose') ?? document.body;
   openPhotoSwipe(container, img);
 }
 

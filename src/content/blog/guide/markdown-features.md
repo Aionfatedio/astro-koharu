@@ -90,6 +90,24 @@ draft: false
   ></iframe>
 </div>
 
+## 图片轮播
+
+使用 Discourse 风格的 `[grid mode=carousel]` 语法可以将多张图片渲染为横向轮播，`|宽x高` 后缀提供占位宽高比，点击图片仍会打开 PhotoSwipe 灯箱：
+
+[grid mode=carousel]
+
+![示例图 1|400x500](https://picsum.photos/seed/koharu-1/800/1000)
+
+![示例图 2|300x500](https://picsum.photos/seed/koharu-2/600/1000)
+
+![示例图 3|500x500](https://picsum.photos/seed/koharu-3/1000/1000)
+
+![示例图 4|375x500](https://picsum.photos/seed/koharu-4/750/1000)
+
+![示例图 5|665x500](https://picsum.photos/seed/koharu-5/1330/1000)
+
+[/grid]
+
 ## 视频嵌入
 
 使用 `{% media video %}` 指令可以嵌入视频播放器：
