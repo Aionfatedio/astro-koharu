@@ -25,6 +25,8 @@ export interface SiteBasicConfig {
   breadcrumbHome?: string;
   /** 时区配置 (IANA 格式) @default 'Asia/Shanghai' */
   timezone?: string;
+  /** ICP filing number. Supports plain text or { text, link } format */
+  icp?: string | { text: string; link?: string };
   /** Enable slug transliteration (converts CJK characters to pinyin/romaji) @default false */
   enableSlugTransliteration?: boolean;
 }
@@ -72,6 +74,21 @@ export interface FeaturedSeriesItem {
   /** Related links */
   links?: FeaturedSeriesLinks;
 }
+
+/**
+ * @deprecated Use FeaturedSeriesItem instead
+ */
+export type FeaturedSeries = FeaturedSeriesItem;
+
+/**
+ * Runtime site configuration: {@link SiteBasicConfig} with `url` renamed to
+ * `site` and featured content normalized.
+ */
+export type ResolvedSiteConfig = Omit<SiteBasicConfig, 'url'> & {
+  site: string;
+  featuredCategories?: FeaturedCategory[];
+  featuredSeries: FeaturedSeriesItem[];
+};
 
 // =============================================================================
 // Social Configuration
@@ -138,19 +155,27 @@ export interface AnnouncementConfig {
 // Content Processing Configuration
 // =============================================================================
 
+/** Post card cover placement on list pages. */
+export type PostCardImagePosition = 'alternating' | 'left' | 'right';
+
+/**
+ * Raw `content:` section of `config/site.yaml`. Every field is optional —
+ * use {@link ResolvedContentConfig} for the value consumers see.
+ */
 export interface ContentConfig {
-  addBlankTarget: boolean;
-  smoothScroll: boolean;
-  addHeadingLevel: boolean;
-  enhanceCodeBlock: boolean;
-  enableCodeCopy: boolean;
-  enableCodeFullscreen: boolean;
-  enableLinkEmbed: boolean;
-  enableTweetEmbed: boolean;
-  enableOGPreview: boolean;
-  enableCodePenEmbed: boolean;
-  previewCacheTime: number;
-  lazyLoadEmbeds: boolean;
+  addBlankTarget?: boolean;
+  smoothScroll?: boolean;
+  addHeadingLevel?: boolean;
+  enhanceCodeBlock?: boolean;
+  enableCodeCopy?: boolean;
+  enableCodeFullscreen?: boolean;
+  enableLinkEmbed?: boolean;
+  enableTweetEmbed?: boolean;
+  enableOGPreview?: boolean;
+  enableCodePenEmbed?: boolean;
+  previewCacheTime?: number;
+  lazyLoadEmbeds?: boolean;
+  postCardImagePosition?: PostCardImagePosition;
   // Shoka compatibility features
   enableShokaContainers?: boolean;
   enableShokaAttrs?: boolean;
@@ -164,9 +189,10 @@ export interface ContentConfig {
   enableEncryptedBlock?: boolean;
   enableComicCard?: boolean;
   enableIconifyInline?: boolean;
-  /** Post card image position on list pages @default 'alternating' */
-  postCardImagePosition?: 'alternating' | 'left' | 'right';
 }
+
+/** Content config after defaults are applied — no optional fields. */
+export type ResolvedContentConfig = Required<ContentConfig>;
 
 // =============================================================================
 // Navigation
@@ -174,6 +200,8 @@ export interface ContentConfig {
 
 export interface RouterItem {
   name?: string;
+  /** Translation key for locale-aware name (e.g., 'nav.home'). Falls back to `name` if absent. */
+  nameKey?: string;
   path?: string;
   icon?: string;
   /** Build-time feature placeholder. The item is replaced or removed before rendering. */
@@ -444,12 +472,15 @@ export interface TwikooConfig {
    * 环境地域，默认为 ap-shanghai
    * Environment region, default is ap-shanghai
    * 腾讯云环境填 ap-shanghai 或 ap-guangzhou；Vercel 环境不填
+   * For Tencent Cloud, fill in ap-shanghai or ap-guangzhou; for Vercel, leave blank
    */
   region?: string;
 
   /**
    * 用于区分不同文章的自定义 js 路径
    * Custom js path to distinguish different articles
+   * 如果您的文章路径不是 location.pathname，需传此参数
+   * If your article path is not location.pathname, you need to pass this parameter
    */
   path?: string;
 
@@ -583,6 +614,39 @@ export interface BgmConfig {
 }
 
 // =============================================================================
+// Bangumi (Media Tracking) Configuration
+// =============================================================================
+
+export interface BangumiConfig {
+  /** Bangumi username or numeric ID */
+  userId: string;
+  /** Navigation display name, defaults to i18n key 'nav.bangumi' */
+  label?: string;
+  /** Navigation icon (Iconify format), defaults to 'ri:bilibili-fill' */
+  icon?: string;
+}
+
+// =============================================================================
+// i18n Configuration
+// =============================================================================
+
+export interface LocaleConfig {
+  /** Locale code (BCP 47 short format, e.g., 'zh', 'en', 'ja') */
+  code: string;
+  /** Display label for the locale (e.g., '中文', 'English') */
+  label?: string;
+  /** Whether this locale is active. Defaults to true. Set false to keep content but hide locale from routing/UI. */
+  enabled?: boolean;
+}
+
+export interface I18nConfig {
+  /** Default locale code */
+  defaultLocale: string;
+  /** List of supported locales */
+  locales: LocaleConfig[];
+}
+
+// =============================================================================
 // Root Configuration Type
 // =============================================================================
 
@@ -595,7 +659,7 @@ export interface SiteYamlConfig {
   friends?: FriendsConfig;
   announcements?: AnnouncementConfig[];
   defaultCoverList?: string[];
-  content?: Partial<ContentConfig>;
+  content?: ContentConfig;
   /** Optional dynamic moments archive backed by koharu-suite. */
   moments?: MomentsConfig;
   navigation?: RouterItem[];
@@ -606,7 +670,9 @@ export interface SiteYamlConfig {
   categoryMap?: Record<string, string>; // TODO: i18n, now use eg: { '随笔': 'life' }
   /** Background music player configuration */
   bgm?: BgmConfig;
+  /** Bangumi media tracking page — comment out to disable */
+  bangumi?: BangumiConfig;
   christmas?: ChristmasConfig;
   /** Development tools configuration (dev only) */
-  dev?: Partial<DevConfig>;
+  dev?: DevConfig;
 }

@@ -80,7 +80,6 @@ const structuredDataJson = structuredData ? JSON.stringify(structuredData).repla
   openGraph={openGraph}
   robots={failure ? 'noindex,follow' : undefined}
   rssFeeds={channel ? [{ href: rssPath(momentsConfig, channel), title: `${channel.title} RSS` }] : []}
-  includeLocaleAlternates={false}
 >
   {structuredDataJson && <script is:inline type="application/ld+json" set:html={structuredDataJson} />}
   <MomentsShell title={channel?.title ?? momentsConfig.title}>

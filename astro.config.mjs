@@ -20,10 +20,11 @@ import Sonda from 'sonda/vite';
 import { loadEnv } from 'vite';
 import svgr from 'vite-plugin-svgr';
 import YAML from 'yaml';
-import { normalizeSiteYamlConfig } from './src/lib/config/normalize.ts';
-import { RESERVED_ROUTES } from './src/constants/router.ts';
 import { momentsRoutes } from './src/features/moments/integration/momentsRoutes.ts';
+import { normalizeContentConfig } from './src/lib/config/content.ts';
+import { enabledFeaturedSeriesSlugs, normalizeFeaturedSeries } from './src/lib/config/featured-series.ts';
 import { normalizeMomentsConfig } from './src/lib/config/moments.ts';
+import { RESERVED_ROUTES } from './src/lib/config/reserved-routes.ts';
 import { rehypeEncryptedBlock } from './src/lib/markdown/rehype-encrypted-block.ts';
 import { rehypeEncryptedPost } from './src/lib/markdown/rehype-encrypted-post.ts';
 import { rehypeImagePlaceholder } from './src/lib/markdown/rehype-image-placeholder.ts';
@@ -48,7 +49,7 @@ function loadConfigForAstro() {
   return YAML.parse(content);
 }
 
-const yamlConfig = normalizeSiteYamlConfig(loadConfigForAstro());
+const yamlConfig = loadConfigForAstro();
 
 // Bundle analysis mode: ANALYZE=true pnpm build
 // Use loadEnv to read .env file (astro.config.mjs runs before Vite loads .env)
@@ -58,10 +59,14 @@ const isAnalyze = ANALYZE === 'true';
 // Get robots.txt config from YAML
 const robotsConfig = yamlConfig.seo?.robots;
 
+const featuredSeries = normalizeFeaturedSeries(yamlConfig.featuredSeries, {
+  categoryMap: yamlConfig.categoryMap,
+  reservedRoutes: RESERVED_ROUTES,
+});
 const momentsConfig = normalizeMomentsConfig(yamlConfig.moments, {
   reservedRoutes: RESERVED_ROUTES,
   localeCodes: [],
-  seriesSlugs: yamlConfig.featuredSeries.flatMap((series) => (series.enabled === false ? [] : [series.slug])),
+  seriesSlugs: enabledFeaturedSeriesSlugs(featuredSeries),
 });
 
 function assertMomentsOgImage(image, field) {
@@ -121,37 +126,33 @@ function conditionalSnowfall() {
 }
 
 // Build conditional plugin lists based on content config
-const contentConfig = yamlConfig.content || {};
+const contentConfig = normalizeContentConfig(yamlConfig.content);
 
 // Remark plugins — order matters
 // remarkShokaPreprocess MUST be first: it re-parses raw text to fix GFM/remark conflicts
 // (+++, ~sub~, {% links %} YAML etc.) before any AST-level plugin runs.
 const remarkPlugins = [];
-{
-  const needsPreprocess =
-    contentConfig.enableShokaContainers !== false ||
-    contentConfig.enableShokaHexoTags !== false ||
-    contentConfig.enableShokaEffects !== false;
-  if (needsPreprocess) {
-    remarkPlugins.push([
-      remarkShokaPreprocess,
-      {
-        enableContainers: contentConfig.enableShokaContainers !== false,
-        enableHexoTags: contentConfig.enableShokaHexoTags !== false,
-        enableSuperSub: contentConfig.enableShokaEffects !== false,
-        enableMath: contentConfig.enableMath !== false,
-        enableEncryptedBlock: contentConfig.enableEncryptedBlock ?? false,
-        enableComicCard: contentConfig.enableComicCard ?? false,
-      },
-    ]);
-  }
+if (contentConfig.enableShokaContainers || contentConfig.enableShokaHexoTags || contentConfig.enableShokaEffects) {
+  remarkPlugins.push([
+    remarkShokaPreprocess,
+    {
+      enableContainers: contentConfig.enableShokaContainers,
+      enableHexoTags: contentConfig.enableShokaHexoTags,
+      // The plugin option is named after what it parses (super/subscript);
+      // `enableShokaEffects` gates the whole ++ins++/==mark==/~sub~/^sup^ family.
+      enableSuperSub: contentConfig.enableShokaEffects,
+      enableMath: contentConfig.enableMath,
+      enableEncryptedBlock: contentConfig.enableEncryptedBlock,
+      enableComicCard: contentConfig.enableComicCard,
+    },
+  ]);
 }
 // remarkMath must run BEFORE ruby/spoiler/effects so that $...$ content
 // is already parsed into inlineMath/math nodes and won't be touched by text-scanning plugins.
-if (contentConfig.enableMath !== false) remarkPlugins.push(remarkMath);
-if (contentConfig.enableShokaSpoiler !== false) remarkPlugins.push(remarkShokaSpoiler);
-if (contentConfig.enableShokaRuby !== false) remarkPlugins.push(remarkShokaRuby);
-if (contentConfig.enableShokaEffects !== false) {
+if (contentConfig.enableMath) remarkPlugins.push(remarkMath);
+if (contentConfig.enableShokaSpoiler) remarkPlugins.push(remarkShokaSpoiler);
+if (contentConfig.enableShokaRuby) remarkPlugins.push(remarkShokaRuby);
+if (contentConfig.enableShokaEffects) {
   remarkPlugins.push(remarkIns, remarkMark);
 }
 // Inline Iconify icons: %prefix/icon-name% → inline <svg>
@@ -177,11 +178,11 @@ remarkPlugins.push(remarkImageGrid);
 remarkPlugins.push([
   remarkLinkEmbed,
   {
-    enableLinkEmbed: contentConfig.enableLinkEmbed ?? true,
-    enableTweetEmbed: contentConfig.enableTweetEmbed ?? true,
-    enableOGPreview: contentConfig.enableOGPreview ?? true,
-    enableCodePenEmbed: contentConfig.enableCodePenEmbed ?? true,
-    previewCacheTime: contentConfig.previewCacheTime ?? 30,
+    enableLinkEmbed: contentConfig.enableLinkEmbed,
+    enableTweetEmbed: contentConfig.enableTweetEmbed,
+    enableOGPreview: contentConfig.enableOGPreview,
+    enableCodePenEmbed: contentConfig.enableCodePenEmbed,
+    previewCacheTime: contentConfig.previewCacheTime,
   },
 ]);
 
@@ -199,9 +200,9 @@ const rehypePlugins = [
     },
   ],
 ];
-if (contentConfig.enableShokaAttrs !== false) rehypePlugins.push(rehypeShokaAttrs);
+if (contentConfig.enableShokaAttrs) rehypePlugins.push(rehypeShokaAttrs);
 rehypePlugins.push(rehypeImagePlaceholder);
-if (contentConfig.enableMath !== false) rehypePlugins.push(rehypeKatex);
+if (contentConfig.enableMath) rehypePlugins.push(rehypeKatex);
 // Encrypted block/post MUST be last rehype plugins — encrypt fully-rendered children
 if (contentConfig.enableEncryptedBlock) {
   rehypePlugins.push(rehypeEncryptedBlock);
@@ -210,7 +211,7 @@ if (contentConfig.enableEncryptedBlock) {
 
 // Shiki transformers
 const shikiTransformers = [];
-if (contentConfig.enableCodeMeta !== false) shikiTransformers.push(shokaMetaTransformer());
+if (contentConfig.enableCodeMeta) shikiTransformers.push(shokaMetaTransformer());
 
 // https://astro.build/config
 export default defineConfig({

@@ -19,7 +19,7 @@ interface Props {
 const { posts, page, showPaginator = true, baseUrl, isHomePage = false, isSimple = false } = Astro.props;
 const covers = shuffle(defaultCoverList);
 
-const imagePosition = contentConfig.postCardImagePosition || 'alternating';
+const imagePosition = contentConfig.postCardImagePosition;
 const isUniformPosition = imagePosition !== 'alternating';
 
 /**

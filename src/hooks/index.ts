@@ -5,24 +5,25 @@
  * Import hooks from '@hooks' for convenience.
  */
 
-export { type UseActiveHeadingOptions, useActiveHeading } from './useActiveHeading';
-
 // Controlled/uncontrolled state pattern
-export type { UseControlledStateOptions } from './useControlledState';
-export type { CurrentHeading, UseCurrentHeadingOptions } from './useCurrentHeading';
-export { type UseExpandedStateOptions, type UseExpandedStateReturn, useExpandedState } from './useExpandedState';
+export { type UseControlledStateOptions, useControlledState } from './useControlledState';
+// Clipboard with feedback
+export { useCopyToClipboard } from './useCopyToClipboard';
+export { type CurrentHeading, type UseCurrentHeadingOptions, useCurrentHeading } from './useCurrentHeading';
 // Floating UI wrapper
-export type { UseFloatingUIOptions } from './useFloatingUI';
-export { type UseHeadingClickHandlerOptions, useHeadingClickHandler } from './useHeadingClickHandler';
-// TableOfContents-specific hooks
-export { type Heading, useHeadingTree } from './useHeadingTree';
+export { type UseFloatingUIOptions, useFloatingUI } from './useFloatingUI';
+// TOC hooks (useTocController etc.) are imported via direct paths; see src/hooks/useTocController.ts
 // Theme state hook (monitors actual page theme, not system preference)
 export { useIsDarkTheme } from './useIsDarkTheme';
+// Utility hooks
+export { useIsMounted } from './useIsMounted';
 // Keyboard shortcuts
-export type { KeyboardShortcutOptions, ModifierKey } from './useKeyboardShortcut';
+export { type KeyboardShortcutOptions, type ModifierKey, useEscapeKey, useKeyboardShortcut } from './useKeyboardShortcut';
 // Media query hooks
-export { useMediaQuery, usePrefersReducedMotion } from './useMediaQuery';
+export { useIsMobile, useIsTablet, useMediaQuery, usePrefersColorSchemeDark, usePrefersReducedMotion } from './useMediaQuery';
+// Timer management
+export { useRetimer } from './useRetimer';
 // Scroll state hooks
-export type { ScrollTriggerState, UseScrollTriggerOptions } from './useScrollTrigger';
+export { type ScrollTriggerState, type UseScrollTriggerOptions, useScrollTrigger } from './useScrollTrigger';
 // Zoom and pan for fullscreen viewers
-export type { UseZoomPanReturn } from './useZoomPan';
+export { type UseZoomPanReturn, useZoomPan } from './useZoomPan';

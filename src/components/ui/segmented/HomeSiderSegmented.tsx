@@ -11,7 +11,6 @@ type HomeSiderSegmentedProps = {
   className?: string;
   indicateClass?: string;
   itemClass?: string;
-  id?: string;
   value?: HomeSiderSegmentType; // 受控
   infoLabel?: string; // 动态 label（画师概览 / 站点概览）
 };

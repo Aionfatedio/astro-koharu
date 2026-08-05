@@ -9,11 +9,11 @@ import type { MessagePage } from '@coszone/koharu-astro';
 import Layout from '@layouts/Layout.astro';
 import { Icon } from 'astro-icon/components';
 import { getMomentsChannels, listChannelMessages } from '../lib/data';
-import { messageCardLabels, momentsLabels } from '../lib/labels';
+import { cursorPaginationLabels, messageCardLabels, momentsLabels } from '../lib/labels';
 import { resolveMomentsOpenGraph } from '../lib/metadata';
 import { toMomentsHttpError } from '../lib/runtime';
 import { momentsPath, rssPath, searchPath } from '../lib/urls';
-import { toChannelViewModel, toMessageViewModel } from '../lib/view-models';
+import { toChannelViewModel, toMessageViewModels } from '../lib/view-models';
 
 Astro.cache.set({ maxAge: 300, swr: 30 });
 const cursor = Astro.url.searchParams.get('cursor')?.trim() || undefined;
@@ -39,7 +39,13 @@ if (primary) {
 }
 
 const channelViews = (channels?.visible ?? []).map((channel) => toChannelViewModel(momentsConfig, channel, primary?.id));
-const messages = primary && page ? page.items.map((message) => toMessageViewModel(momentsConfig, primary, message)) : [];
+const messages =
+  primary && page
+    ? toMessageViewModels(momentsConfig, primary, page.items, {
+        separateFirst: Boolean(cursor),
+        separateLast: Boolean(page.nextCursor),
+      })
+    : [];
 const canonicalPath = momentsPath(momentsConfig);
 const canonical = new URL(canonicalPath, Astro.site).href;
 const openGraph = resolveMomentsOpenGraph({ canonical, config: momentsConfig, kind: 'index' });
@@ -55,7 +61,6 @@ const errorDescription = errorKind === 'rate-limited' ? momentsLabels.rateLimite
   openGraph={openGraph}
   robots={cursor ? 'noindex,follow' : undefined}
   rssFeeds={[{ href: rssPath(momentsConfig), title: `${momentsConfig.title} RSS` }]}
-  includeLocaleAlternates={false}
 >
   <MomentsShell title={momentsConfig.title}>
     <div class="flex flex-wrap items-center justify-between gap-2">
@@ -86,14 +91,14 @@ const errorDescription = errorKind === 'rate-limited' ? momentsLabels.rateLimite
       <MomentsState kind="empty" title={momentsLabels.emptyChannel} />
     ) : (
       <>
-        <ol class="moments-timeline">
+        <ol class="moments-timeline" data-moments-timeline>
           {messages.map((message) => (
             <li>
               <MessageCard message={message} labels={messageCardLabels} />
             </li>
           ))}
         </ol>
-        <CursorPagination nextHref={nextHref} nextLabel={momentsLabels.olderContent} backLabel={momentsLabels.back} navigationLabel={momentsLabels.pagination} />
+        <CursorPagination nextHref={nextHref} labels={cursorPaginationLabels} />
       </>
     )}
     <p class="text-muted-foreground text-center text-xs">{momentsLabels.cacheNotice}</p>
