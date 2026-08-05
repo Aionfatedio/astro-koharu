@@ -34,7 +34,6 @@ import { remarkIns, remarkMark } from './src/lib/markdown/remark-shoka-effects.t
 import { remarkShokaPreprocess } from './src/lib/markdown/remark-shoka-preprocess.ts';
 import { remarkShokaRuby } from './src/lib/markdown/remark-shoka-ruby.ts';
 import { remarkShokaSpoiler } from './src/lib/markdown/remark-shoka-spoiler.ts';
-import { collapsibleCodeTransformer } from './src/lib/markdown/shiki-collapsible-transformer.ts';
 import { shokaMetaTransformer } from './src/lib/markdown/shiki-meta-transformer.ts';
 
 // Load YAML config directly with Node.js (before Vite plugins are available)
@@ -174,7 +173,6 @@ if (contentConfig.enableEncryptedBlock) {
 // Shiki transformers
 const shikiTransformers = [];
 if (contentConfig.enableCodeMeta !== false) shikiTransformers.push(shokaMetaTransformer());
-if (contentConfig.enhanceCodeBlock !== false) shikiTransformers.push(collapsibleCodeTransformer());
 
 // https://astro.build/config
 export default defineConfig({
