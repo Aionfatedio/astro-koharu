@@ -4,7 +4,7 @@ export { RESERVED_ROUTES } from '@lib/config/reserved-routes';
 
 export type Router = RouterItem;
 
-// Routes enum kept for backwards compatibility
+/** Shared paths consumed by routeBuilder and navigation components. */
 export enum Routes {
   Home = '/',
   About = '/about',
@@ -13,15 +13,6 @@ export enum Routes {
   Friends = '/friends',
   Post = '/post',
   Archives = '/archives',
-}
-
-/**
- * Get the URL path for a featured series
- * @param slug - The series slug (e.g., 'weekly')
- * @returns The full path (e.g., '/weekly')
- */
-export function getSeriesPath(slug: string): string {
-  return `/${slug}`;
 }
 
 /** Fallback navigation used when `config/site.yaml` does not define `navigation`. */

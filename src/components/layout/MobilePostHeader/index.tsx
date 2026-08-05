@@ -8,8 +8,8 @@
 import { LazyMotionProvider } from '@components/common/LazyMotionProvider';
 import { TocProvider } from '@components/layout/TableOfContents/TocContext';
 import { animation } from '@constants/design-tokens';
-import { useMediaQuery } from '@hooks/index';
 import { useCurrentHeading } from '@hooks/useCurrentHeading';
+import { useMediaQuery } from '@hooks/useMediaQuery';
 import { useTocController } from '@hooks/useTocController';
 import { AnimatePresence, m, useReducedMotion } from 'motion/react';
 import { siteConfig } from '@/constants/site-config';

@@ -21,11 +21,11 @@ draft: true
 
 ### 项目简介
 
-astro-koharu 是一个基于 Astro 5.x 构建的现代化博客系统，从 Hexo 迁移而来，设计灵感和初衷都来自 [Shoka](https://github.com/amehime/hexo-theme-shoka) 主题。欢迎 [fork](https://github.com/cosZone/astro-koharu/fork) 出来制作自己的主题。
+astro-koharu 是一个基于 Astro 7.x 构建的现代化博客系统，从 Hexo 迁移而来，设计灵感和初衷都来自 [Shoka](https://github.com/amehime/hexo-theme-shoka) 主题。欢迎 [fork](https://github.com/cosZone/astro-koharu/fork) 出来制作自己的主题。
 
 **核心特点：**
 
-* 基于 Astro 5.x，静态站点生成，性能优异
+* 基于 Astro 7.x，静态站点生成，性能优异
 
 * 优雅的深色/浅色主题切换
 
@@ -808,7 +808,7 @@ const lqipProps = getLqipProps(coverUrl);
 
 ### 相关文章推荐
 
-参考 [No Server, No Database: Smarter Related Posts in Astro with ](https://alexop.dev/posts/semantic-related-posts-astro-transformersjs/)`transformers.js`
+参考 [No Server, No Database: Smarter Related Posts in Astro with](https://alexop.dev/posts/semantic-related-posts-astro-transformersjs/)`transformers.js`
 
 基于语义相似度的智能文章推荐系统，使用 [transformers.js](https://huggingface.co/docs/transformers.js) 在本地生成文章嵌入向量，计算文章间的语义相似度。
 
@@ -2147,7 +2147,7 @@ export const christmasConfig = {
 
 | 方面   | Hexo + Shoka   | astro-koharu        |
 | ---- | -------------- | ------------------- |
-| 框架   | Hexo (Node.js) | Astro 5.x           |
+| 框架   | Hexo (Node.js) | Astro 7.x           |
 | 模板引擎 | EJS/Pug        | Astro + React       |
 | 样式   | Stylus         | Tailwind CSS 4.x    |
 | 构建工具 | Webpack        | Vite                |

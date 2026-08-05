@@ -1,7 +1,7 @@
 import { LazyMotionProvider } from '@components/common/LazyMotionProvider';
 import { microDampingPreset } from '@constants/anim/spring';
-import type { FriendLink } from '@constants/friends-config';
 import { useIsMounted } from '@hooks/useIsMounted';
+import type { FriendLink } from '@lib/config/types';
 import { useStore } from '@nanostores/react';
 import { m, useMotionTemplate, useMotionValue, useSpring, useTransform } from 'motion/react';
 import { type MouseEvent, useRef } from 'react';

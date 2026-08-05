@@ -1,10 +1,5 @@
-// Import YAML config directly - processed by @rollup/plugin-yaml
-
-import { normalizeSiteYamlConfig } from '@lib/config/normalize';
+import { announcementsConfig } from '@lib/config/site';
 import type { Announcement } from '@/types/announcement';
-import rawYamlConfig from '../../config/site.yaml';
-
-const yamlConfig = normalizeSiteYamlConfig(rawYamlConfig);
 
 /**
  * Site Announcements Configuration
@@ -12,7 +7,7 @@ const yamlConfig = normalizeSiteYamlConfig(rawYamlConfig);
  * Announcements are loaded from config/site.yaml
  * They will automatically appear based on their startDate/endDate settings.
  */
-export const announcements: Announcement[] = yamlConfig.announcements.map((a) => ({
+export const announcements: Announcement[] = announcementsConfig.map((a) => ({
   id: a.id,
   title: a.title,
   content: a.content,

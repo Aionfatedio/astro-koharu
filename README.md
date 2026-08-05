@@ -59,7 +59,7 @@ docker compose --env-file ./.env -f docker/docker-compose.yml up -d --build
 
 ### 本地开发
 
-开始前请确保已安装 Node.js 22.12.0 或更高版本，以及 pnpm 11.16.0。
+开始前请确保已安装 Node.js 22.20.0 或更高版本，以及 pnpm 11.20.0。
 
 1. 克隆项目到本地
 
@@ -82,7 +82,7 @@ pnpm dev
 
 ## 功能特性
 
-- 基于 Astro 6.x，静态站点生成，性能优异
+- 基于 Astro 7.x，静态站点生成，性能优异
 - 优雅的深色/浅色主题切换
 - 基于 Pagefind 的无后端全站搜索
 - **可更换评论系统**：支持 Waline（推荐）、Giscus、Remark42、Twikoo 四种评论组件，配置文件一键切换，主题自动跟随
@@ -119,7 +119,7 @@ pnpm koharu new          # 新建内容（文章/友链）
 pnpm koharu backup       # 备份博客内容和配置
 pnpm koharu restore      # 从备份恢复
 pnpm koharu update       # 更新主题
-pnpm koharu migrate      # 迁移 Astro 6 文章链接
+pnpm koharu migrate      # 迁移旧版文章链接
 pnpm koharu generate     # 生成内容资产 (LQIP, 相似度, AI 摘要)
 pnpm koharu clean        # 清理旧备份
 pnpm koharu list         # 查看所有备份
@@ -205,7 +205,7 @@ pnpm koharu update --dry-run
 >
 > CLI 更新命令是对 git 操作的封装，熟悉 git 的用户也可以直接使用 `git merge`/`git rebase` 手动操作。
 
-升级到 Astro 6 的版本后，先预览并执行一次文章链接迁移：
+从使用旧版 `slug` frontmatter 的版本升级后，先预览并执行一次文章链接迁移：
 
 ```bash
 pnpm koharu migrate --dry-run

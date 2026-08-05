@@ -34,7 +34,7 @@ const { post, siderType, isPostPage, artistProfile } = Astro.props;
 <div class="flex min-h-screen flex-col text-black dark:text-white">
   <Header isPostPage={isPostPage} tocNumbering={post?.data.tocNumbering ?? true} />
   <main class="relative flex grow flex-col gap-4">
-    {(<slot />)}
+    <slot />
   </main>
   {bgmConfig.enabled && bgmConfig.audio.length > 0 && (
     <div transition:persist="global-bgm">

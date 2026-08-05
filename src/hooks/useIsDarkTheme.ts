@@ -5,9 +5,8 @@
  * the `dark` class on `document.documentElement`.
  * Uses useSyncExternalStore for optimal React 18+ compatibility.
  *
- * Note: This is different from `usePrefersColorSchemeDark()` which
- * monitors the user's system preference. This hook monitors the actual
- * page theme which can be manually toggled by the user.
+ * This hook monitors the active page theme, which can be manually toggled
+ * independently of the user's system preference.
  *
  * @example
  * ```tsx

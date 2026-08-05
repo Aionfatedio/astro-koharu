@@ -48,7 +48,6 @@ const nextPost = adjacentPosts.nextPost ? toPostRef(adjacentPosts.nextPost) : nu
         className="my-4 tablet:mb-0 flex justify-between text-sm/6 w-auto"
         itemClass="grow"
         defaultValue={defaultSegmentType}
-        id="inner-home-sider"
         infoLabel={artistProfile ? '画师概览' : '站点概览'}
       />
     )
@@ -75,17 +74,11 @@ const nextPost = adjacentPosts.nextPost ? toPostRef(adjacentPosts.nextPost) : nu
   <!-- 内联脚本：在 DOM 解析后立即隐藏不需要的内容，避免闪烁 -->
   <script is:inline data-astro-rerun>
     (function () {
-      const container = document.querySelector('sider-content');
-      if (!container) return;
-
-      const defaultType = container.getAttribute('data-default-type') || 'info';
-      const slots = container.querySelectorAll('.sider-slot');
-
-      slots.forEach((slot) => {
-        const slotType = slot.getAttribute('data-slot-type');
-        if (slotType !== defaultType) {
-          slot.classList.add('hidden');
-        }
+      document.querySelectorAll('sider-content').forEach((container) => {
+        const defaultType = container.getAttribute('data-default-type') || 'info';
+        container.querySelectorAll('.sider-slot').forEach((slot) => {
+          slot.classList.toggle('hidden', slot.getAttribute('data-slot-type') !== defaultType);
+        });
       });
     })();
   </script>

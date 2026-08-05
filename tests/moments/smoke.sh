@@ -8,6 +8,11 @@ blog_log="${TMPDIR:-/tmp}/astro-koharu-moments-blog.log"
 fixture_pid=''
 blog_pid=''
 
+if [[ ! -f dist/server/entry.mjs ]]; then
+  printf 'Missing dist/server/entry.mjs; build once with moments.enabled=true before running the dynamic smoke test.\n' >&2
+  exit 1
+fi
+
 cleanup() {
   if [[ -n "$blog_pid" ]]; then kill "$blog_pid" 2>/dev/null || true; fi
   if [[ -n "$fixture_pid" ]]; then kill "$fixture_pid" 2>/dev/null || true; fi
@@ -19,10 +24,20 @@ fixture_pid=$!
 KOHARU_SUITE_URL="http://127.0.0.1:${fixture_port}" HOST=127.0.0.1 PORT="$blog_port" node dist/server/entry.mjs >"$blog_log" 2>&1 &
 blog_pid=$!
 
+blog_ready='false'
 for _ in {1..40}; do
-  if curl -fsS "http://127.0.0.1:${blog_port}/" >/dev/null; then break; fi
+  if curl -fsS --connect-timeout 1 --max-time 2 "http://127.0.0.1:${blog_port}/" >/dev/null; then
+    blog_ready='true'
+    break
+  fi
+  if ! kill -0 "$blog_pid" 2>/dev/null; then break; fi
   sleep 0.25
 done
+
+if [[ "$blog_ready" != 'true' ]]; then
+  cat "$blog_log" >&2
+  exit 1
+fi
 
 base="http://127.0.0.1:${blog_port}"
 message_id='018f3f7a-2b1c-7def-8abc-1234567890ab'
@@ -74,6 +89,6 @@ wait "$fixture_pid" 2>/dev/null || true
 fixture_pid=''
 status="$(curl -sS -o /dev/null -w '%{http_code}' "$base/moments/daily?cursor=offline-unique")"
 [[ "$status" == '503' ]]
-curl -fsS "$base/post/hello-world" >/dev/null
+curl -fsS "$base/post/markdown-features" >/dev/null
 
 printf 'Moments dynamic smoke passed\n'

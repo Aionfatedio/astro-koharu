@@ -4,7 +4,7 @@ import { renderCodePenEmbed, renderLinkPreview, renderTweetEmbed } from './link-
 
 /** Byte-exact markup: existing pages and CSS depend on it, so changes must be deliberate. */
 const SUCCESS_CARD = `<div class="link-preview-block not-prose" data-state="success">
-  <a href="https://example.com/post/1" target="_blank" class="group block overflow-hidden rounded-lg border border-border transition-all hover:border-primary/50 hover:shadow-md" aria-label="Title - example.com">
+  <a href="https://example.com/post/1" target="_blank" rel="noopener noreferrer" class="group block overflow-hidden rounded-lg border border-border transition-all hover:border-primary/50 hover:shadow-md" aria-label="Title - example.com">
     <div class="bg-card flex md:flex-col flex-row">
       <div class="flex-1 p-4">
         <div class="mb-2 flex items-center gap-2">
@@ -24,7 +24,7 @@ const SUCCESS_CARD = `<div class="link-preview-block not-prose" data-state="succ
 </div>`;
 
 const ERROR_CARD = `<div class="link-preview-block not-prose" data-state="error">
-  <a href="https://example.com/post/1" target="_blank" class="hover:border-primary/50 group block rounded-lg border border-border bg-card p-4 transition-all hover:shadow-md" aria-label="https://example.com/post/1">
+  <a href="https://example.com/post/1" target="_blank" rel="noopener noreferrer" class="hover:border-primary/50 group block rounded-lg border border-border bg-card p-4 transition-all hover:shadow-md" aria-label="https://example.com/post/1">
     <div class="flex items-center justify-between gap-3">
       <div class="flex items-center gap-3 min-w-0 flex-1">
         <div class="bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">

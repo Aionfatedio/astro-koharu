@@ -78,7 +78,7 @@ export const collections = {
 };
 ```
 
-Astro 6 使用 Content Layer 的 `glob()` loader，文章的文件路径进入 `post.id`；公开 URL 由 `data.link` 决定，缺少 `link` 的旧文章需先运行 `pnpm koharu migrate`。
+Astro 7 使用 Content Layer 的 `glob()` loader，文章的文件路径进入 `post.id`；公开 URL 由 `data.link` 决定，缺少 `link` 的旧文章需先运行 `pnpm koharu migrate`。
 
 ### Schema 字段说明
 

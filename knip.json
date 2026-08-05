@@ -5,7 +5,7 @@
     "type": true,
     "function": true
   },
-  "entry": ["scripts/koharu/utils/index.ts"],
+  "entry": ["scripts/koharu/utils/index.ts", "src/features/moments/pages/**/*.{astro,ts}", "tests/moments/fixture-server.mjs"],
   "tags": ["-lintignore"],
   "ignore": ["public/**", "cms/**", "src/components/ui/**", "src/constants/design-tokens.ts", "src/layouts/PageLayout.astro"],
   "ignoreDependencies": ["@iconify-json/*", "ffprobe-static"]

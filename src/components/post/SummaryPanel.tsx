@@ -7,7 +7,7 @@
  */
 
 import { ErrorBoundary, InlineErrorFallback } from '@components/common';
-import { usePrefersReducedMotion } from '@hooks/index';
+import { usePrefersReducedMotion } from '@hooks/useMediaQuery';
 import { cn } from '@lib/utils';
 import { memo, type ReactNode, type RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { RiBook2Fill } from 'react-icons/ri';

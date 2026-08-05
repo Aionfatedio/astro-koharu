@@ -17,7 +17,7 @@ ARG KOHARU_SUITE_URL
 ENV KOHARU_SUITE_URL=${KOHARU_SUITE_URL}
 
 # Install the pnpm version used to generate the lockfile
-RUN corepack enable && corepack prepare pnpm@11.16.0 --activate
+RUN corepack enable && corepack prepare pnpm@11.20.0 --activate
 
 # Copy dependency metadata first (for Docker layer caching)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./

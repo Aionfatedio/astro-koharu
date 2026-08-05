@@ -44,7 +44,6 @@ function getUniqueFamilies(fonts: LocalFontData[], locale: string): string[] {
   return [...families].sort(new Intl.Collator(locale, { numeric: true, sensitivity: 'base' }).compare);
 }
 
-// Hardcoded zh-CN (local mod: no i18n)
 const locale = 'zh-CN';
 
 const LOCAL_FONT_FAILURE_MESSAGES: Record<FailureReason, string> = {

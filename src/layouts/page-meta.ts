@@ -2,7 +2,7 @@
  * Document-metadata contract between pages, `Layout` and `HeadMeta`.
  *
  * `HeadMeta` owns every `<head>` derivation (canonical, OG image fallbacks,
- * hreflang, RSS links); pages only describe *what* the page is.
+ * RSS links); pages only describe *what* the page is.
  */
 
 export interface PageOpenGraph {
@@ -21,7 +21,7 @@ export interface RssFeedLink {
 
 /** Metadata a page may override. Every field is optional — `HeadMeta` fills the defaults. */
 export interface PageMetaProps {
-  /** Override canonical URL (e.g. fallback pages pointing at the default-locale version). */
+  /** Override the canonical URL for this page. */
   canonical?: string;
   keywords?: string[];
   openGraph?: PageOpenGraph;

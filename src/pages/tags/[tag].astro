@@ -40,7 +40,7 @@ const hasPosts = posts.length > 0;
     <div class={`shadow-box mx-0 flex w-full flex-col bg-gradient-start ${CONTENT_PADDING.standard}`}>
       <h2 class="shoka-decoration-circle has-children group relative h-19 px-6 py-5 text-2xl/9 font-bold">
         <a
-          href={Astro.url.origin + '/tags'}
+          href="/tags"
           class="dashed-border text-muted-foreground group-hover:border-blue group-hover:text-blue border-b">全部</a
         >
         <span class="text-muted-foreground text-lg"> / </span>
@@ -58,7 +58,7 @@ const hasPosts = posts.length > 0;
                     {displayDate.shortDate(post.data.date)}
                   </span>
                   <a
-                    href={Astro.url.origin + link}
+                    href={link}
                     class="text-muted-foreground hover:text-blue mr-2 inline-block text-xs md:relative md:-top-1"
                   >
                     {name}

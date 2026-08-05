@@ -47,11 +47,10 @@ astro-koharu is an Astro-based blog rebuilt from Hexo, inspired by the Shoka the
 - **Keep CLAUDE.md updated**: Ask to update when making architectural changes
 - **Run lint before completion**: `pnpm lint:fix` must pass before completing tasks
 - **Check for dead code**: Run `pnpm knip` periodically
-- **Build cache**: `.cache/og-data.json` is intentionally committed to Git for build acceleration (OG metadata cache for link embeds). Do NOT add it to `.gitignore`. Other files under `.cache/` (transformers models, summaries-cache) are already ignored.
 
 ## Development Commands
 
-Package manager: **pnpm** (`pnpm@10.28.2`)
+Package manager: **pnpm** (`pnpm@11.20.0`)
 
 ```bash
 # Development
@@ -82,15 +81,14 @@ pnpm koharu list         # List all backups
 
 **Note on Configuration Changes:** After modifying `config/site.yaml`, restart the dev server or rebuild. The YAML configuration is cached during build for performance.
 
-**Config normalization:** `src/lib/config/site.ts` is the single YAML parse/assembly point. Each config section has a pure `normalize*(raw)` function in `src/lib/config/` (content, featured-series, moments) owning its default table and validation — add new sections there, with node:test coverage, instead of reading `yamlConfig` ad hoc. `src/constants/site-config.ts` is a thin assembly/compat layer; `src/lib` must not import from `@constants/site-config`.
+**Config normalization:** `src/lib/config/site.ts` is the single YAML parse/assembly point. Validated config sections use focused `normalize*(raw)` functions in `src/lib/config/` (content, featured-series, friends, moments), each owning its defaults and boundary checks. Add new validation there with node:test coverage instead of duplicating normalization in consumers. `src/constants/site-config.ts` is a thin assembly/compat layer; `src/lib` must not import from `@constants/site-config`.
 
 ## Architecture
 
 ### Tech Stack
-- **Framework**: Astro 6.x with React integration
+- **Framework**: Astro 7.1.3 with React integration
 - **Styling**: Tailwind CSS 4.x with plugins
-- **Content**: Astro Content Collections (`src/content/blog/`)
-- **i18n**: Custom translation system (`src/i18n/`) with Astro i18n routing
+- **Content**: Astro 7 Content Layer (`src/content.config.ts` + `src/content/blog/`)
 - **Animations**: Motion (Framer Motion successor)
 - **State**: Nanostores
 - **Search**: Pagefind (static)
@@ -100,10 +98,9 @@ pnpm koharu list         # List all backups
 ```plain
 src/
 ├── components/   # React & Astro components
-├── content/blog/ # Markdown/MDX posts (translations under <locale>/ subdirs)
-├── i18n/         # Internationalization (translations, config, utils)
+├── content/blog/ # Markdown/MDX posts
 ├── layouts/      # Page layouts
-├── pages/        # File-based routing ([lang]/ mirrors for non-default locales)
+├── pages/        # File-based routing
 ├── lib/          # Utility functions
 ├── hooks/        # React hooks
 ├── constants/    # Config, router, animations
@@ -142,23 +139,11 @@ pages/ → components/ → hooks/ → lib/ → constants/
 
 ### Key Concepts
 
-**Content System**: Blog posts in `src/content/blog/` using Astro Content Collections. Hierarchical categories supporting `'工具'` or `['笔记', '前端', 'React']`.
+**Content System**: Blog posts in `src/content/blog/` use the Astro 7 `glob()` loader. Public links come from `data.link`; run `pnpm koharu migrate` when upgrading legacy `slug` frontmatter. Hierarchical categories support `'工具'` or `['笔记', '前端', 'React']`.
 
 **Featured Series**: Special category-based content series with dedicated pages and homepage highlights. Configured via `featuredSeries` in `config/site.yaml`. Each series requires a unique `slug` (must not conflict with reserved routes) and `categoryName`. Supports multiple series, individual enable/disable, and homepage highlight control. Dynamic routes generated at `[seriesSlug].astro`.
 
-**Bangumi Page**: Optional media tracking page integrating [Bangumi API](https://api.bgm.tv). Configured via `bangumi` section in `config/site.yaml` — comment out to disable (page + navigation auto-hidden). Data fetched client-side in React (`BangumiCollection` component with `client:load`). Types in `src/types/bangumi.ts`, API client in `src/lib/bangumi/`, data hook in `src/hooks/useBangumiData.ts`. Navigation item auto-injected via `routers` in `src/constants/site-config.ts`.
-
 **Theme System**: Dark/light toggle with localStorage, inline check in `<head>` prevents FOUC.
-
-**i18n System**: Two-layer translation architecture with locale-aware routing.
-- **UI strings** (`src/i18n/translations/`): TypeScript dictionaries with `t(locale, key, params?)` function. Keys defined in `zh.ts` (source-of-truth), other locales are partial overrides. ~170 keys.
-- **Content strings** (`config/i18n-content.yaml`): YAML-based translations for category names, series fields, featured category labels. Accessed via `getContentCategoryName()` / `getContentSeriesField()` / `getContentFeaturedCategoryField()` (internal to `src/lib/content/categories.ts`).
-- **Routing**: Default locale has no URL prefix; other locales use `/<locale>/` prefix. Static pages in `src/pages/[lang]/` are thin wrappers using `getLocaleStaticPaths()`. Dynamic routes declare their param space once in `src/pages/_shared/routes.ts`; root/mirror pages share it via `localePaths(enumerate)` from `src/pages/_shared/utils.ts`, which injects `locale` into props — pages pass it explicitly to `<Layout locale={...}>`. `assertLocaleMirrorsComplete()` fails the build if a root page lacks its `[lang]/` mirror (exemptions in `MIRROR_EXEMPT`).
-- **React hook**: `useTranslation()` reads from `$locale` nanostore (synced via `astro:page-load` event). Returns `{ t, locale }`.
-- **Content locale**: Posts in `src/content/blog/<locale>/` are detected by slug prefix (`getSlugLocaleInfo()`); `filterPostsByLocale()` provides fallback — non-default locales show translations + untranslated default-locale posts.
-- **Locale config**: `enabled` flag in `config/site.yaml` allows disabling locales without removing content. `isI18nEnabled` controls conditional Astro i18n routing.
-- **`localizedPath(path, locale?)`** defaults to `defaultLocale` — no need for `locale ?? defaultLocale` at call sites.
-- **Do NOT enable Astro `fallback`** in `astro.config.mjs` — it breaks `[seriesSlug].astro` dynamic routes.
 
 **Markdown**: Shiki highlighting, auto-generated heading IDs/links via rehype plugins, GFM support.
 

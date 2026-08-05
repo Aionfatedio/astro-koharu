@@ -3,7 +3,7 @@
  * Provides a lightweight, theme-aware Twitter/X embed
  */
 
-import { useIsDarkTheme } from '@hooks/index';
+import { useIsDarkTheme } from '@hooks/useIsDarkTheme';
 import { Tweet } from 'react-tweet';
 
 interface TweetEmbedProps {

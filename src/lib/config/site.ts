@@ -11,6 +11,7 @@ import yamlConfig from '../../../config/site.yaml';
 import { DEFAULT_TIMEZONE, isValidTimezone } from '../timezone';
 import { normalizeContentConfig } from './content';
 import { enabledFeaturedSeriesSlugs, normalizeFeaturedSeries } from './featured-series';
+import { normalizeFriendsConfig } from './friends';
 import { RESERVED_ROUTES } from './reserved-routes';
 import type { ResolvedContentConfig, ResolvedSiteConfig } from './types';
 
@@ -28,6 +29,12 @@ export const enabledSeriesSlugList = enabledFeaturedSeriesSlugs(featuredSeriesLi
 
 /** Content processing flags with field-level defaults applied. */
 export const contentConfig: ResolvedContentConfig = normalizeContentConfig(yamlConfig.content);
+
+/** Friend links with defaults and boundary validation applied. */
+export const friendsConfig = normalizeFriendsConfig(yamlConfig.friends);
+
+/** Announcements default to an empty collection. */
+export const announcementsConfig = yamlConfig.announcements ?? [];
 
 /**
  * Site timezone in IANA format.

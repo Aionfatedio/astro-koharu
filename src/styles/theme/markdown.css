@@ -893,10 +893,9 @@
 
 /* Reader font presets */
 
-/* The default rounded preset inherits the existing Han Chan and Gen Jyuu rules. */
-/* The system preset preserves Gen Jyuu on Japanese pages. */
-html[data-font-preset="system"]:not(:lang(ja)) .prose,
-html[data-font-preset="system"]:not(:lang(ja)) .prose :is(h1, h2, h3, h4, h5, h6) {
+/* The default rounded preset inherits the existing Han Chan rules. */
+html[data-font-preset="system"] .prose,
+html[data-font-preset="system"] .prose :is(h1, h2, h3, h4, h5, h6) {
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC",
     sans-serif;
@@ -912,16 +911,11 @@ html[data-font-preset="wenkai"] .prose :is(h1, h2, h3, h4, h5, h6) {
   font-family: "LXGW WenKai", "LXGW WenKai Screen", "寒蝉全圆体", serif;
 }
 
-html[data-reader-font="local"]:not(:lang(ja)) .prose,
-html[data-reader-font="local"]:not(:lang(ja)) .prose :is(h1, h2, h3, h4, h5, h6) {
+html[data-reader-font="local"] .prose,
+html[data-reader-font="local"] .prose :is(h1, h2, h3, h4, h5, h6) {
   font-family:
     var(--reader-font-family), "寒蝉全圆体", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei",
     sans-serif;
-}
-
-html[data-reader-font="local"]:lang(ja) .prose,
-html[data-reader-font="local"]:lang(ja) .prose :is(h1, h2, h3, h4, h5, h6) {
-  font-family: var(--reader-font-family), "Gen Jyuu Gothic P", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
 }
 
 /* Reader text justification */

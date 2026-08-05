@@ -76,11 +76,6 @@ export interface FeaturedSeriesItem {
 }
 
 /**
- * @deprecated Use FeaturedSeriesItem instead
- */
-export type FeaturedSeries = FeaturedSeriesItem;
-
-/**
  * Runtime site configuration: {@link SiteBasicConfig} with `url` renamed to
  * `site` and featured content normalized.
  */
@@ -614,39 +609,6 @@ export interface BgmConfig {
 }
 
 // =============================================================================
-// Bangumi (Media Tracking) Configuration
-// =============================================================================
-
-export interface BangumiConfig {
-  /** Bangumi username or numeric ID */
-  userId: string;
-  /** Navigation display name, defaults to i18n key 'nav.bangumi' */
-  label?: string;
-  /** Navigation icon (Iconify format), defaults to 'ri:bilibili-fill' */
-  icon?: string;
-}
-
-// =============================================================================
-// i18n Configuration
-// =============================================================================
-
-export interface LocaleConfig {
-  /** Locale code (BCP 47 short format, e.g., 'zh', 'en', 'ja') */
-  code: string;
-  /** Display label for the locale (e.g., '中文', 'English') */
-  label?: string;
-  /** Whether this locale is active. Defaults to true. Set false to keep content but hide locale from routing/UI. */
-  enabled?: boolean;
-}
-
-export interface I18nConfig {
-  /** Default locale code */
-  defaultLocale: string;
-  /** List of supported locales */
-  locales: LocaleConfig[];
-}
-
-// =============================================================================
 // Root Configuration Type
 // =============================================================================
 
@@ -667,11 +629,9 @@ export interface SiteYamlConfig {
   analytics?: AnalyticsConfig;
   /** SEO configuration for robots.txt and meta tags */
   seo?: SeoConfig;
-  categoryMap?: Record<string, string>; // TODO: i18n, now use eg: { '随笔': 'life' }
+  categoryMap?: Record<string, string>;
   /** Background music player configuration */
   bgm?: BgmConfig;
-  /** Bangumi media tracking page — comment out to disable */
-  bangumi?: BangumiConfig;
   christmas?: ChristmasConfig;
   /** Development tools configuration (dev only) */
   dev?: DevConfig;

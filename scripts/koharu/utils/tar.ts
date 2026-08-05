@@ -4,6 +4,15 @@ import path from 'node:path';
 
 import { PROJECT_ROOT } from '../constants';
 
+// GNU tar interprets the drive-letter colon in native Windows paths as a
+// remote archive separator unless --force-local is present.
+const TAR_PLATFORM_ARGS = process.platform === 'win32' ? ['--force-local'] : [];
+
+function tarArgs(...args: string[]): string[] {
+  const normalizedArgs = process.platform === 'win32' ? args.map((argument) => argument.replaceAll('\\', '/')) : args;
+  return [...TAR_PLATFORM_ARGS, ...normalizedArgs];
+}
+
 function validateTarEntries(entries: string[], archivePath: string): void {
   for (const entry of entries) {
     if (!entry) {
@@ -31,7 +40,7 @@ function validateTarEntries(entries: string[], archivePath: string): void {
 }
 
 function validateTarEntryTypes(archivePath: string, entryCount: number): void {
-  const result = spawnSync('tar', ['-tvzf', archivePath], {
+  const result = spawnSync('tar', tarArgs('-tvzf', archivePath), {
     encoding: 'utf-8',
     cwd: PROJECT_ROOT,
   });
@@ -53,7 +62,7 @@ function validateTarEntryTypes(archivePath: string, entryCount: number): void {
 }
 
 function listTarEntries(archivePath: string): string[] {
-  const result = spawnSync('tar', ['-tzf', archivePath], {
+  const result = spawnSync('tar', tarArgs('-tzf', archivePath), {
     encoding: 'utf-8',
     cwd: PROJECT_ROOT,
   });
@@ -70,13 +79,15 @@ function listTarEntries(archivePath: string): string[] {
  * 从 tar.gz 中提取 manifest.json 内容（不解压整个文件）
  */
 export function tarExtractManifest(archivePath: string): string | null {
-  const result = spawnSync('tar', ['-xzf', archivePath, '-O', 'manifest.json'], {
-    encoding: 'utf-8',
-    cwd: PROJECT_ROOT,
-    stdio: ['pipe', 'pipe', 'pipe'],
-  });
-  if (result.status === 0 && result.stdout) {
-    return result.stdout;
+  // Archives created from `.` may retain the leading `./` depending on the tar
+  // implementation. Both names normalize to the same validated root entry.
+  for (const entry of ['manifest.json', './manifest.json']) {
+    const result = spawnSync('tar', tarArgs('-xzf', archivePath, '-O', entry), {
+      encoding: 'utf-8',
+      cwd: PROJECT_ROOT,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    if (result.status === 0 && result.stdout) return result.stdout;
   }
   return null;
 }
@@ -96,7 +107,7 @@ export function tarCreate(archivePath: string, sourceDir: string): void {
   fs.closeSync(archiveHandle);
   fs.chmodSync(archivePath, 0o600);
 
-  const result = spawnSync('tar', ['-czf', archivePath, '-C', sourceDir, '.'], {
+  const result = spawnSync('tar', tarArgs('-czf', archivePath, '-C', sourceDir, '.'), {
     cwd: PROJECT_ROOT,
   });
   if (result.status !== 0) {
@@ -111,7 +122,7 @@ export function tarCreate(archivePath: string, sourceDir: string): void {
  */
 export function tarExtract(archivePath: string, destDir: string): void {
   listTarEntries(archivePath);
-  const result = spawnSync('tar', ['-xzf', archivePath, '-C', destDir], {
+  const result = spawnSync('tar', tarArgs('-xzf', archivePath, '-C', destDir), {
     cwd: PROJECT_ROOT,
   });
   if (result.status !== 0) {

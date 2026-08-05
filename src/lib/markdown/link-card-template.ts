@@ -49,8 +49,7 @@ function getDomain(url: string): string {
   try {
     const urlObj = new URL(url);
     return urlObj.hostname.replace(/^www\./, '');
-  } catch (error) {
-    console.warn('[Link Embed] Failed to parse domain from URL:', url, error);
+  } catch {
     return url;
   }
 }
@@ -81,8 +80,8 @@ function renderFallbackCard(ogData: OGData, domain: string): string {
         subtitle = description ?? domain;
       }
     }
-  } catch (error) {
-    console.warn('[Link Embed] Failed to extract readable text from URL:', url, error);
+  } catch {
+    // Keep the raw fallback text for malformed external input.
   }
 
   // originUrl preserves the original path (metascraper may normalize og:url incorrectly)
@@ -94,7 +93,7 @@ function renderFallbackCard(ogData: OGData, domain: string): string {
     : sanitizeText(originUrl.length > 60 ? `${originUrl.substring(0, 60)}...` : originUrl);
 
   return `<div class="link-preview-block not-prose" data-state="error">
-  <a href="${safeUrl}" target="_blank" class="hover:border-primary/50 group block rounded-lg border border-border bg-card p-4 transition-all hover:shadow-md" aria-label="${safeDisplayLabel}">
+  <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="hover:border-primary/50 group block rounded-lg border border-border bg-card p-4 transition-all hover:shadow-md" aria-label="${safeDisplayLabel}">
     <div class="flex items-center justify-between gap-3">
       <div class="flex items-center gap-3 min-w-0 flex-1">
         <div class="bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
@@ -133,7 +132,7 @@ export function renderLinkPreview(ogData: OGData): string {
   const safeImage = image ? sanitizeUrlAttribute(image) : '';
   const safeOriginUrl = sanitizeText(originUrl);
   return `<div class="link-preview-block not-prose" data-state="success">
-  <a href="${safeUrl}" target="_blank" class="group block overflow-hidden rounded-lg border border-border transition-all hover:border-primary/50 hover:shadow-md" aria-label="${safeAriaLabel}">
+  <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="group block overflow-hidden rounded-lg border border-border transition-all hover:border-primary/50 hover:shadow-md" aria-label="${safeAriaLabel}">
     <div class="bg-card flex md:flex-col flex-row">
       <div class="flex-1 p-4">
         <div class="mb-2 flex items-center gap-2">
