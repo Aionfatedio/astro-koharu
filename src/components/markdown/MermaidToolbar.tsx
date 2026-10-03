@@ -11,95 +11,121 @@ import { MacToolbar } from '@components/markdown/shared/MacToolbar';
 import { ViewSourceToggle } from '@components/markdown/shared/ViewSourceToggle';
 import { useDiagramScale } from '@hooks/useDiagramScale';
 import { Icon } from '@iconify/react';
+import { readMermaidSource } from '@lib/mermaid-source';
 import { openModal } from '@store/modal';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 interface MermaidToolbarProps {
   preElement: HTMLElement;
 }
 
-export function MermaidToolbar({ preElement }: MermaidToolbarProps) {
-  const [isProcessed, setIsProcessed] = useState(preElement.getAttribute('data-processed') === 'true');
-  const [isSourceView, setIsSourceView] = useState(false);
-  const { zoom, setScale, reset, measure } = useDiagramScale(preElement);
-  const renderedSvgRef = useRef<string | null>(null);
-  const sourceContainerRef = useRef<HTMLDivElement | null>(null);
+type RenderState = 'loading' | 'ready' | 'error' | 'delayed';
 
-  const source = useMemo(() => preElement.getAttribute('data-diagram') || preElement.textContent || '', [preElement]);
+function getRenderState(preElement: HTMLElement): RenderState {
+  if (preElement.getAttribute('data-processed') !== 'true') return 'loading';
+  const svg = preElement.querySelector('svg');
+  return svg && !svg.querySelector('.error-icon, .error-text') ? 'ready' : 'error';
+}
+
+export function MermaidToolbar({ preElement }: MermaidToolbarProps) {
+  const [renderState, setRenderState] = useState<RenderState>(() => getRenderState(preElement));
+  const [isSourceView, setIsSourceView] = useState(false);
+  const [source, setSource] = useState(() => readMermaidSource(preElement));
+  const { zoom, setScale, reset, measure } = useDiagramScale(preElement);
 
   // Size the diagram whenever mermaid renders it: on first load and again after every theme switch
   useEffect(() => {
     const handleRender = () => {
-      if (preElement.getAttribute('data-processed') !== 'true') return;
-      setIsProcessed(true);
-      measure(preElement.querySelector('svg'));
+      const state = getRenderState(preElement);
+      setRenderState(state);
+      const original = readMermaidSource(preElement);
+      if (original) setSource(original);
+      if (state === 'ready') measure(preElement.querySelector('svg'));
     };
 
     const observer = new MutationObserver(handleRender);
-    observer.observe(preElement, { attributes: true, attributeFilter: ['data-processed'] });
+    observer.observe(preElement, {
+      attributes: true,
+      attributeFilter: ['data-processed', 'data-diagram'],
+      childList: true,
+    });
     // Mermaid may have rendered before hydration; a microtask keeps measure's flushSync out of the commit phase.
     queueMicrotask(handleRender);
 
-    const timeout = setTimeout(() => setIsProcessed(true), 5000);
-
     return () => {
       observer.disconnect();
-      clearTimeout(timeout);
     };
   }, [preElement, measure]);
 
+  useEffect(() => {
+    if (renderState !== 'loading') return;
+    const timeout = setTimeout(() => setRenderState('delayed'), 15000);
+    return () => clearTimeout(timeout);
+  }, [renderState]);
+
+  const hasError = renderState === 'error' || renderState === 'delayed';
+  // Keep the SVG in place: astro-mermaid can replace it on a theme change even while source is visible.
+  useEffect(() => {
+    const display = preElement.style.display;
+    if (isSourceView || hasError) preElement.style.display = 'none';
+    return () => {
+      preElement.style.display = display;
+    };
+  }, [preElement, isSourceView, hasError]);
+
   const handleFullscreen = useCallback(() => {
-    openModal('diagramFullscreen', { diagramType: 'mermaid', svg: preElement.innerHTML, source });
-  }, [preElement, source]);
+    const svg = preElement.querySelector('svg');
+    if (renderState !== 'ready' || !svg) return;
+    openModal('diagramFullscreen', { diagramType: 'mermaid', svg: svg.outerHTML, source });
+  }, [preElement, renderState, source]);
 
-  // NOTE: Direct innerHTML manipulation on preElement is safe here because the pre element
-  // lives outside the React tree (in .custom-content DOM). React only manages the toolbar
-  // rendered via portal into the mount point, not the pre element itself.
-  const handleToggleSource = useCallback(() => {
-    if (!isSourceView) {
-      // Save rendered SVG on first toggle
-      if (!renderedSvgRef.current) {
-        renderedSvgRef.current = preElement.innerHTML;
-        const container = document.createElement('div');
-        container.className = 'mermaid-source';
-        const codeEl = document.createElement('code');
-        codeEl.className = 'language-mermaid';
-        codeEl.textContent = source;
-        container.appendChild(codeEl);
-        sourceContainerRef.current = container;
-      }
-      // Switch to source view
-      preElement.innerHTML = '';
-      if (sourceContainerRef.current) {
-        preElement.appendChild(sourceContainerRef.current);
-      }
-    } else {
-      // Switch back to rendered view
-      if (renderedSvgRef.current) {
-        preElement.innerHTML = renderedSvgRef.current;
-      }
-    }
-    setIsSourceView(!isSourceView);
-  }, [isSourceView, preElement, source]);
-
-  if (!isProcessed) return null;
+  const wrapper = preElement.parentElement;
 
   return (
     <>
-      <MacToolbar language="mermaid" onFullscreen={handleFullscreen}>
+      <MacToolbar language="mermaid" onFullscreen={renderState === 'ready' ? handleFullscreen : undefined}>
         <button
           type="button"
           onClick={handleFullscreen}
-          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground active:scale-95"
-          aria-label={'全屏查看'}
-          title={'全屏查看'}
+          disabled={renderState !== 'ready'}
+          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label="全屏查看"
+          title="全屏查看"
         >
           <Icon icon="ri:fullscreen-line" className="size-4" />
         </button>
-        <CopyButton text={source} />
-        <ViewSourceToggle isSourceView={isSourceView} onToggle={handleToggleSource} disabled={!source} />
+        {source && <CopyButton text={source} />}
+        <ViewSourceToggle isSourceView={isSourceView} onToggle={() => setIsSourceView((value) => !value)} disabled={!source} />
       </MacToolbar>
-      {zoom && !isSourceView && <DiagramResizeHandle {...zoom} onScaleChange={setScale} onReset={reset} />}
+      {wrapper &&
+        (hasError || isSourceView) &&
+        createPortal(
+          <div className="mermaid-fallback">
+            {hasError && (
+              <div className="mermaid-error">
+                <output>
+                  <span>{renderState === 'delayed' ? '图表加载时间较长' : '图表暂时无法显示'}</span>
+                  <span className="text-muted-foreground text-sm">
+                    {source ? '可以刷新页面重试，或通过工具栏查看和复制图表源码。' : '请刷新页面重试。'}
+                  </span>
+                </output>
+                <button type="button" onClick={() => window.location.reload()}>
+                  刷新重试
+                </button>
+              </div>
+            )}
+            {isSourceView && (
+              <pre className="mermaid-source" data-react-enhanced="true">
+                <code className="language-mermaid">{source}</code>
+              </pre>
+            )}
+          </div>,
+          wrapper,
+        )}
+      {zoom && renderState === 'ready' && !isSourceView && (
+        <DiagramResizeHandle {...zoom} onScaleChange={setScale} onReset={reset} />
+      )}
     </>
   );
 }
