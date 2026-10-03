@@ -1,12 +1,15 @@
 /**
  * Mermaid diagram toolbar rendered via portal.
  * Waits for astro-mermaid to process the diagram (data-processed attribute),
- * then renders Mac-style toolbar with fullscreen, copy, and view-source toggle.
+ * then renders Mac-style toolbar with fullscreen, copy, and view-source toggle,
+ * plus the resize grip.
  */
 
 import { CopyButton } from '@components/markdown/shared/CopyButton';
+import { DiagramResizeHandle } from '@components/markdown/shared/DiagramResizeHandle';
 import { MacToolbar } from '@components/markdown/shared/MacToolbar';
 import { ViewSourceToggle } from '@components/markdown/shared/ViewSourceToggle';
+import { useDiagramScale } from '@hooks/useDiagramScale';
 import { Icon } from '@iconify/react';
 import { openModal } from '@store/modal';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -18,34 +21,32 @@ interface MermaidToolbarProps {
 export function MermaidToolbar({ preElement }: MermaidToolbarProps) {
   const [isProcessed, setIsProcessed] = useState(preElement.getAttribute('data-processed') === 'true');
   const [isSourceView, setIsSourceView] = useState(false);
+  const { zoom, setScale, reset, measure } = useDiagramScale(preElement);
   const renderedSvgRef = useRef<string | null>(null);
   const sourceContainerRef = useRef<HTMLDivElement | null>(null);
 
   const source = useMemo(() => preElement.getAttribute('data-diagram') || preElement.textContent || '', [preElement]);
 
-  // Wait for mermaid to process the diagram
+  // Size the diagram whenever mermaid renders it: on first load and again after every theme switch
   useEffect(() => {
-    if (isProcessed) return;
-
-    const observer = new MutationObserver(() => {
-      if (preElement.getAttribute('data-processed') === 'true') {
-        setIsProcessed(true);
-        observer.disconnect();
-      }
-    });
-
-    observer.observe(preElement, { attributes: true, attributeFilter: ['data-processed'] });
-
-    const timeout = setTimeout(() => {
+    const handleRender = () => {
+      if (preElement.getAttribute('data-processed') !== 'true') return;
       setIsProcessed(true);
-      observer.disconnect();
-    }, 5000);
+      measure(preElement.querySelector('svg'));
+    };
+
+    const observer = new MutationObserver(handleRender);
+    observer.observe(preElement, { attributes: true, attributeFilter: ['data-processed'] });
+    // Mermaid may have rendered before hydration; a microtask keeps measure's flushSync out of the commit phase.
+    queueMicrotask(handleRender);
+
+    const timeout = setTimeout(() => setIsProcessed(true), 5000);
 
     return () => {
       observer.disconnect();
       clearTimeout(timeout);
     };
-  }, [preElement, isProcessed]);
+  }, [preElement, measure]);
 
   const handleFullscreen = useCallback(() => {
     openModal('diagramFullscreen', { diagramType: 'mermaid', svg: preElement.innerHTML, source });
@@ -84,18 +85,21 @@ export function MermaidToolbar({ preElement }: MermaidToolbarProps) {
   if (!isProcessed) return null;
 
   return (
-    <MacToolbar language="mermaid" onFullscreen={handleFullscreen}>
-      <button
-        type="button"
-        onClick={handleFullscreen}
-        className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground active:scale-95"
-        aria-label="全屏查看"
-        title="全屏查看"
-      >
-        <Icon icon="ri:fullscreen-line" className="size-4" />
-      </button>
-      <CopyButton text={source} />
-      <ViewSourceToggle isSourceView={isSourceView} onToggle={handleToggleSource} disabled={!source} />
-    </MacToolbar>
+    <>
+      <MacToolbar language="mermaid" onFullscreen={handleFullscreen}>
+        <button
+          type="button"
+          onClick={handleFullscreen}
+          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground active:scale-95"
+          aria-label={'全屏查看'}
+          title={'全屏查看'}
+        >
+          <Icon icon="ri:fullscreen-line" className="size-4" />
+        </button>
+        <CopyButton text={source} />
+        <ViewSourceToggle isSourceView={isSourceView} onToggle={handleToggleSource} disabled={!source} />
+      </MacToolbar>
+      {zoom && !isSourceView && <DiagramResizeHandle {...zoom} onScaleChange={setScale} onReset={reset} />}
+    </>
   );
 }

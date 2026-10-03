@@ -4,8 +4,10 @@
  */
 
 import { CopyButton } from '@components/markdown/shared/CopyButton';
+import { DiagramResizeHandle } from '@components/markdown/shared/DiagramResizeHandle';
 import { MacToolbar } from '@components/markdown/shared/MacToolbar';
 import { ViewSourceToggle } from '@components/markdown/shared/ViewSourceToggle';
+import { useDiagramScale } from '@hooks/useDiagramScale';
 import { useIsDarkTheme } from '@hooks/useIsDarkTheme';
 import { Icon } from '@iconify/react';
 import { openModal } from '@store/modal';
@@ -28,8 +30,9 @@ interface InfographicToolbarProps {
 export function InfographicToolbar({ preElement }: InfographicToolbarProps) {
   const isDark = useIsDarkTheme();
   const [isSourceView, setIsSourceView] = useState(false);
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
+  const { zoom, setScale, reset, measure } = useDiagramScale(container);
   const instanceRef = useRef<unknown>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
   const renderCountRef = useRef(0);
 
   const source = useMemo(() => {
@@ -47,31 +50,30 @@ export function InfographicToolbar({ preElement }: InfographicToolbarProps) {
   // Create render container on mount
   useEffect(() => {
     const wrapper = preElement.parentElement;
-    if (!wrapper || containerRef.current) return;
+    if (!wrapper) return;
 
-    const container = document.createElement('div');
-    container.className = 'infographic-container';
-    wrapper.appendChild(container);
-    containerRef.current = container;
+    const element = document.createElement('div');
+    element.className = 'infographic-container';
+    wrapper.appendChild(element);
+    setContainer(element);
 
     // Hide the original pre element
     preElement.style.display = 'none';
 
     return () => {
       destroyInstance();
-      container.remove();
+      element.remove();
       preElement.style.display = '';
     };
   }, [preElement, destroyInstance]);
 
   // Render/re-render when theme changes
   useEffect(() => {
-    if (!containerRef.current || !source) return;
+    if (!container || !source) return;
 
-    const container = containerRef.current;
     const currentRender = ++renderCountRef.current;
 
-    async function render() {
+    const render = async () => {
       try {
         const { Infographic } = await import('@antv/infographic');
 
@@ -81,32 +83,42 @@ export function InfographicToolbar({ preElement }: InfographicToolbarProps) {
         destroyInstance();
         container.innerHTML = '';
 
+        // padding: 0 keeps the viewBox hugging the content; the library would otherwise convert its
+        // padding at the render-time scale, so the natural size would drift between renders.
         const infographic = new Infographic({
           container,
           width: '100%',
-          height: 'auto',
+          padding: 0,
           theme: isDark ? 'dark' : 'default',
         });
 
         infographic.render(`${source}\n${FONT_CONFIG}`);
         instanceRef.current = infographic;
+
+        // Let the card surface show through instead of the dark theme's flat #1F1F1F backdrop.
+        const svg = container.querySelector('svg');
+        svg?.style.removeProperty('background-color');
+        svg?.querySelector(':scope > [data-element-type="background"]')?.remove();
+
+        // The library fits the viewBox in a mutation-observer microtask queued by render().
+        await Promise.resolve();
+        if (currentRender === renderCountRef.current) measure(svg);
       } catch (error) {
         console.error('Failed to render infographic:', error);
         // Show source code on error
         preElement.style.display = '';
         container.style.display = 'none';
       }
-    }
+    };
 
     render();
-  }, [isDark, source, preElement, destroyInstance]);
+  }, [container, isDark, source, preElement, destroyInstance, measure]);
 
   const handleFullscreen = useCallback(() => {
-    openModal('diagramFullscreen', { diagramType: 'infographic', svg: containerRef.current?.innerHTML || '', source });
-  }, [source]);
+    openModal('diagramFullscreen', { diagramType: 'infographic', svg: container?.innerHTML || '', source });
+  }, [container, source]);
 
   const handleToggleSource = useCallback(() => {
-    const container = containerRef.current;
     if (!container) return;
 
     if (!isSourceView) {
@@ -117,21 +129,24 @@ export function InfographicToolbar({ preElement }: InfographicToolbarProps) {
       container.style.display = '';
     }
     setIsSourceView(!isSourceView);
-  }, [isSourceView, preElement]);
+  }, [container, isSourceView, preElement]);
 
   return (
-    <MacToolbar language="infographic" onFullscreen={handleFullscreen}>
-      <button
-        type="button"
-        onClick={handleFullscreen}
-        className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground active:scale-95"
-        aria-label="全屏查看"
-        title="全屏查看"
-      >
-        <Icon icon="ri:fullscreen-line" className="size-4" />
-      </button>
-      <CopyButton text={source} />
-      <ViewSourceToggle isSourceView={isSourceView} onToggle={handleToggleSource} disabled={!source} />
-    </MacToolbar>
+    <>
+      <MacToolbar language="infographic" onFullscreen={handleFullscreen}>
+        <button
+          type="button"
+          onClick={handleFullscreen}
+          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground active:scale-95"
+          aria-label={'全屏查看'}
+          title={'全屏查看'}
+        >
+          <Icon icon="ri:fullscreen-line" className="size-4" />
+        </button>
+        <CopyButton text={source} />
+        <ViewSourceToggle isSourceView={isSourceView} onToggle={handleToggleSource} disabled={!source} />
+      </MacToolbar>
+      {zoom && !isSourceView && <DiagramResizeHandle {...zoom} onScaleChange={setScale} onReset={reset} />}
+    </>
   );
 }

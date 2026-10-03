@@ -9,6 +9,7 @@
 import { CopyButton } from '@components/markdown/shared/CopyButton';
 import { MacToolbar } from '@components/markdown/shared/MacToolbar';
 import { ModalLayer } from '@components/ui/ModalLayer';
+import { useRetainedValue } from '@hooks/useRetainedValue';
 import { useZoomPan } from '@hooks/useZoomPan';
 import { Icon } from '@iconify/react';
 import { cn } from '@lib/utils';
@@ -17,8 +18,9 @@ import { $diagramFullscreenData, closeModal, type DiagramFullscreenData } from '
 import { useEffect } from 'react';
 
 export default function DiagramFullscreen() {
-  const data = useStore($diagramFullscreenData);
-  const isOpen = data !== null;
+  const liveData = useStore($diagramFullscreenData);
+  const data = useRetainedValue(liveData);
+  const isOpen = liveData !== null;
   const { containerRef, state, reset, zoomLevel } = useZoomPan(isOpen);
 
   // Reset zoom when opening
@@ -29,18 +31,19 @@ export default function DiagramFullscreen() {
   if (!data) return null;
 
   return (
-    <ModalLayer open onClose={closeModal}>
+    <ModalLayer open={isOpen} onClose={closeModal}>
       <DiagramToolbar data={data} zoomLevel={zoomLevel} onReset={reset} />
       <div
         ref={containerRef}
         className={cn(
-          'flex flex-1 cursor-grab items-center justify-center overflow-hidden active:cursor-grabbing',
+          'flex flex-1 cursor-grab touch-none select-none items-center justify-center active:cursor-grabbing',
           data.diagramType === 'infographic' && 'infographic-container',
         )}
+        style={{ minHeight: 0, overflow: 'hidden' }}
       >
         <div
           className={cn(
-            'flex origin-center items-center justify-center transition-transform duration-100',
+            'flex origin-center items-center justify-center',
             data.diagramType === 'mermaid' ? 'mermaid-svg-container' : 'infographic-svg-container',
           )}
           style={{
@@ -58,17 +61,18 @@ export default function DiagramFullscreen() {
 
 function DiagramToolbar({ data, zoomLevel, onReset }: { data: DiagramFullscreenData; zoomLevel: string; onReset: () => void }) {
   return (
-    <MacToolbar language={data.diagramType} className="tablet:items-stretch tablet:px-2" onClose={closeModal}>
+    <MacToolbar language={data.diagramType} onClose={closeModal}>
       <div className="flex items-center gap-1">
-        <span className="mr-2 tablet:ml-auto text-muted-foreground text-sm">{zoomLevel}</span>
+        <span className="mr-2 text-muted-foreground text-sm tabular-nums">{zoomLevel}</span>
         <button
           type="button"
           onClick={onReset}
-          className="flex items-center gap-2 rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-          title="重置缩放"
+          className="flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-md px-3 tablet:px-0 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+          aria-label={'重置缩放'}
+          title={'重置缩放'}
         >
           <Icon icon="ri:refresh-line" className="size-4" />
-          <span className="text-sm">重置缩放</span>
+          <span className="tablet:hidden text-sm">{'重置缩放'}</span>
         </button>
         <CopyButton text={data.source} showLabel />
       </div>
