@@ -37,7 +37,7 @@
     "koharu": "npx tsx scripts/koharu.tsx",
     "migrate": "pnpm koharu migrate",
     "save-slugs": "npx tsx scripts/save-slugs.ts",
-    "test": "pnpm test:config && pnpm test:markdown && pnpm test:toc && pnpm test:migrate && pnpm test:moments",
+    "test": "pnpm test:config && pnpm test:markdown && pnpm test:meting && pnpm test:umami && pnpm test:toc && pnpm test:migrate && pnpm test:moments",
     "test:config": "tsx --test src/lib/config/*.test.ts",
     "test:markdown": "tsx --test src/lib/markdown/*.test.ts",
     "test:toc": "tsx --test src/lib/toc.test.ts",
@@ -53,7 +53,9 @@
     "docker:rebuild": "bash docker/rebuild.sh",
     "docker:up:dynamic": "docker compose --env-file ./.env -f docker/docker-compose.dynamic.yml up -d --build",
     "docker:down:dynamic": "docker compose -f docker/docker-compose.dynamic.yml down",
-    "docker:logs:dynamic": "docker compose -f docker/docker-compose.dynamic.yml logs -f"
+    "docker:logs:dynamic": "docker compose -f docker/docker-compose.dynamic.yml logs -f",
+    "test:meting": "node --import tsx --test src/lib/meting.test.ts",
+    "test:umami": "node --import tsx --test src/lib/umami-stats.test.ts"
   },
   "dependencies": {
     "@antv/infographic": "^0.2.4",
