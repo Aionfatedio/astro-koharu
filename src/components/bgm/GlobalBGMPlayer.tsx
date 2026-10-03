@@ -15,6 +15,7 @@ import { MediaControls } from '@components/markdown/shared/MediaControls';
 import { FloatingFocusManager, useDismiss, useFloating, useInteractions, useRole } from '@floating-ui/react';
 import { useAudioPlayer } from '@hooks/useAudioPlayer';
 import { useMediaQuery } from '@hooks/useMediaQuery';
+import { useMotionLevel } from '@hooks/useMotionLevel';
 import { Icon } from '@iconify/react';
 import { applyCloudLyrics, getCloudLyricsSourceKey, loadCloudLyricsIndex } from '@lib/cloud-lyrics';
 import type { BgmAudioGroup } from '@lib/config/types';
@@ -23,7 +24,7 @@ import { resolvePlaylist } from '@lib/meting';
 import { useStore } from '@nanostores/react';
 import { $isAnyModalOpen, $isDrawerOpen } from '@store/modal';
 import { AnimatePresence, m } from 'motion/react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { $bgmPanelOpen, closeBgmPanel } from '@/store/bgm';
 
 interface GlobalBGMPlayerProps {
@@ -36,24 +37,26 @@ export default function GlobalBGMPlayer({ audioGroups, metingApi }: GlobalBGMPla
   const isDrawerOpen = useStore($isDrawerOpen);
   const isAnyModalOpen = useStore($isAnyModalOpen);
   const isMobilePlayer = useMediaQuery('(max-width: 600px)');
+  const motionDisabled = useMotionLevel() === 'reduced';
 
   const [tracks, setTracks] = useState<MetingSong[]>([]);
   const [groups, setGroups] = useState<PlaylistGroup[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(0);
   const [retryKey, setRetryKey] = useState(0);
 
-  // Track which retryKey has been resolved to avoid duplicate fetches.
-  // Starts at -1 so the first open (retryKey=0) always triggers a load.
-  const resolvedRetryRef = useRef(-1);
+  const [playlistRequested, setPlaylistRequested] = useState(false);
 
   useEffect(() => {
-    if (!panelOpen || resolvedRetryRef.current === retryKey) return;
-    resolvedRetryRef.current = retryKey;
+    if (panelOpen) setPlaylistRequested(true);
+  }, [panelOpen]);
 
+  // Closing the UI must not cancel the first request and leave subsequent openings stuck loading.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: retryKey intentionally triggers another request.
+  useEffect(() => {
+    if (!playlistRequested) return;
     let cancelled = false;
-    let settled = false;
     setLoading(true);
     setError(null);
 
@@ -86,13 +89,11 @@ export default function GlobalBGMPlayer({ audioGroups, metingApi }: GlobalBGMPla
           setTracks(allTracks);
           setGroups(resolvedGroups);
           setLoading(false);
-          settled = true;
         }
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Failed to load playlist');
           setLoading(false);
-          settled = true;
         }
       }
     }
@@ -100,13 +101,8 @@ export default function GlobalBGMPlayer({ audioGroups, metingApi }: GlobalBGMPla
     resolve();
     return () => {
       cancelled = true;
-      if (!settled && resolvedRetryRef.current === retryKey) {
-        // Allow a later reopen to retry a request that was cancelled while the
-        // panel was closing.
-        resolvedRetryRef.current = -1;
-      }
     };
-  }, [panelOpen, audioGroups, retryKey, metingApi]);
+  }, [playlistRequested, audioGroups, retryKey, metingApi]);
 
   // Audio hook at top level — Audio element persists across panel open/close
   const player = useAudioPlayer(tracks);
@@ -137,8 +133,44 @@ export default function GlobalBGMPlayer({ audioGroups, metingApi }: GlobalBGMPla
     if (loading) {
       return (
         <output className="audio-player audio-player-loading bgm-panel-player">
-          <div className="audio-player-spinner" />
-          <span>加载播放列表…</span>
+          <div className="audio-player-preview">
+            <div className="audio-player-disc-wrapper" aria-hidden="true">
+              <div className="bgm-panel-placeholder bgm-panel-placeholder-cover" />
+            </div>
+            <div className="audio-player-info">
+              <div className="audio-player-song-name bgm-panel-loading-label">
+                <div className="audio-player-spinner" />
+                <span>{'加载播放列表…'}</span>
+              </div>
+              <div className="audio-player-artist" aria-hidden="true">
+                <span className="bgm-panel-placeholder bgm-panel-placeholder-artist" />
+              </div>
+              <div className="audio-player-lrc bgm-panel-placeholder-lyrics" aria-hidden="true">
+                {[0, 1, 2].map((line) => (
+                  <span key={line} className="bgm-panel-placeholder" />
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="audio-player-controls" aria-hidden="true">
+            <div className="audio-player-buttons">
+              {[0, 1, 2, 3].map((button) => (
+                <span key={button} className="bgm-panel-placeholder bgm-panel-placeholder-button" />
+              ))}
+            </div>
+            <div className="audio-player-progress" />
+          </div>
+          <div className="audio-player-playlist" aria-hidden="true">
+            <div className="audio-player-tabs">
+              <span className="bgm-panel-placeholder bgm-panel-placeholder-tab" />
+              <span className="bgm-panel-placeholder bgm-panel-placeholder-tab" />
+            </div>
+            <div className="audio-player-song-list bgm-panel-placeholder-list">
+              {[0, 1, 2, 3].map((row) => (
+                <span key={row} className="bgm-panel-placeholder" />
+              ))}
+            </div>
+          </div>
         </output>
       );
     }
@@ -163,13 +195,14 @@ export default function GlobalBGMPlayer({ audioGroups, metingApi }: GlobalBGMPla
     }
 
     return (
-      <div className="audio-player not-prose bgm-panel-player">
+      <div className="audio-player not-prose bgm-panel-player bgm-panel-ready">
         <PlayerPreview
           track={currentTrack}
           playing={player.state.playing}
           timeStore={player.timeStore}
           lrcLineHeight={28}
           lrcContainerHeight={isMobilePlayer ? 168 : 140}
+          reserveLyrics
         />
         <MediaControls
           playing={player.state.playing}
@@ -204,17 +237,17 @@ export default function GlobalBGMPlayer({ audioGroups, metingApi }: GlobalBGMPla
     <LazyMotionProvider>
       <AnimatePresence>
         {panelOpen && !isHidden && (
-          <FloatingFocusManager context={context} modal={false}>
+          <FloatingFocusManager key="bgm-panel" context={context} modal={false}>
             <m.div
               ref={refs.setFloating}
               {...getFloatingProps()}
               className="fixed right-16 bottom-20 z-40 w-[460px] max-w-[calc(100vw-5rem)]"
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              initial={motionDisabled ? false : { opacity: 0, y: 12, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
+              exit={motionDisabled ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.98 }}
+              transition={motionDisabled ? { duration: 0 } : { duration: 0.18, ease: 'easeOut' }}
             >
-              <div className="bgm-panel max-h-[85vh] overflow-y-auto overscroll-none rounded-2xl shadow-xl sm:max-h-[70vh] sm:overflow-hidden">
+              <div className="bgm-panel rounded-2xl shadow-xl" aria-busy={loading}>
                 {/* Close button */}
                 <button
                   type="button"

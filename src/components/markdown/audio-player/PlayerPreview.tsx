@@ -22,6 +22,8 @@ interface PlayerPreviewProps {
   lrcLineHeight?: number;
   /** Container height in px — must match CSS `.audio-player-lrc` height. @default 128 */
   lrcContainerHeight?: number;
+  /** Keep the lyrics slot while fetching, so floating players don't shift their controls. */
+  reserveLyrics?: boolean;
 }
 
 /** Default line height and container height (match CSS values) */
@@ -62,6 +64,7 @@ export const PlayerPreview = memo(function PlayerPreview({
   timeStore,
   lrcLineHeight = DEFAULT_LRC_LINE_HEIGHT,
   lrcContainerHeight = DEFAULT_LRC_CONTAINER_HEIGHT,
+  reserveLyrics = false,
 }: PlayerPreviewProps) {
   const lrcText = useLrcText(track?.lrc);
 
@@ -116,7 +119,7 @@ export const PlayerPreview = memo(function PlayerPreview({
         )}
 
         {/* Line-by-line lyrics (original, unchanged) */}
-        {!wordLrcLines && lrcLines.length > 0 && (
+        {!wordLrcLines && (reserveLyrics || lrcLines.length > 0) && (
           <div className="audio-player-lrc">
             <div
               className="audio-player-lrc-inner"
