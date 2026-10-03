@@ -52,7 +52,15 @@ astro-koharu is an Astro-based blog rebuilt from Hexo, inspired by the Shoka the
 
 Package manager: **pnpm** (`pnpm@11.20.0`)
 
+The site and CMS share the root `pnpm-workspace.yaml` and `pnpm-lock.yaml`, including dependency build approvals. Do not create a separate CMS lockfile or bypass the workspace when installing CMS dependencies.
+
 ```bash
+# Dependencies
+pnpm install                         # Install site and CMS dependencies
+pnpm --filter astro-koharu install    # Install only site dependencies
+pnpm cms:install                     # Install only CMS dependencies using root workspace settings
+pnpm cms                             # Start the local CMS
+
 # Development
 pnpm dev              # Start dev server at http://localhost:4321
 pnpm build            # Build for production
