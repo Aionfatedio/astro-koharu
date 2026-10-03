@@ -16,7 +16,7 @@ const finalConfig = { ...defaultContentConfig, ...config };
 ---
 
 <div
-  class:list={['custom-content', { 'relative z-5': christmasConfig.enabled && christmasConfig.features.snowfall }]}
+  class:list={['custom-content motion-reveal-lively', { 'relative z-5': christmasConfig.enabled && christmasConfig.features.snowfall }]}
   data-config={JSON.stringify(finalConfig)}
   data-spoiler-reveal-label="显示隐藏内容"
 >
@@ -40,6 +40,7 @@ const finalConfig = { ...defaultContentConfig, ...config };
 <script>
   import { enhanceCarousels, cleanupCarousels } from '@lib/carousel-enhancer';
   import { enhanceImages, cleanupImages } from '@lib/image-enhancer';
+  import { getScrollBehavior } from '@lib/motion-level';
   import { enhanceLinkPreviews } from '@lib/link-preview-enhancer';
   import { enhanceVideos, cleanupVideos } from '@lib/video-enhancer';
   import { enhanceComics, cleanupComics } from '@lib/comic-enhancer';
@@ -91,7 +92,7 @@ const finalConfig = { ...defaultContentConfig, ...config };
           if (!targetId) return;
           const targetElement = document.getElementById(targetId);
           if (targetElement) {
-            targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            targetElement.scrollIntoView({ behavior: getScrollBehavior(), block: 'start' });
             history.pushState(null, '', `#${targetId}`);
           }
         });

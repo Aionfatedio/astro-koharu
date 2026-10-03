@@ -5,6 +5,7 @@
  * Only CheckIcon remains hand-written due to its SMIL stroke animation.
  */
 
+import { useMotionLevel } from '@hooks/useMotionLevel';
 import { useId } from 'react';
 
 interface IconProps {
@@ -13,6 +14,7 @@ interface IconProps {
 
 export function CheckIcon({ className }: IconProps) {
   const maskId = useId();
+  const motionDisabled = useMotionLevel() === 'reduced';
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" className={className}>
       <title>Copied</title>
@@ -21,13 +23,13 @@ export function CheckIcon({ className }: IconProps) {
           fill="none"
           stroke="#fff"
           strokeDasharray="24"
-          strokeDashoffset="24"
+          strokeDashoffset={motionDisabled ? 0 : 24}
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth="2"
         >
           <path d="M4.5 13.5l4 4l10.75 -10.75">
-            <animate fill="freeze" attributeName="stroke-dashoffset" dur="0.4s" values="24;0" />
+            {!motionDisabled && <animate fill="freeze" attributeName="stroke-dashoffset" dur="0.4s" values="24;0" />}
           </path>
         </g>
       </mask>

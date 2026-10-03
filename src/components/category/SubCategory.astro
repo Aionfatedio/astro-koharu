@@ -21,7 +21,7 @@ const hasChildren = (category.children?.length ?? 0) > 0;
   hasChildren && (
     <div class="category-second-level-container flex flex-col">
       {category.children?.map((grandChild) => (
-        <p class="shoka-decoration-circle relative px-7.5 py-2 text-base/9 text-primary hover:text-blue">
+        <p class="motion-reveal shoka-decoration-circle relative px-7.5 py-2 text-base/9 text-primary hover:text-blue [--rise-y:0.5rem]">
           <a href={`/categories/${grandChild.link}`} class="dashed-border">
             {grandChild.name}
           </a>

@@ -4,9 +4,31 @@
 
 astro-koharu 使用 **Motion**（Framer Motion 的继任者）作为动画库，结合设计令牌系统提供一致的动画体验。
 
+## 减弱动画与性能
+
+有效偏好为「系统减弱动画 **或** 站内减弱动画」。系统偏好通过浏览器原生
+`matchMedia('(prefers-reduced-motion: reduce)')` 读取并监听 `change`，不会写入用户的站内偏好。
+`BootScripts.astro` 在首屏和 Astro 换页时同步 `html.motion-off`，CSS media query 同时提供无 JS 兜底。
+
+- React 组件使用 `useMotionLevel()`（返回 `reduced` 时禁用）；SSR 和 hydration 先显示静态内容。
+- 非 React 增强使用 `isMotionDisabled()` 和 `subscribeMotionLevel()`；滚动使用 `getScrollBehavior()`。
+- `LazyMotionProvider` 提供默认即时过渡，组件显式指定的 `transition`、variants 和属性级 transition 仍须自行分支。
+  Motion 会在挂载时快照其内置减弱动画选项，并忽略目标不变的 transition 更新。动态偏好由共享 hook 管理，
+  延迟加载的 motionFeatures 同时完成进行中的值和布局动画，避免重挂载丢失焦点或状态。
+- 减弱动画时取消循环装饰、弹簧、Canvas 和延时入场；用户主动缩放、旋转、展开等操作保留即时最终状态。
+- CSS 使用极短 duration 保留 tooltip 等组件依赖的完成事件；不可全局删除 transform，它也承担布局和翻面功能。
+  减弱动态时，最低优先级的 `motion-defaults` 层关闭未声明的过渡，避免默认 `all` 让弹层定位也产生过渡；
+  组件明确声明的过渡仍保留完成事件。
+- 第三方 spoiler 在减弱动画或隐藏页面时替换为静态可揭示内容，断连后释放 Canvas 和 RAF。嵌套富文本、键盘焦点和已揭示状态均须保留。
+- 雪花在减弱动画、关闭特效或隐藏页面时不渲染；正常模式限制实际 drawing buffer 和绘制频率。
+
+Motion 12.43.0 在取消已完成的原生动画前同步提交最终样式，统一避免 opacity、clip-path、filter、transform
+短暂恢复初始值。无需在组件中手写完成回调或关闭原生加速。[上游修复](https://github.com/motiondivision/motion/blob/v12.43.0/packages/motion-dom/src/animation/NativeAnimation.ts)。
+`pnpm test:motion` 检查动效偏好订阅与樱花生命周期；`pnpm test:toc` 检查目录进度与丝带计算。
+
 ### 动画层次
 
-```
+```plain
 ┌─────────────────────────────────────────────────────────────┐
 │                      动画系统架构                            │
 ├─────────────────────────────────────────────────────────────┤
@@ -177,7 +199,7 @@ export const animation = {
 
 ### Spring 参数说明
 
-```
+```plain
                     Spring 物理模型
 
                     ┌─────────┐
@@ -261,7 +283,7 @@ useEffect(() => {
 
 **动画效果**：
 
-```
+```plain
 关闭状态（三条横线）          打开状态（X）
     ─────────                    ╲
     ─────────         →          ╱
@@ -289,7 +311,7 @@ useEffect(() => {
 
 **动画效果**：
 
-```
+```plain
 进入动画：
 opacity: 0 → 1
 scale: 0.85 → 1

@@ -4,21 +4,24 @@
  * Floating action buttons for navigation and utilities.
  * - Scroll to top/bottom
  * - Christmas effects toggle
- * - Expand/collapse toggle
+ * - Expand/collapse toggle, ringed with the reading progress
  */
 
 import { LazyMotionProvider } from '@components/common/LazyMotionProvider';
 import { preloadSettingsPanel } from '@components/settings/SettingsPanel';
+import { animation } from '@constants/design-tokens';
 import { bgmConfig, christmasConfig } from '@constants/site-config';
 import { useIsMounted } from '@hooks/useIsMounted';
+import { useMotionLevel } from '@hooks/useMotionLevel';
 import { Icon } from '@iconify/react';
+import { getScrollBehavior } from '@lib/motion-level';
 import { cn } from '@lib/utils';
 import { useStore } from '@nanostores/react';
 import { $bgmPanelOpen, toggleBgmPanel } from '@store/bgm';
 import { christmasEnabled, disableChristmasCompletely, enableChristmas, initChristmasState } from '@store/christmas';
 import { $isDrawerOpen, $isSettingsOpen, toggleSettings } from '@store/modal';
-import { bgmWidgetEnabled, initSettings } from '@store/settings';
-import { AnimatePresence, m } from 'motion/react';
+import { bgmWidgetEnabled, initSettings, scrollProgressEnabled } from '@store/settings';
+import { AnimatePresence, type MotionValue, m, useScroll, useSpring, type Variants } from 'motion/react';
 import { useEffect, useState } from 'react';
 
 const FLOATING_GROUP_EXPANDED_KEY = 'floating-group-expanded';
@@ -34,14 +37,37 @@ interface FloatingButtonProps {
   dataBgmToggle?: boolean;
   /** Optional data attribute for identifying settings toggle button */
   dataSettingsToggle?: boolean;
+  ariaExpanded?: boolean;
 }
 
+// Buttons pop out of the toggle one after another (nearest first) and fold back faster.
+const listVariants: Variants = {
+  open: { transition: { staggerChildren: 0.045, staggerDirection: -1 } },
+  closed: { transition: { staggerChildren: 0.03 } },
+};
+
+// Whole-transform values (not x/y/scale) run on the compositor through WAAPI, so the stagger stays smooth
+// while the main thread is busy.
+const itemVariants: Variants = {
+  open: { opacity: 1, transform: 'translate3d(0px, 0px, 0px) scale(1)', transition: animation.spring.pop },
+  closed: {
+    opacity: 0,
+    transform: 'translate3d(0px, 14px, 0px) scale(0.6)',
+    transition: { duration: 0.16, ease: animation.bezier.inQuart },
+  },
+};
+
+const staticVariants: Variants = {
+  open: { opacity: 1, transform: 'translate3d(0px, 0px, 0px) scale(1)', transition: { duration: 0 } },
+  closed: { opacity: 0, transition: { duration: 0 } },
+};
+
 function scrollToTop() {
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({ top: 0, behavior: getScrollBehavior() });
 }
 
 function scrollToBottom() {
-  window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+  window.scrollTo({ top: document.documentElement.scrollHeight, behavior: getScrollBehavior() });
 }
 
 function toggleChristmas() {
@@ -61,6 +87,7 @@ function FloatingButton({
   onIntent,
   dataBgmToggle,
   dataSettingsToggle,
+  ariaExpanded,
 }: FloatingButtonProps) {
   const isMounted = useIsMounted();
 
@@ -72,17 +99,49 @@ function FloatingButton({
       onPointerDown={onIntent}
       onFocus={onIntent}
       className={cn(
-        'rounded-full bg-background/80 p-2 opacity-80 shadow-lg backdrop-blur-sm transition-all duration-200 hover:bg-background hover:opacity-100',
+        'relative size-10 flex-center rounded-full bg-background/85 shadow-sakura-sm ring-1 ring-primary/10 backdrop-blur-md',
+        'transition-[background-color,box-shadow,translate,scale] duration-300 ease-out-quart',
+        'hover:-translate-y-0.5 hover:bg-background hover:shadow-sakura-md hover:ring-primary/25 active:scale-90 active:duration-100',
         className,
       )}
       aria-label={ariaLabel}
+      aria-expanded={ariaExpanded}
       title={isMounted ? title : undefined}
+      data-tooltip-interactive="false"
       data-bgm-toggle={dataBgmToggle || undefined}
       data-settings-toggle={dataSettingsToggle || undefined}
     >
       {children}
     </button>
   );
+}
+
+function ProgressRingDrawing({ progress }: { progress: MotionValue<number> }) {
+  return (
+    <svg className="pointer-events-none absolute -inset-0.5 -rotate-90" viewBox="0 0 44 44" aria-hidden="true">
+      <circle cx="22" cy="22" r="20.5" fill="none" stroke="currentColor" strokeWidth="1.5" className="opacity-15" />
+      <m.circle
+        cx="22"
+        cy="22"
+        r="20.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        style={{ pathLength: progress }}
+      />
+    </svg>
+  );
+}
+
+function SmoothProgressRing({ progress }: { progress: MotionValue<number> }) {
+  const smooth = useSpring(progress, { stiffness: 140, damping: 30, restDelta: 0.001 });
+  return <ProgressRingDrawing progress={smooth} />;
+}
+
+function ProgressRing({ springy }: { springy: boolean }) {
+  const { scrollYProgress } = useScroll();
+  return springy ? <SmoothProgressRing progress={scrollYProgress} /> : <ProgressRingDrawing progress={scrollYProgress} />;
 }
 
 export default function FloatingGroup() {
@@ -93,6 +152,8 @@ export default function FloatingGroup() {
   const isBgmPanelOpen = useStore($bgmPanelOpen);
   const isSettingsOpen = useStore($isSettingsOpen);
   const isBgmWidgetEnabled = useStore(bgmWidgetEnabled);
+  const showProgress = useStore(scrollProgressEnabled);
+  const reduced = useMotionLevel() === 'reduced';
 
   // Initialize christmas & settings state on mount
   useEffect(() => {
@@ -114,59 +175,84 @@ export default function FloatingGroup() {
   return (
     <LazyMotionProvider>
       <m.div
-        className="fixed right-4 bottom-4 z-50 flex flex-col gap-2 text-primary"
+        className="fixed right-4 bottom-4 z-50 flex flex-col items-center gap-2 text-primary"
         animate={{
-          x: isHidden ? 200 : 0,
+          transform: isHidden ? 'translateX(200px)' : 'translateX(0px)',
           opacity: isHidden ? 0 : 1,
           pointerEvents: isHidden ? 'none' : 'auto',
         }}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        transition={reduced ? { duration: 0 } : { duration: 0.35, ease: animation.bezier.outQuart }}
       >
-        <AnimatePresence>
+        <AnimatePresence initial={false}>
           {isExpanded && (
             <m.div
-              className="flex flex-col gap-2"
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 50, opacity: 0 }}
-              transition={{ duration: 0.15, ease: 'easeInOut' }}
+              className="flex flex-col items-center gap-2"
+              variants={reduced ? undefined : listVariants}
+              initial={reduced ? false : 'closed'}
+              animate="open"
+              exit="closed"
             >
               {christmasConfig.enabled && (
-                <FloatingButton onClick={toggleChristmas} ariaLabel="切换圣诞特效" title="切换圣诞特效">
-                  <Icon icon={isChristmasEnabled ? 'ri:snowy-fill' : 'ri:snowy-line'} className="h-5 w-5" />
-                </FloatingButton>
+                <m.div variants={reduced ? staticVariants : itemVariants}>
+                  <FloatingButton onClick={toggleChristmas} ariaLabel={'切换圣诞特效'} title={'切换圣诞特效'}>
+                    <Icon icon={isChristmasEnabled ? 'ri:snowy-fill' : 'ri:snowy-line'} className="size-5" />
+                  </FloatingButton>
+                </m.div>
               )}
               {bgmConfig.enabled && bgmConfig.audio.length > 0 && isBgmWidgetEnabled && (
-                <FloatingButton onClick={toggleBgmPanel} ariaLabel="背景音乐" title="背景音乐" dataBgmToggle>
-                  <Icon icon={isBgmPanelOpen ? 'ri:music-2-fill' : 'ri:music-2-line'} className="h-5 w-5" />
-                </FloatingButton>
+                <m.div variants={reduced ? staticVariants : itemVariants}>
+                  <FloatingButton onClick={toggleBgmPanel} ariaLabel={'背景音乐'} title={'背景音乐'} dataBgmToggle>
+                    <Icon icon={isBgmPanelOpen ? 'ri:music-2-fill' : 'ri:music-2-line'} className="size-5" />
+                  </FloatingButton>
+                </m.div>
               )}
-              <FloatingButton
-                onClick={toggleSettings}
-                onIntent={preloadSettingsPanel}
-                ariaLabel="设置"
-                title="设置"
-                dataSettingsToggle
-              >
-                <Icon icon={isSettingsOpen ? 'ri:settings-3-fill' : 'ri:settings-3-line'} className="h-5 w-5" />
-              </FloatingButton>
-              <FloatingButton onClick={scrollToTop} ariaLabel="回到顶部" title="回到顶部">
-                <Icon icon="ri:arrow-up-s-line" className="h-5 w-5" />
-              </FloatingButton>
-              <FloatingButton onClick={scrollToBottom} ariaLabel="滚到底部" title="滚到底部">
-                <Icon icon="ri:arrow-down-s-line" className="h-5 w-5" />
-              </FloatingButton>
+              <m.div variants={reduced ? staticVariants : itemVariants}>
+                <FloatingButton
+                  onClick={toggleSettings}
+                  ariaLabel={'设置'}
+                  title={'设置'}
+                  dataSettingsToggle
+                  onIntent={preloadSettingsPanel}
+                >
+                  <Icon
+                    icon={isSettingsOpen ? 'ri:settings-3-fill' : 'ri:settings-3-line'}
+                    className={cn('size-5 transition-transform duration-500 ease-out-expo', isSettingsOpen && 'rotate-90')}
+                  />
+                </FloatingButton>
+              </m.div>
+              <m.div variants={reduced ? staticVariants : itemVariants}>
+                <FloatingButton onClick={scrollToTop} ariaLabel={'回到顶部'} title={'回到顶部'}>
+                  <Icon icon="ri:arrow-up-s-line" className="size-5" />
+                </FloatingButton>
+              </m.div>
+              <m.div variants={reduced ? staticVariants : itemVariants}>
+                <FloatingButton onClick={scrollToBottom} ariaLabel={'滚到底部'} title={'滚到底部'}>
+                  <Icon icon="ri:arrow-down-s-line" className="size-5" />
+                </FloatingButton>
+              </m.div>
             </m.div>
           )}
         </AnimatePresence>
 
         <FloatingButton
           onClick={toggleExpand}
-          ariaLabel="展开/收起工具栏"
-          title="展开/收起工具栏"
-          className="size-9 flex-center"
+          ariaLabel={'展开/收起工具栏'}
+          title={'展开/收起工具栏'}
+          ariaExpanded={isExpanded}
         >
-          <Icon icon={isExpanded ? 'ri:close-large-fill' : 'ri:magic-fill'} className="size-4" />
+          {showProgress && <ProgressRing springy={!reduced} />}
+          <AnimatePresence mode="popLayout" initial={false}>
+            <m.span
+              key={isExpanded ? 'close' : 'magic'}
+              className="flex-center"
+              initial={reduced ? false : { opacity: 0, transform: 'rotate(-90deg) scale(0.5)' }}
+              animate={{ opacity: 1, transform: 'rotate(0deg) scale(1)' }}
+              exit={reduced ? { opacity: 0 } : { opacity: 0, transform: 'rotate(90deg) scale(0.5)' }}
+              transition={reduced ? { duration: 0 } : animation.spring.press}
+            >
+              <Icon icon={isExpanded ? 'ri:close-large-fill' : 'ri:magic-fill'} className="size-4" />
+            </m.span>
+          </AnimatePresence>
         </FloatingButton>
       </m.div>
     </LazyMotionProvider>

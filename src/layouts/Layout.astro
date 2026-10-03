@@ -14,6 +14,7 @@ interface Props extends PageMetaProps {
 
 import { ClientRouter } from 'astro:transitions';
 import UmamiAnalytics from '@components/analytics/UmamiAnalytics.astro';
+import { pageTransition } from '@constants/anim/page-transition';
 import { seoConfig } from '@constants/site-config';
 import LoadingIndicator from 'astro-loading-indicator/component';
 import { Tooltips } from 'astro-tooltips';
@@ -38,7 +39,7 @@ const isPostPage = Astro.url.pathname.startsWith('/post/');
 ---
 
 <!doctype html>
-<html transition:name="root" lang="zh-CN" class="vertical-scrollbar">
+<html transition:name="root" transition:animate={pageTransition} lang="zh-CN">
   <head>
     <HeadMeta meta={meta} />
 

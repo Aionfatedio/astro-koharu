@@ -26,7 +26,7 @@ const postCardData = toPostCardDataList(page.data);
     <Cover slot="cover" />
     <HomeSider slot="sider" />
     <div
-      class={`shadow-box bg-gradient-start tablet:shadow-none flex flex-col gap-4 overflow-hidden ${CONTENT_PADDING.standard}`}
+      class={`shadow-box bg-gradient-start tablet:shadow-none flex flex-col gap-4 overflow-clip ${CONTENT_PADDING.standard}`}
     >
       <Divider>文章列表</Divider>
       <PostList posts={postCardData} page={page} />

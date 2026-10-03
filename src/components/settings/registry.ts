@@ -29,8 +29,8 @@ export interface SettingItem {
   options?: SettingOption[];
   /** Build-time feature gate that hides unavailable settings. */
   gatedBy?: 'christmas' | 'bgm';
-  /** Disable this setting while the master motion preference is enabled. */
-  disabledByMasterMotion?: boolean;
+  /** Disable this setting while the motion level is `reduced`. */
+  disabledByReducedMotion?: boolean;
 }
 
 export const SETTINGS_REGISTRY: SettingItem[] = [
@@ -100,17 +100,22 @@ export const SETTINGS_REGISTRY: SettingItem[] = [
     gatedBy: 'bgm',
   },
   {
-    key: 'masterMotion',
+    key: 'motionLevel',
     section: 'general',
-    type: 'switch',
-    label: '减弱动画',
+    type: 'segmented',
+    label: '动效强度',
+    options: [
+      { value: 'lively', label: '灵动' },
+      { value: 'subtle', label: '克制' },
+      { value: 'reduced', label: '减弱' },
+    ],
   },
   {
     key: 'wave',
     section: 'general',
     type: 'switch',
     label: '封面海浪',
-    disabledByMasterMotion: true,
+    disabledByReducedMotion: true,
   },
 ];
 

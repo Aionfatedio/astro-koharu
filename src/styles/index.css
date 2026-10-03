@@ -1,3 +1,5 @@
+@layer motion-defaults;
+
 @import "./theme/shadcn.css";
 @import "./theme/index.css";
 @import "./theme/theme-transition.css";
@@ -5,6 +7,7 @@
 @import "./global/animate.css";
 @import "./global/motion.css";
 @import "./global/tailwind.css";
+@import "./global/scrollbar.css";
 
 @import "./theme/markdown.css";
 @import "./theme/shoka-effects.css";
@@ -20,8 +23,13 @@
 @import "./theme/image-carousel.css";
 @import "photoswipe/style.css";
 @import "./components/wave.css";
+@import "./components/cover.css";
+@import "./components/header.css";
+@import "./components/segmented.css";
+@import "./components/drawer.css";
 @import "./components/category.css";
 @import "./components/post.css";
+@import "./components/toc.css";
 @import "./components/pagefind.css";
 @import "./components/search-highlight.css";
 @import "./components/embed.css";

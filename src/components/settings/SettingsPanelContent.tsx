@@ -10,8 +10,12 @@
 import { LazyMotionProvider } from '@components/common/LazyMotionProvider';
 import { Switch } from '@components/ui/switch';
 import { microReboundPreset } from '@constants/anim/spring';
+import { animation } from '@constants/design-tokens';
 import { FloatingFocusManager, useDismiss, useFloating, useInteractions, useRole } from '@floating-ui/react';
+import { usePrefersReducedMotion } from '@hooks/useMediaQuery';
+import { useMotionLevel } from '@hooks/useMotionLevel';
 import { Icon } from '@iconify/react';
+import type { MotionLevel } from '@lib/config/types';
 import { cn } from '@lib/utils';
 import { useStore } from '@nanostores/react';
 import { christmasEnabled, toggleChristmas } from '@store/christmas';
@@ -19,7 +23,7 @@ import { $isSettingsOpen, closeModal } from '@store/modal';
 import {
   bgmWidgetEnabled,
   type FontPreset,
-  masterMotionEnabled,
+  motionLevel,
   readerFontFamily,
   readerFontPreset,
   readerFontSize,
@@ -34,19 +38,30 @@ import {
   setJustify,
   setLineHeight,
   setLocalFontFamily,
-  setMasterMotionEnabled,
   setMeasure,
+  setMotionLevel,
   setScrollProgressEnabled,
   setWaveEnabled,
   waveEnabled,
 } from '@store/settings';
 import { READER_CUSTOM_MEASURE } from '@store/settings-constants';
-import { AnimatePresence, m, useReducedMotion } from 'motion/react';
+import { AnimatePresence, m, type Transition } from 'motion/react';
 import { lazy, type MouseEvent, Suspense, useEffect, useRef, useState } from 'react';
 import { NumberField } from './NumberField';
 import { isSettingVisible, SETTINGS_REGISTRY, type SettingItem, type SettingSection } from './registry';
 
 const SECTIONS: SettingSection[] = ['reader', 'general'];
+
+// Whole-transform keyframes (not x/y/scale) let Motion hand the panel to WAAPI, so it unfolds from the
+// settings button smoothly even while the main thread is busy; the exit is quicker than the entrance.
+const PANEL_HIDDEN = 'translate3d(8px, 12px, 0px) scale(0.94)';
+const PANEL_SHOWN = 'translate3d(0px, 0px, 0px) scale(1)';
+const PANEL_EXIT: Transition = { duration: 0.14, ease: animation.bezier.inQuart };
+const MOTION_HINTS: Record<MotionLevel, string> = {
+  lively: '入场编排、滚动浮现与樱花特效全开',
+  subtle: '保留入场与过渡，关闭正文浮现和樱花特效',
+  reduced: '只保留必要的交互反馈',
+};
 const loadLocalFontPicker = () => import('./LocalFontPicker');
 
 function preloadLocalFontPicker(): void {
@@ -57,7 +72,8 @@ const LocalFontPicker = lazy(loadLocalFontPicker);
 
 export default function SettingsPanelContent() {
   const open = useStore($isSettingsOpen);
-  const shouldReduceMotion = useReducedMotion();
+  const shouldReduceMotion = useMotionLevel() === 'reduced';
+  const systemReducedMotion = usePrefersReducedMotion();
 
   // Store bindings
   const fontPreset = useStore(readerFontPreset);
@@ -68,7 +84,7 @@ export default function SettingsPanelContent() {
   const justify = useStore(readerJustify);
   const scrollProgress = useStore(scrollProgressEnabled);
   const bgmWidget = useStore(bgmWidgetEnabled);
-  const masterMotion = useStore(masterMotionEnabled);
+  const level = useStore(motionLevel);
   const wave = useStore(waveEnabled);
   const isChristmasEnabled = useStore(christmasEnabled);
   const [fontPickerLoaded, setFontPickerLoaded] = useState(false);
@@ -87,8 +103,21 @@ export default function SettingsPanelContent() {
     scrollProgress: { checked: scrollProgress, onChange: setScrollProgressEnabled },
     christmas: { checked: isChristmasEnabled, onChange: () => toggleChristmas() },
     bgmWidget: { checked: bgmWidget, onChange: setBgmWidgetEnabled },
-    masterMotion: { checked: masterMotion, onChange: setMasterMotionEnabled },
     wave: { checked: wave, onChange: setWaveEnabled },
+  };
+
+  const segmentedBindings: Record<
+    string,
+    { isActive: (value: string) => boolean; onSelect: (value: string, event: MouseEvent<HTMLButtonElement>) => void }
+  > = {
+    fontPreset: {
+      isActive: (value) => (value === 'local' ? fontFamily !== null : fontFamily === null && fontPreset === value),
+      onSelect: (value, event) => (value === 'local' ? openFontPicker(event) : setFontPreset(value as FontPreset)),
+    },
+    motionLevel: {
+      isActive: (value) => value === level,
+      onSelect: (value) => setMotionLevel(value as MotionLevel),
+    },
   };
 
   const numberBindings: Record<
@@ -133,21 +162,31 @@ export default function SettingsPanelContent() {
   const role = useRole(context, { role: 'dialog' });
   const { getFloatingProps } = useInteractions([dismiss, role]);
 
+  const panelTransition = (visible: boolean): Transition => {
+    const fade = visible ? { duration: 0.16, ease: animation.bezier.outQuart } : PANEL_EXIT;
+    return {
+      opacity: shouldReduceMotion ? { duration: 0 } : fade,
+      transform: shouldReduceMotion ? { duration: 0 } : visible ? animation.spring.popover : PANEL_EXIT,
+    };
+  };
+
   const renderControl = (item: SettingItem) => {
-    const disabled = Boolean(item.disabledByMasterMotion && masterMotion);
+    const disabled = Boolean(item.disabledByReducedMotion && shouldReduceMotion);
 
     switch (item.type) {
-      case 'segmented':
+      case 'segmented': {
+        const binding = segmentedBindings[item.key];
+        if (!binding) return null;
         return (
           <div className="flex flex-wrap gap-1">
             {item.options?.map((option) => {
               const localOption = option.value === 'local';
-              const active = localOption ? fontFamily !== null : fontFamily === null && fontPreset === option.value;
+              const active = binding.isActive(option.value);
               return (
                 <button
                   key={option.value}
                   type="button"
-                  onClick={(event) => (localOption ? openFontPicker(event) : setFontPreset(option.value as FontPreset))}
+                  onClick={(event) => binding.onSelect(option.value, event)}
                   onPointerEnter={localOption ? preloadLocalFontPicker : undefined}
                   onPointerDown={localOption ? preloadLocalFontPicker : undefined}
                   onFocus={localOption ? preloadLocalFontPicker : undefined}
@@ -157,19 +196,22 @@ export default function SettingsPanelContent() {
                     active ? 'text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground',
                   )}
                 >
-                  {active && (
-                    <m.span
-                      layoutId="settings-font-preset-pill"
-                      className="absolute inset-0 rounded-md bg-primary"
-                      transition={shouldReduceMotion ? { duration: 0 } : microReboundPreset}
-                    />
-                  )}
+                  <AnimatePresence initial={false}>
+                    {active && (
+                      <m.span
+                        layoutId={shouldReduceMotion ? undefined : `settings-${item.key}-pill`}
+                        className="absolute inset-0 rounded-md bg-primary"
+                        transition={shouldReduceMotion ? { duration: 0 } : microReboundPreset}
+                      />
+                    )}
+                  </AnimatePresence>
                   <span className="relative">{option.label}</span>
                 </button>
               );
             })}
           </div>
         );
+      }
       case 'number': {
         const binding = numberBindings[item.key];
         if (!binding) return null;
@@ -204,11 +246,14 @@ export default function SettingsPanelContent() {
             <m.div
               ref={refs.setFloating}
               {...getFloatingProps()}
-              className="fixed right-16 bottom-20 z-40 w-[320px] max-w-[calc(100vw-5rem)]"
-              initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 20, scale: 0.95 }}
-              transition={shouldReduceMotion ? { duration: 0.15 } : microReboundPreset}
+              className="fixed right-16 bottom-20 z-40 w-[320px] max-w-[calc(100vw-5rem)] origin-bottom-right"
+              initial={shouldReduceMotion ? false : { opacity: 0, transform: PANEL_HIDDEN }}
+              animate={{ opacity: 1, transform: PANEL_SHOWN, transition: panelTransition(true) }}
+              exit={{
+                opacity: 0,
+                transform: shouldReduceMotion ? PANEL_SHOWN : PANEL_HIDDEN,
+                transition: panelTransition(false),
+              }}
             >
               <div className="flex h-[calc(100dvh-6rem)] max-h-96 flex-col overflow-hidden rounded-2xl border border-border bg-popover p-4 text-popover-foreground shadow-xl">
                 {/* Header */}
@@ -238,13 +283,16 @@ export default function SettingsPanelContent() {
                           active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
                         )}
                       >
-                        {active && (
-                          <m.span
-                            layoutId="settings-section-pill"
-                            className="absolute inset-0 rounded-md bg-background shadow-sm"
-                            transition={shouldReduceMotion ? { duration: 0 } : microReboundPreset}
-                          />
-                        )}
+                        {/* Keep replaced layout pills out of the panel's exit-completion registry. */}
+                        <AnimatePresence initial={false}>
+                          {active && (
+                            <m.span
+                              layoutId={shouldReduceMotion ? undefined : 'settings-section-pill'}
+                              className="absolute inset-0 rounded-md bg-background shadow-sm"
+                              transition={shouldReduceMotion ? { duration: 0 } : microReboundPreset}
+                            />
+                          )}
+                        </AnimatePresence>
                         <span className="relative">{key === 'reader' ? '阅读' : '通用'}</span>
                       </button>
                     );
@@ -264,7 +312,7 @@ export default function SettingsPanelContent() {
                     >
                       <div className="flex flex-col divide-y divide-border">
                         {items.map((item) => {
-                          const disabled = Boolean(item.disabledByMasterMotion && masterMotion);
+                          const disabled = Boolean(item.disabledByReducedMotion && shouldReduceMotion);
                           return (
                             <div key={item.key} className="py-2.5 first:pt-1 last:pb-1">
                               <div className="flex items-center justify-between gap-3">
@@ -287,7 +335,14 @@ export default function SettingsPanelContent() {
                                   <Icon icon="ri:arrow-right-s-line" className="size-4 shrink-0 text-muted-foreground" />
                                 </button>
                               )}
-                              {disabled && <p className="mt-1 text-muted-foreground text-xs">{'「减弱动画」开启时不可用'}</p>}
+                              {item.key === 'motionLevel' && (
+                                <p className="mt-1.5 text-muted-foreground text-xs">
+                                  {systemReducedMotion
+                                    ? '系统已开启「减少动态效果」，将始终按「减弱」处理'
+                                    : MOTION_HINTS[level]}
+                                </p>
+                              )}
+                              {disabled && <p className="mt-1 text-muted-foreground text-xs">{'动效强度为「减弱」时不可用'}</p>}
                             </div>
                           );
                         })}

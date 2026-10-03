@@ -1,7 +1,8 @@
 /**
  * MobileTOCDropdown Component
  *
- * Dropdown panel for the mobile table of contents.
+ * Dropdown panel for the mobile table of contents. It grows out of the header pill (a clip-path
+ * reveal from the pill's corner) and opens already scrolled to the current heading.
  * Uses Floating UI for positioning and Motion for animations.
  */
 
@@ -9,17 +10,33 @@ import { animation } from '@constants/design-tokens';
 import { FloatingFocusManager, FloatingPortal, useClick, useDismiss, useInteractions, useRole } from '@floating-ui/react';
 import { useControlledState } from '@hooks/useControlledState';
 import { useFloatingUI } from '@hooks/useFloatingUI';
-import type { Heading } from '@lib/toc';
-import { AnimatePresence, m } from 'motion/react';
+import { useMotionLevel } from '@hooks/useMotionLevel';
+import type { ReadingProgress } from '@hooks/useReadingProgress';
+import { chapterIndexOf, type Heading } from '@lib/toc';
+import { AnimatePresence, m, type Transition } from 'motion/react';
 import type React from 'react';
-import { cloneElement, useMemo } from 'react';
+import { cloneElement, useMemo, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { HeadingList } from '../TableOfContents/HeadingList';
 import { TocProvider, useTocContext } from '../TableOfContents/TocContext';
+import { TocGlide } from '../TableOfContents/TocGlide';
+
+/** The panel starts as a pill-sized corner under the trigger and opens to its full size. */
+const PANEL_CLOSED = 'inset(0% 45% 88% 0% round 20px)';
+const PANEL_OPEN = 'inset(0% 0% 0% 0% round 16px)';
+const PANEL_ENTER: Transition = {
+  clipPath: { duration: 0.46, ease: animation.bezier.outExpo },
+  opacity: { duration: 0.16, ease: animation.bezier.outQuart },
+};
+const PANEL_EXIT: Transition = {
+  clipPath: { duration: 0.2, ease: animation.bezier.inQuart },
+  opacity: { duration: 0.16, delay: 0.04, ease: animation.bezier.inQuart },
+};
 
 interface MobileTOCDropdownProps {
   /** Hierarchical heading tree */
   headings: Heading[];
+  subscribeFrame: ReadingProgress['subscribeFrame'];
   /** Trigger element that opens the dropdown */
   trigger: React.JSX.Element;
   /** Controlled open state */
@@ -32,12 +49,15 @@ interface MobileTOCDropdownProps {
 
 export function MobileTOCDropdown({
   headings,
+  subscribeFrame,
   trigger,
   open: passedOpen,
   onOpenChange,
   enableNumbering = true,
 }: MobileTOCDropdownProps) {
   const outerToc = useTocContext();
+  const motionDisabled = useMotionLevel() === 'reduced';
+  const chapter = chapterIndexOf(headings, outerToc.activeId);
   const [isOpen, setIsOpen] = useControlledState({
     value: passedOpen,
     defaultValue: false,
@@ -57,6 +77,9 @@ export function MobileTOCDropdown({
   const role = useRole(context);
 
   const { getReferenceProps, getFloatingProps } = useInteractions([click, dismiss, role]);
+  // Focus opens on the current entry, which the TOC has just scrolled into view; the first entry
+  // (the focus manager's default) would scroll the panel back to the top.
+  const currentEntry = useRef<HTMLElement | null>(null);
 
   // Same TOC state, but a click also dismisses the dropdown
   const toc = useMemo(
@@ -76,27 +99,48 @@ export function MobileTOCDropdown({
       <AnimatePresence>
         {isOpen && (
           <FloatingPortal>
-            <FloatingFocusManager context={context} modal={false}>
+            <FloatingFocusManager context={context} modal={false} initialFocus={currentEntry}>
               <m.div
                 ref={refs.setFloating}
                 style={floatingStyles}
-                className="z-50 max-h-[60vh] w-72 overflow-auto rounded-2xl border border-border bg-background/80 p-3 backdrop-blur-md"
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1, originY: 0 }}
-                exit={{ opacity: 0, scale: 0.85 }}
-                transition={animation.spring.popoverContent}
+                className="z-50 flex max-h-[min(70vh,34rem)] w-[min(20rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl border border-primary/15 bg-background/85 shadow-xl backdrop-blur-md"
+                initial={motionDisabled ? false : { opacity: 0, clipPath: PANEL_CLOSED }}
+                animate={
+                  motionDisabled
+                    ? { opacity: 1, clipPath: PANEL_OPEN, transition: { duration: 0 } }
+                    : { opacity: 1, clipPath: PANEL_OPEN, transition: PANEL_ENTER }
+                }
+                exit={
+                  motionDisabled
+                    ? { opacity: 0, transition: { duration: 0 } }
+                    : { opacity: 0, clipPath: PANEL_CLOSED, transition: PANEL_EXIT }
+                }
                 {...getFloatingProps()}
               >
-                <nav
-                  className={cn('toc-container vertical-scrollbar', { 'toc-no-numbering': !enableNumbering })}
-                  aria-label="文章目录"
-                >
-                  <div className="space-y-1">
+                <div className="flex items-center justify-between px-4 pt-3 pb-1.5 text-xs">
+                  <span className="font-semibold text-foreground/85">{'文章目录'}</span>
+                  {chapter > 0 && (
+                    <span className="text-muted-foreground tabular-nums">
+                      {chapter} / {headings.length}
+                    </span>
+                  )}
+                </div>
+                <div className="toc-scroll-fade overflow-y-auto overflow-x-hidden px-2 pb-2" data-toc-scroller>
+                  <nav
+                    ref={(nav) => {
+                      currentEntry.current = nav?.querySelector<HTMLElement>('[aria-current]') ?? null;
+                    }}
+                    className={cn('toc-container toc-silk-container flex flex-col gap-1', {
+                      'toc-no-numbering': !enableNumbering,
+                    })}
+                    aria-label={'文章目录'}
+                  >
                     <TocProvider value={toc}>
-                      <HeadingList headings={headings} />
+                      <TocGlide headings={headings} subscribeFrame={subscribeFrame} />
+                      <HeadingList headings={headings} numbered={enableNumbering} />
                     </TocProvider>
-                  </div>
-                </nav>
+                  </nav>
+                </div>
               </m.div>
             </FloatingFocusManager>
           </FloatingPortal>

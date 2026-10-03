@@ -78,7 +78,7 @@ const filteredRouters = filterNavItems(routers, configuredSeriesSlugs, enabledSe
       标签
     </a>
   </div>
-  <div class="mt-6 flex w-full flex-col items-center gap-2.5">
+  <div class="mt-6 flex w-full flex-col items-center gap-2.5" data-home-nav>
     {
       filteredRouters.map(({ name, path, icon, children }, index) => {
         if (children?.length) {

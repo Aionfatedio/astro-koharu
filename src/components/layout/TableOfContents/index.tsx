@@ -5,17 +5,24 @@
  * Uses custom hooks for state management and sub-components for better organization.
  */
 
+import { useMediaQuery } from '@hooks/useMediaQuery';
 import { useTocController } from '@hooks/useTocController';
+import { cn } from '@lib/utils';
+import { useStore } from '@nanostores/react';
+import { $isDrawerOpen } from '@store/modal';
 import { HeadingList } from './HeadingList';
 import { TocProvider } from './TocContext';
+import { TocGlide } from './TocGlide';
 
 // Constants
 const SCROLL_OFFSET_TOP = 120; // Offset for header height when detecting active heading
 
 interface TableOfContentsProps {
+  /** Drawer navigation tracks only while it is open on a narrow viewport. */
+  isDrawer?: boolean;
   /** Whether headings should be expanded by default */
   defaultExpanded?: boolean;
-  /** Whether to enable CSS counter numbering (default: true) */
+  /** Whether to enable heading numbering (default: true) */
   enableNumbering?: boolean;
 }
 
@@ -25,8 +32,18 @@ interface TableOfContentsProps {
  * Main container for the table of contents. Manages heading state and
  * delegates rendering to HeadingList sub-component.
  */
-export function TableOfContents({ defaultExpanded = false, enableNumbering = true }: TableOfContentsProps = {}) {
-  const { headings, toc } = useTocController({ offsetTop: SCROLL_OFFSET_TOP, defaultExpanded });
+export function TableOfContents({
+  isDrawer = false,
+  defaultExpanded = false,
+  enableNumbering = true,
+}: TableOfContentsProps = {}) {
+  const isMobile = useMediaQuery('(max-width: 992px)');
+  const drawerOpen = useStore($isDrawerOpen);
+  const { headings, toc, subscribeFrame } = useTocController({
+    offsetTop: SCROLL_OFFSET_TOP,
+    defaultExpanded,
+    enabled: isDrawer ? isMobile && drawerOpen : !isMobile,
+  });
 
   // Empty state
   if (headings.length === 0) {
@@ -39,11 +56,16 @@ export function TableOfContents({ defaultExpanded = false, enableNumbering = tru
 
   return (
     <nav
-      className={`toc-container vertical-scrollbar scroll-gutter-stable flex h-full flex-col gap-2 overflow-auto pr-1 md:pb-3 md:pl-1 ${enableNumbering ? '' : 'toc-no-numbering'}`}
-      aria-label="文章目录"
+      className={cn(
+        'toc-container toc-silk-container toc-scroll-fade scrollbar-hidden flex h-full flex-col gap-1 overflow-y-auto overflow-x-hidden md:pb-3 md:pl-1',
+        { 'toc-no-numbering': !enableNumbering },
+      )}
+      aria-label={'文章目录'}
+      data-toc-scroller
     >
       <TocProvider value={toc}>
-        <HeadingList headings={headings} />
+        <TocGlide headings={headings} subscribeFrame={subscribeFrame} />
+        <HeadingList headings={headings} numbered={enableNumbering} />
       </TocProvider>
     </nav>
   );

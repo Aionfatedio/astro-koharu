@@ -7,7 +7,7 @@
  */
 
 import { ErrorBoundary, InlineErrorFallback } from '@components/common';
-import { usePrefersReducedMotion } from '@hooks/useMediaQuery';
+import { useMotionLevel } from '@hooks/useMotionLevel';
 import { cn } from '@lib/utils';
 import { memo, type ReactNode, type RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { RiBook2Fill } from 'react-icons/ri';
@@ -96,12 +96,11 @@ function SummaryPanel({ summary, source = 'ai', typingSpeed = 25, className }: S
 
   const config = SOURCE_CONFIG[source];
 
-  // 检测用户是否偏好减少动画 (响应式，用户切换系统偏好后会自动更新)
-  const prefersReducedMotion = usePrefersReducedMotion();
+  const motionDisabled = useMotionLevel() === 'reduced';
 
   // 清理动画
   const clearAnimation = useCallback(() => {
-    if (animationRef.current) {
+    if (animationRef.current !== null) {
       cancelAnimationFrame(animationRef.current);
       animationRef.current = null;
     }
@@ -112,7 +111,7 @@ function SummaryPanel({ summary, source = 'ai', typingSpeed = 25, className }: S
     if (!textRef.current) return;
 
     // 如果用户偏好减少动画，或已经播放过动画，直接显示全部
-    if (prefersReducedMotion || hasAnimatedRef.current) {
+    if (motionDisabled || hasAnimatedRef.current) {
       textRef.current.textContent = summary;
       setIsTyping(false);
       hasAnimatedRef.current = true;
@@ -123,12 +122,16 @@ function SummaryPanel({ summary, source = 'ai', typingSpeed = 25, className }: S
     textRef.current.textContent = '';
     startTimeRef.current = performance.now();
 
+    let previousCharIndex = -1;
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTimeRef.current;
       const charIndex = Math.floor(elapsed / typingSpeed);
 
       if (charIndex < summary.length && textRef.current) {
-        textRef.current.textContent = summary.slice(0, charIndex + 1);
+        if (charIndex !== previousCharIndex) {
+          textRef.current.textContent = summary.slice(0, charIndex + 1);
+          previousCharIndex = charIndex;
+        }
         animationRef.current = requestAnimationFrame(animate);
       } else {
         if (textRef.current) {
@@ -136,11 +139,20 @@ function SummaryPanel({ summary, source = 'ai', typingSpeed = 25, className }: S
         }
         setIsTyping(false);
         hasAnimatedRef.current = true;
+        animationRef.current = null;
       }
     };
 
     animationRef.current = requestAnimationFrame(animate);
-  }, [summary, typingSpeed, prefersReducedMotion]);
+  }, [summary, typingSpeed, motionDisabled]);
+
+  useEffect(() => {
+    if (!motionDisabled || !isExpanded) return;
+    clearAnimation();
+    if (textRef.current) textRef.current.textContent = summary;
+    setIsTyping(false);
+    hasAnimatedRef.current = true;
+  }, [motionDisabled, isExpanded, summary, clearAnimation]);
 
   // 展开/收起
   const handleToggle = useCallback(() => {

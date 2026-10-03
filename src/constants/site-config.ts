@@ -7,7 +7,7 @@
  */
 
 import { normalizeMomentsConfig, resolveMomentsNavigation } from '@lib/config/moments';
-import { contentConfig, enabledSeriesSlugList, featuredSeriesList, siteConfig } from '@lib/config/site';
+import { contentConfig, enabledSeriesSlugList, featuredSeriesList, motionConfig, siteConfig } from '@lib/config/site';
 import type {
   AnalyticsConfig,
   BgmAudioGroup,
@@ -22,7 +22,7 @@ import type { UmamiStatsConfig } from '@/types/umami-stats';
 import yamlConfig from '../../config/site.yaml';
 import { DEFAULT_ROUTERS, RESERVED_ROUTES } from './router';
 
-export { contentConfig, siteConfig };
+export { contentConfig, motionConfig, siteConfig };
 
 export const socialConfig: SocialConfig = yamlConfig.social ?? {};
 

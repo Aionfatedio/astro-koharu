@@ -6,7 +6,7 @@
  */
 
 export const PAGEFIND_SEARCH_INPUT_SELECTOR = '.pf-searchbox-input';
-export const SEARCH_DIALOG_SCROLL_AREA_ID = 'search-dialog-scroll-area';
+export const PAGEFIND_SEARCH_SCROLL_SELECTOR = '#search-for-dialog .pf-searchbox-results';
 
 const STORAGE_KEY = 'koharu:pagefind-search-session:v1';
 

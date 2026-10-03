@@ -1,14 +1,16 @@
 ---
 import { Routes } from '@constants/router';
-import { createArticleStatsConfig, siteConfig } from '@constants/site-config';
+import { createArticleStatsConfig, motionConfig, siteConfig } from '@constants/site-config';
 import { getPostReadingTime } from '@lib/content/posts';
 import { displayDate } from '@lib/date';
 import { getLqipStyle } from '@lib/lqip';
-import { routeBuilder } from '@lib/route';
+import { postTitleMorphName } from '@lib/morph-transitions';
+import { getPostSlug, routeBuilder } from '@lib/route';
 import { Icon } from 'astro-icon/components';
 import type { BlogPost } from 'types/blog';
 import UmamiPVSpan from '@/components/umami/UmamiPVSpan';
 import { MAX_WIDTH } from '@/constants/layout';
+import SakuraPetals from './SakuraPetals.astro';
 import WaveSvg from './wave';
 
 export interface CoverProps {
@@ -30,6 +32,7 @@ const bannerLqipStyle = compact ? undefined : getLqipStyle('/img/site_header_192
 
 const href = data && routeBuilder(Routes.Post, data);
 const pageStatsConfig = href ? createArticleStatsConfig(href) : null;
+const titleMorph = data ? postTitleMorphName(getPostSlug(data)) : undefined;
 const copyLinkLabel = '复制链接';
 const copiedLabel = '已复制';
 const copyFailedLabel = '复制失败，请手动复制';
@@ -37,14 +40,15 @@ const copyFailedLabel = '复制失败，请手动复制';
 
 <div
   class:list={[
-    'relative z-0 flex overflow-hidden',
+    'cover-hero relative z-0 flex overflow-hidden',
     compact ? 'h-[42dvh] min-h-72 max-h-120 tablet:h-[36dvh] tablet:min-h-64' : 'h-[60dvh] max-h-200',
   ]}
 >
-  <div class="absolute inset-0 h-full bg-black/40"></div>
+  <div class="cover-scrim absolute inset-0 h-full"></div>
+  {motionConfig.heroPetals && <SakuraPetals />}
   <div
     class:list={[
-      'absolute inset-0 flex flex-col items-center justify-center px-5 text-white',
+      'cover-copy absolute inset-0 flex flex-col items-center justify-center px-5 text-white',
       compact ? 'bottom-[4dvh]' : 'bottom-[8dvh]',
     ]}
   >
@@ -52,7 +56,7 @@ const copyFailedLabel = '复制失败，请手动复制';
       title ? (
         <h1
           class:list={[
-            'shadow-text word-break flex items-center gap-2 text-center font-bold text-balance',
+            'motion-rise shadow-text word-break flex items-center gap-2 text-center font-bold text-balance',
             MAX_WIDTH.content,
             compact
               ? 'text-4xl/[1.15] tracking-[0.08em] tablet:text-3xl/[1.15] tablet:tracking-[0.05em]'
@@ -76,7 +80,10 @@ const copyFailedLabel = '复制失败，请手动复制';
       ) : data ? (
         <>
           <h1
-            class={`shadow-text word-break text-4.5xl text-center font-bold md:text-2xl ${MAX_WIDTH.content} flex flex-wrap items-center justify-center gap-3`}
+            class={`motion-rise shadow-text word-break text-4.5xl text-center font-bold md:text-2xl ${MAX_WIDTH.content} flex flex-wrap items-center justify-center gap-3`}
+            transition:name={titleMorph}
+            transition:animate="initial"
+            data-morph={titleMorph}
           >
             {dataTitle ?? title}
             {isDraft && (
@@ -87,7 +94,7 @@ const copyFailedLabel = '复制失败，请手动复制';
             )}
           </h1>
           {data && (
-            <p class="mt-3 flex flex-wrap items-center justify-center gap-4 md:text-xs">
+            <p class="motion-rise mt-3 flex flex-wrap items-center justify-center gap-4 md:text-xs" style="--i: 1">
               <span class="flex items-center gap-1">
                 <Icon name="fa6-solid:calendar-days" />
                 发表于 {date && displayDate.datetime(date)}
@@ -117,9 +124,11 @@ const copyFailedLabel = '复制失败，请手动复制';
         </>
       ) : (
         <>
-          <h2 class="shadow-text font-chill-round text-5xl/[1.2]">{siteConfig?.alternate}</h2>
-          <h1 class="shadow-text font-chill-round mt-3 text-5xl/[1.2] font-bold tracking-widest">{siteConfig?.title}</h1>
-          <p class="shadow-text mt-5 text-sm">= {siteConfig?.subtitle} =</p>
+          <h2 class="motion-rise shadow-text font-chill-round text-5xl/[1.2]">{siteConfig?.alternate}</h2>
+          <h1 class="motion-rise shadow-text font-chill-round mt-3 text-5xl/[1.2] font-bold tracking-widest" style="--i: 1">
+            {siteConfig?.title}
+          </h1>
+          <p class="motion-rise shadow-text mt-5 text-sm tracking-[0.2em]" style="--i: 2">= {siteConfig?.subtitle} =</p>
         </>
       )
     }
@@ -145,6 +154,33 @@ const copyFailedLabel = '复制失败，请手动复制';
 </div>
 
 <script>
+  import { readMotionLevel, subscribeMotionLevel } from '@lib/motion-level';
+
+  /**
+   * First visit only: the banner fades up from its LQIP and settles from a slight zoom.
+   * A cached banner is painted before this module runs, so animating it would visibly jump.
+   */
+  function settleBanner() {
+    const image = document.querySelector<HTMLImageElement>('#banner-box > img');
+    if (!image || image.complete || readMotionLevel() === 'reduced') return;
+    image.addEventListener(
+      'load',
+      () => {
+        if (readMotionLevel() === 'reduced') return;
+        const easing = 'cubic-bezier(0.25, 1, 0.5, 1)';
+        const animations = [
+          image.animate({ opacity: [0, 1] }, { duration: 700, easing }),
+          image.animate({ scale: [1.08, 1] }, { duration: 1800, easing }),
+        ];
+        const unsubscribe = subscribeMotionLevel(() => {
+          if (readMotionLevel() === 'reduced') animations.forEach((animation) => animation.cancel());
+        });
+        void Promise.allSettled(animations.map((animation) => animation.finished)).then(unsubscribe);
+      },
+      { once: true },
+    );
+  }
+
   function installCoverCopyButtons() {
     document.querySelectorAll<HTMLButtonElement>('.cover-copy-link:not([data-copy-ready])').forEach((button) => {
       button.dataset.copyReady = 'true';
@@ -168,6 +204,7 @@ const copyFailedLabel = '复制失败，请手动复制';
     });
   }
 
+  settleBanner();
   installCoverCopyButtons();
   document.addEventListener('astro:page-load', installCoverCopyButtons);
 </script>

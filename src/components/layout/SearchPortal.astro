@@ -35,9 +35,9 @@ import Search from 'astro-pagefind/components/Search.astro';
   import {
     applyPagefindSearchQuery,
     PAGEFIND_SEARCH_INPUT_SELECTOR,
+    PAGEFIND_SEARCH_SCROLL_SELECTOR,
     type PagefindSearchSession,
     readPagefindSearchSession,
-    SEARCH_DIALOG_SCROLL_AREA_ID,
     updatePagefindSearchSession,
   } from '@lib/pagefind-search-session';
 
@@ -50,7 +50,7 @@ import Search from 'astro-pagefind/components/Search.astro';
   }
 
   function getScrollArea(): HTMLElement | null {
-    return document.getElementById(SEARCH_DIALOG_SCROLL_AREA_ID);
+    return document.querySelector<HTMLElement>(PAGEFIND_SEARCH_SCROLL_SELECTOR);
   }
 
   function persistSearchSession() {

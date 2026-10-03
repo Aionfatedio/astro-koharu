@@ -19,7 +19,7 @@ export function SeriesPostList({ posts, currentPostSlug, className }: SeriesPost
   }
 
   return (
-    <div className={cn('flex flex-col gap-1 md:pb-3 md:pl-2', className)}>
+    <div className={cn('flex flex-col gap-1 md:pb-3 md:pl-2', className)} data-series-list>
       {posts.map((post) => {
         const href = routeBuilder(Routes.Post, post);
         const isActive = post.slug === currentPostSlug;
