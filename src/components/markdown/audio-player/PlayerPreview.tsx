@@ -7,7 +7,7 @@
  */
 
 import { usePlaybackLrcIndex } from '@hooks/usePlaybackTime';
-import { type MetingSong, normalizeMetingResourceUrl } from '@lib/meting';
+import type { MetingSong } from '@lib/meting';
 import type { PlaybackTimeStore } from '@lib/playback-time-store';
 import { cn } from '@lib/utils';
 import { memo, useEffect, useMemo, useState } from 'react';
@@ -38,12 +38,10 @@ function useLrcText(lrcSource: string | undefined): string {
       return;
     }
 
-    // Local mod: normalize Meting URLs (http->https) and also fetch root-relative
-    // paths — cloud lyrics live at /music/cloud-lyrics/*.lrc.
-    const normalizedLrcSource = normalizeMetingResourceUrl(lrcSource);
-    if (normalizedLrcSource.startsWith('http') || normalizedLrcSource.startsWith('/')) {
+    // Playlist resolution normalizes API URLs; cloud lyrics also use root-relative paths.
+    if (lrcSource.startsWith('http') || lrcSource.startsWith('/')) {
       const controller = new AbortController();
-      fetch(normalizedLrcSource, { signal: controller.signal })
+      fetch(lrcSource, { signal: controller.signal })
         .then((r) => r.text())
         .then(setText)
         .catch((error: unknown) => {
@@ -52,7 +50,7 @@ function useLrcText(lrcSource: string | undefined): string {
       return () => controller.abort();
     }
 
-    setText(normalizedLrcSource);
+    setText(lrcSource);
   }, [lrcSource]);
 
   return text;

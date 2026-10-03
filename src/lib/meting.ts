@@ -7,7 +7,6 @@
 
 const DEFAULT_API = 'https://163.hyc.moe/';
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
-const DEFAULT_API_HOST = '163.hyc.moe';
 
 export interface MetingSong {
   name: string;
@@ -55,33 +54,28 @@ function getCacheKey(server: string, type: string, id: string): string {
   return `meting:${server}:${type}:${id}`;
 }
 
-/** Avoid CORS failures from the public Meting API's HTTP -> HTTPS redirect. */
-export function normalizeMetingResourceUrl(value: string): string {
-  const trimmed = value.trim();
-  if (!trimmed) return trimmed;
+/** Some HTTPS Meting servers return HTTP links whose redirects fail browser CORS checks. */
+function normalizeMediaUrls(songs: MetingSong[], apiUrl: URL): MetingSong[] {
+  if (apiUrl.protocol !== 'https:') return songs;
 
-  try {
-    const url = new URL(trimmed);
-    if (url.protocol === 'http:' && url.hostname === DEFAULT_API_HOST) {
+  const normalize = (source: string): string => {
+    if (!source?.startsWith('http://')) return source;
+    try {
+      const url = new URL(source);
+      if (url.host !== apiUrl.host) return source;
       url.protocol = 'https:';
-      return url.toString();
+      return url.href;
+    } catch {
+      return source;
     }
-
-    if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  } catch {
-    // Relative local paths and inline lyrics are valid for this app; leave them untouched.
-  }
-
-  return value;
-}
-
-function normalizeMetingSong(song: MetingSong): MetingSong {
-  return {
-    ...song,
-    url: normalizeMetingResourceUrl(song.url),
-    pic: song.pic ? normalizeMetingResourceUrl(song.pic) : '',
-    lrc: song.lrc ? normalizeMetingResourceUrl(song.lrc) : '',
   };
+
+  return songs.map((song) => ({
+    ...song,
+    url: normalize(song.url),
+    pic: normalize(song.pic),
+    lrc: normalize(song.lrc),
+  }));
 }
 
 function getFromCache(key: string): MetingSong[] | null {
@@ -93,9 +87,8 @@ function getFromCache(key: string): MetingSong[] | null {
       localStorage.removeItem(key);
       return null;
     }
-    // Normalize on read (cheap) instead of writing back — a write here would
-    // refresh `timestamp` and let stale CDN-signed URLs outlive the TTL forever.
-    return entry.data.filter(isMetingSong).map(normalizeMetingSong);
+    // Do not write back on read: refreshing the timestamp would keep stale CDN-signed URLs alive.
+    return entry.data.filter(isMetingSong);
   } catch {
     try {
       localStorage.removeItem(key);
@@ -138,11 +131,11 @@ function isMetingSong(obj: unknown): obj is MetingSong {
 
 /** Fetch songs from Meting API for a single parsed URL. */
 async function fetchMeting(server: string, type: string, id: string, apiUrl?: string): Promise<MetingSong[]> {
+  const url = new URL(apiUrl || DEFAULT_API);
   const cacheKey = getCacheKey(server, type, id);
   const cached = getFromCache(cacheKey);
-  if (cached) return cached;
+  if (cached) return normalizeMediaUrls(cached, url);
 
-  const url = new URL(normalizeMetingResourceUrl(apiUrl || DEFAULT_API));
   const params = new URLSearchParams({ server, type, id });
   url.search = params.toString();
   const response = await fetch(url);
@@ -150,7 +143,7 @@ async function fetchMeting(server: string, type: string, id: string, apiUrl?: st
 
   const data: unknown = await response.json();
   if (!Array.isArray(data)) throw new Error('Meting API returned an invalid playlist.');
-  const songs = data.filter(isMetingSong).map(normalizeMetingSong);
+  const songs = normalizeMediaUrls(data.filter(isMetingSong), url);
   if (songs.length > 0) setCache(cacheKey, songs);
   return songs;
 }
@@ -180,7 +173,7 @@ async function fetchLocalPlaylist(basePath: string): Promise<MetingSong[]> {
 
   const manifest: LocalManifest = await response.json();
   if (!Array.isArray(manifest.tracks)) throw new Error(`Invalid local playlist manifest: ${manifestUrl}`);
-  return manifest.tracks.filter(isMetingSong).map(normalizeMetingSong);
+  return normalizeMediaUrls(manifest.tracks.filter(isMetingSong), new URL(DEFAULT_API));
 }
 
 /** Resolve multiple music URLs into a flat song list. */
