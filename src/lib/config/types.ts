@@ -632,6 +632,15 @@ export interface BgmConfig {
 }
 
 // =============================================================================
+// Writing Room Configuration
+// =============================================================================
+
+/** Public writing room and its preview page. Disabled unless explicitly enabled. */
+export interface WritingRoomConfig {
+  enabled?: boolean;
+}
+
+// =============================================================================
 // Root Configuration Type
 // =============================================================================
 
@@ -649,6 +658,8 @@ export interface SiteYamlConfig {
   motion?: MotionConfig;
   /** Optional dynamic moments archive backed by koharu-suite. */
   moments?: MomentsConfig;
+  /** Optional public Markdown writing room. */
+  editor?: WritingRoomConfig;
   navigation?: RouterItem[];
   comment?: CommentConfig;
   analytics?: AnalyticsConfig;

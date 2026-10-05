@@ -14,17 +14,18 @@ import { useDecryptFlow } from './useDecryptFlow';
 
 interface EncryptedPostProps {
   element: HTMLElement;
+  sanitizeHtml?: (html: string) => string;
 }
 
-export function EncryptedPost({ element }: EncryptedPostProps) {
-  const decryptedRef = useRef('');
+export function EncryptedPost({ element, sanitizeHtml }: EncryptedPostProps) {
+  const decryptedRef = useRef<string | null>(null);
   const renderFrameRef = useRef<number | null>(null);
 
   const flow = useDecryptFlow({
     element,
     initialHint: '请输入密码以查看文章内容',
     onDecrypted: (plaintext) => {
-      decryptedRef.current = plaintext;
+      decryptedRef.current = sanitizeHtml ? sanitizeHtml(plaintext) : plaintext;
     },
   });
   const { state, setState } = flow;
@@ -40,10 +41,10 @@ export function EncryptedPost({ element }: EncryptedPostProps) {
 
     renderFrameRef.current = requestAnimationFrame(() => {
       renderFrameRef.current = null;
-      if (!decryptedRef.current) return;
+      if (decryptedRef.current === null) return;
 
       element.innerHTML = decryptedRef.current;
-      decryptedRef.current = '';
+      decryptedRef.current = null;
       element.classList.remove('encrypted-post');
       element.removeAttribute('data-cipher');
       element.removeAttribute('data-iv');

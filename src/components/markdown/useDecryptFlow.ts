@@ -65,7 +65,7 @@ export function useDecryptFlow({ element, initialHint, onDecrypted }: UseDecrypt
     setState('decrypting');
     const result = await decryptContent(cipher, iv, salt, password);
 
-    if (result) {
+    if (result !== null) {
       onDecrypted(result);
       setState('success');
     } else {

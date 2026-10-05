@@ -6,8 +6,16 @@
  * may import this module — depend on `@lib/config/*` instead.
  */
 
+import { resolveEditorNavigation } from '@lib/config/editor';
 import { normalizeMomentsConfig, resolveMomentsNavigation } from '@lib/config/moments';
-import { contentConfig, enabledSeriesSlugList, featuredSeriesList, motionConfig, siteConfig } from '@lib/config/site';
+import {
+  contentConfig,
+  editorConfig,
+  enabledSeriesSlugList,
+  featuredSeriesList,
+  motionConfig,
+  siteConfig,
+} from '@lib/config/site';
 import type {
   AnalyticsConfig,
   BgmAudioGroup,
@@ -94,7 +102,10 @@ export const momentsConfig = normalizeMomentsConfig(yamlConfig.moments, {
   seriesSlugs: enabledSeriesSlugList,
 });
 
-export const routers: RouterItem[] = resolveMomentsNavigation(yamlConfig.navigation ?? DEFAULT_ROUTERS, momentsConfig);
+export const routers: RouterItem[] = resolveMomentsNavigation(
+  resolveEditorNavigation(yamlConfig.navigation ?? DEFAULT_ROUTERS, editorConfig),
+  momentsConfig,
+);
 
 // Map YAML dev tools config with defaults (dev only)
 export const devConfig: DevConfig = {

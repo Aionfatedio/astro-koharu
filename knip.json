@@ -10,6 +10,7 @@
       "entry": [
         "scripts/koharu/utils/index.ts",
         "src/features/moments/pages/**/*.{astro,ts}",
+        "src/features/editor/pages/**/*.astro",
         "tests/moments/fixture-server.mjs"
       ]
     }

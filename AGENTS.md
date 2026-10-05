@@ -71,6 +71,7 @@ pnpm check            # Run Astro type checking
 pnpm lint             # Run Biome linter and formatter
 pnpm lint:fix         # Auto-fix linting issues
 pnpm knip             # Find unused files/dependencies
+pnpm test:editor      # Check the writing room and CMS source-save logic
 
 # Koharu CLI (Interactive TUI)
 pnpm koharu              # Interactive menu
@@ -150,6 +151,8 @@ pages/ → components/ → hooks/ → lib/ → constants/
 **Featured Series**: Special category-based content series with dedicated pages and homepage highlights. Configured via `featuredSeries` in `config/site.yaml`. Each series requires a unique `slug` (must not conflict with reserved routes) and `categoryName`. Supports multiple series, individual enable/disable, and homepage highlight control. Dynamic routes generated at `[seriesSlug].astro`.
 
 **Theme System**: Dark/light toggle with localStorage, inline check in `<head>` prevents FOUC.
+
+**Writing Room**: `src/features/editor/` provides the shared CodeMirror Markdown editor and isolated live preview. It is disabled by default: set `editor.enabled: true` in `config/site.yaml` and restart/rebuild to generate `/editor/` and `/editor/preview/`. Public editing stores browser drafts or exports Markdown; it cannot write blog files. Local CMS source editing also requires this switch and both `pnpm dev` and `pnpm cms`; only the CMS may save explicitly opened files. The optional link-preview service is documented in `docs/features/editor-link-service.md` and is deployed separately for static hosting.
 
 **Markdown**: Shiki highlighting, auto-generated heading IDs/links via rehype plugins, GFM support.
 

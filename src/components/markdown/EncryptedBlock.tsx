@@ -4,13 +4,14 @@ import { useDecryptFlow } from './useDecryptFlow';
 
 interface EncryptedBlockProps {
   element: HTMLElement;
+  sanitizeHtml?: (html: string) => string;
 }
 
 /**
  * Inline encrypted block. Renders decrypted HTML via dangerouslySetInnerHTML
  * with a smooth height transition, then triggers content enhancers.
  */
-export function EncryptedBlock({ element }: EncryptedBlockProps) {
+export function EncryptedBlock({ element, sanitizeHtml }: EncryptedBlockProps) {
   const [html, setHtml] = useState('');
   const renderFrameRef = useRef<number | null>(null);
   const startHeightRef = useRef<number | null>(null);
@@ -18,7 +19,7 @@ export function EncryptedBlock({ element }: EncryptedBlockProps) {
   const flow = useDecryptFlow({
     element,
     initialHint: '此内容已加密，请输入密码查看',
-    onDecrypted: setHtml,
+    onDecrypted: (plaintext) => setHtml(sanitizeHtml ? sanitizeHtml(plaintext) : plaintext),
   });
   const { state, setState } = flow;
 
@@ -105,7 +106,7 @@ export function EncryptedBlock({ element }: EncryptedBlockProps) {
     return (
       <div className="encrypted-block-render-frame">
         <div className="encrypted-block-content encrypted-content-enter prose dark:prose-invert max-w-none">
-          {/* biome-ignore lint/security/noDangerouslySetInnerHtml: content is from our own build-time markdown pipeline */}
+          {/* biome-ignore lint/security/noDangerouslySetInnerHtml: editor previews sanitize decrypted HTML; blog HTML comes from its build pipeline. */}
           <div dangerouslySetInnerHTML={{ __html: html }} />
         </div>
         {state === 'rendered' && (

@@ -15,6 +15,7 @@ export const RESERVED_ROUTES = new Set([
   'posts',
   'archives',
   'music',
+  'editor',
   '404',
   // Special files
   'rss.xml',

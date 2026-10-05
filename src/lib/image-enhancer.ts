@@ -294,7 +294,7 @@ function handleImageClick(e: Event): void {
 /**
  * Main enhancement function
  */
-export function enhanceImages(container: Element): void {
+export function enhanceImages(container: Element): () => void {
   const images = container.querySelectorAll<HTMLImageElement>('.markdown-image');
 
   // Event delegation — module-level handleImageClick is a stable reference,
@@ -344,6 +344,7 @@ export function enhanceImages(container: Element): void {
 
   // Initial grouping for already-loaded images
   scheduleGrouping();
+  return () => cleanupImages(container);
 }
 
 export function cleanupImages(container: Element): void {

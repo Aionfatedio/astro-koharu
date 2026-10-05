@@ -838,6 +838,7 @@ html.dark :is(.prose .astro-code, .code-fullscreen-content) {
 
 /* Mermaid source view styling */
 .mermaid-source {
+  color: hsl(var(--card-foreground));
   padding: 1rem 1.5rem;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
