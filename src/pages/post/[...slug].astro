@@ -2,6 +2,7 @@
 import { render } from 'astro:content';
 import CustomContent from '@components/common/CustomContent.astro';
 import HomeSider from '@components/layout/HomeSider.astro';
+import PostPagination from '@components/post/PostPagination.astro';
 import SummaryPanel, { type SummarySource } from '@components/post/SummaryPanel';
 import Cover from '@components/ui/cover/Cover.astro';
 import { defaultContentConfig } from '@constants/content-config';
@@ -18,6 +19,8 @@ import {
   getSortedPosts,
   resolvePostSummary,
 } from '@lib/content';
+import { getAdjacentSeriesPosts } from '@lib/content/posts';
+import { toPostRef } from '@lib/content/transforms';
 import { formatForSeo } from '@lib/date';
 import { getPostSlug } from '@lib/route';
 import { getOgImageUrl } from '@lib/seo/og-image';
@@ -47,6 +50,9 @@ const postRelativePath = normalizedPostFilePath?.startsWith(contentRoot)
   ? normalizedPostFilePath.slice(contentRoot.length)
   : undefined;
 const { Content } = await render(post);
+const adjacent = await getAdjacentSeriesPosts(post);
+const prevPost = adjacent.prevPost ? toPostRef(adjacent.prevPost) : null;
+const nextPost = adjacent.nextPost ? toPostRef(adjacent.nextPost) : null;
 const { title, categories = [], tags = [], date, math: postMath, keywords: postKeywords = [] } = post.data;
 
 // 画师概览：查找画师数据（匹配失败则回退为 null，显示站点概览）
@@ -190,6 +196,7 @@ const summarySource = (resolvedSummary?.source ?? null) as SummarySource | null;
       <article class="prose dark:prose-invert" data-pagefind-body>
         <CustomContent Content={Content} />
       </article>
+      <PostPagination prevPost={prevPost} nextPost={nextPost} />
       <Comment />
     </div>
   </TwoColumnLayout>
