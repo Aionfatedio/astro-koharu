@@ -28,6 +28,7 @@ import { normalizeEditorConfig } from './src/lib/config/editor.ts';
 import { enabledFeaturedSeriesSlugs, normalizeFeaturedSeries } from './src/lib/config/featured-series.ts';
 import { normalizeMomentsConfig } from './src/lib/config/moments.ts';
 import { RESERVED_ROUTES } from './src/lib/config/reserved-routes.ts';
+import { mermaidThemeCSS } from './src/lib/markdown/mermaid-theme.ts';
 import { rehypeEncryptedBlock } from './src/lib/markdown/rehype-encrypted-block.ts';
 import { rehypeEncryptedPost } from './src/lib/markdown/rehype-encrypted-post.ts';
 import { rehypeImagePlaceholder } from './src/lib/markdown/rehype-image-placeholder.ts';
@@ -43,6 +44,7 @@ import { remarkShokaPreprocess } from './src/lib/markdown/remark-shoka-preproces
 import { remarkShokaRuby } from './src/lib/markdown/remark-shoka-ruby.ts';
 import { remarkShokaSpoiler } from './src/lib/markdown/remark-shoka-spoiler.ts';
 import { shokaMetaTransformer } from './src/lib/markdown/shiki-meta-transformer.ts';
+import { SHIKI_THEMES } from './src/lib/markdown/shiki-themes.ts';
 
 // Load YAML config directly with Node.js (before Vite plugins are available)
 // This is only used in astro.config.mjs - other files use @rollup/plugin-yaml
@@ -244,10 +246,7 @@ export default defineConfig({
       excludeLangs: ['mermaid'],
     },
     shikiConfig: {
-      themes: {
-        light: 'github-light',
-        dark: 'github-dark',
-      },
+      themes: SHIKI_THEMES,
       transformers: shikiTransformers,
     },
   },
@@ -270,6 +269,7 @@ export default defineConfig({
     pagefind(),
     mermaid({
       autoTheme: true,
+      mermaidConfig: { themeCSS: mermaidThemeCSS },
     }),
     robotsTxt(robotsConfig || {}),
     ...(momentsConfig.enabled ? [momentsRoutes(momentsConfig)] : []),

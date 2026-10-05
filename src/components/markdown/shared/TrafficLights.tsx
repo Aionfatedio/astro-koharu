@@ -14,7 +14,7 @@ interface TrafficLightsProps {
 export function TrafficLights({ onClose, onFullscreen }: TrafficLightsProps) {
   const interactive = !!(onClose || onFullscreen);
   return (
-    <div className={cn('flex gap-2', interactive && 'group')}>
+    <div className={cn('traffic-lights flex gap-2', interactive && 'group')}>
       <TrafficDot
         color="bg-[#ff5f56]"
         onClick={onClose}
