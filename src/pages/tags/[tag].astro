@@ -1,13 +1,12 @@
 ---
+import PageIntro from '@components/common/PageIntro.astro';
+import PostYears from '@components/common/PostYears.astro';
 import HomeSider from '@components/layout/HomeSider.astro';
 import Cover from '@components/ui/cover/Cover.astro';
-import { CONTENT_PADDING } from '@constants/layout';
 import { siteConfig } from '@constants/site-config';
 import Layout from '@layouts/Layout.astro';
 import TwoColumnLayout from '@layouts/TwoColumnLayout.astro';
-import { getPostLastCategory, getSortedPosts, normalizeTag } from '@lib/content';
-import { displayDate } from '@lib/date';
-import { encodeSlug, getPostSlug } from '@lib/route';
+import { getSortedPosts, normalizeTag } from '@lib/content';
 
 export async function getStaticPaths() {
   const posts = await getSortedPosts();
@@ -30,48 +29,15 @@ export async function getStaticPaths() {
 }
 
 const { tag, posts } = Astro.props;
-const hasPosts = posts.length > 0;
 ---
 
-<Layout title={`标签:${tag} | ${siteConfig.title}`} description={`标签 ${tag} 下的所有文章`}>
-  <TwoColumnLayout>
-    <Cover slot="cover" title={`包含标签"${tag}"的文章`} />
+<Layout articleTools={false} title={`标签:${tag} | ${siteConfig.title}`} description={`标签 ${tag} 下的所有文章`}>
+  <TwoColumnLayout showPostFooter={false}>
+    <Cover compact slot="cover" title={`包含标签"${tag}"的文章`} />
     <HomeSider slot="sider" />
-    <div class={`shadow-box mx-0 flex w-full flex-col bg-gradient-start ${CONTENT_PADDING.standard}`}>
-      <h2 class="shoka-decoration-circle has-children group relative h-19 px-6 py-5 text-2xl/9 font-bold">
-        <a
-          href="/tags"
-          class="dashed-border text-muted-foreground group-hover:border-blue group-hover:text-blue border-b">全部</a
-        >
-        <span class="text-muted-foreground text-lg"> / </span>
-        <span class="text-muted-foreground">{tag}</span>
-        <span class="text-muted-foreground text-lg">({posts.length} 篇文章)</span>
-      </h2>
-      {
-        hasPosts && (
-          <div class="category-second-level-container flex flex-col">
-            {posts.map((post) => {
-              const { link, name } = getPostLastCategory(post);
-              return (
-                <p class="shoka-decoration-circle group text-primary relative px-6 py-2 text-base/9 md:overflow-visible">
-                  <span class="text-muted-foreground inline-block w-15 text-xs md:relative md:-top-1">
-                    {displayDate.shortDate(post.data.date)}
-                  </span>
-                  <a
-                    href={link}
-                    class="text-muted-foreground hover:text-blue mr-2 inline-block text-xs md:relative md:-top-1"
-                  >
-                    {name}
-                  </a>
-                  <a href={`/post/${encodeSlug(getPostSlug(post))}`} class="dashed-border md:mt-0.5 md:block md:w-fit">
-                    {post?.data?.title}
-                  </a>
-                </p>
-              );
-            })}
-          </div>
-        )
-      }
+    <div class="index-surface shadow-box">
+      <PageIntro stats={[{ value: posts.length, label: '篇文章' }]} breadcrumbs={[{ label: '标签', href: '/tags' }, { label: tag }]} />
+      <PostYears posts={posts} />
     </div>
   </TwoColumnLayout>
 </Layout>

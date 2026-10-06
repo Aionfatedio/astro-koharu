@@ -1,0 +1,13 @@
+---
+import { buildTagPath } from '@lib/content/tags';
+
+interface Props {
+  tag: string;
+  count: number;
+  tier: number;
+}
+const { tag, count, tier } = Astro.props;
+---
+<a class="index-tag" data-tag={tag.toLowerCase()} data-tier={tier} href={buildTagPath(tag)} aria-label={`查看标签「${tag}」的 ${count} 篇文章`}>
+  {tag}<sup>{count}</sup>
+</a>

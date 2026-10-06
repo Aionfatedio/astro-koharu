@@ -1,0 +1,16 @@
+---
+import PageIntro from '@components/common/PageIntro.astro';
+import FriendRequestForm from '@components/friends/FriendRequestForm';
+import FriendsGrid from '@components/friends/FriendsGrid.astro';
+import { friendsData } from '@constants/friends-config';
+import { Comment } from '@/components/comment';
+---
+
+<div class="index-surface shadow-box flex flex-col gap-8">
+  <PageIntro className="page-intro-flush" stats={[{ value: friendsData.length, label: '位朋友' }]} />
+  <FriendsGrid />
+  <div class="mb-4">
+    <FriendRequestForm client:visible />
+    <Comment />
+  </div>
+</div>

@@ -9,6 +9,7 @@ interface Props {
   post?: BlogPost;
   siderType?: HomeSiderType;
   isPostPage: boolean;
+  articleTools?: boolean;
   artistProfile?: ArtistProfile | null;
 }
 
@@ -27,7 +28,7 @@ import SettingsPanel from '@components/settings/SettingsPanel';
 import { Toaster } from '@components/ui/sonner';
 import { bgmConfig } from '@constants/site-config';
 
-const { post, siderType, isPostPage, artistProfile } = Astro.props;
+const { post, siderType, isPostPage, artistProfile, articleTools = true } = Astro.props;
 ---
 
 <ChristmasEffects transition:persist="christmas-snowfall" />
@@ -46,8 +47,10 @@ const { post, siderType, isPostPage, artistProfile } = Astro.props;
   <MobileDrawer type={siderType} post={post} artistProfile={artistProfile} />
   <SearchDialog client:idle />
   <SearchPortal />
-  <CodeBlockFullscreen client:idle />
-  <DiagramFullscreen client:idle />
+  {articleTools && <>
+    <CodeBlockFullscreen client:idle />
+    <DiagramFullscreen client:idle />
+  </>}
   <Toaster client:idle />
   <AnnouncementProvider />
   <CodePenEmbed />

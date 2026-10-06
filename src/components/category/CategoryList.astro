@@ -1,47 +1,33 @@
 ---
-import { CONTENT_PADDING } from '@constants/layout';
+import PageIntro from '@components/common/PageIntro.astro';
 import type { Category } from '@lib/content';
-import CategoryTitle from './CategoryTitle.astro';
-import SubCategory from './SubCategory.astro';
+import { PETAL_MASK } from '@lib/sakura/petal';
 
 interface Props {
   categories: Category[];
   countMap: Record<string, number>;
   totalCount: number;
+  postCount: number;
 }
-const { categories, countMap, totalCount } = Astro.props;
+const { categories, countMap, totalCount, postCount } = Astro.props;
 ---
-
-<div class={`shadow-box mx-0 flex w-full flex-col bg-gradient-start ${CONTENT_PADDING.standard}`}>
-  <h2 class="shoka-decoration-circle group relative px-6 py-5 text-2xl/9 font-bold md:text-xl/9">
-    <a href="/" class="dashed-border text-muted-foreground group-hover:border-blue group-hover:text-blue border-b"> 首页 </a>
-    <span class="text-muted-foreground text-xl md:text-base">/</span> 共 {totalCount} 个分类
-  </h2>
-
-  <div class="flex w-full flex-col">
-    {
-      categories.map((category) => {
-        const hasChildren = (category.children?.length ?? 0) > 0;
-        return (
-          <>
-            <CategoryTitle
-              title={category.name}
-              count={countMap[category.link]}
-              href={`/categories/${category.link}`}
-              className={hasChildren ? 'has-children' : ''}
-            />
-            {
-              hasChildren && (
-                <div class="category-first-level-container flex flex-col">
-                  {category.children?.map((child) => (
-                    <SubCategory category={child} countMap={countMap} />
-                  ))}
-                </div>
-              )
-            }
-          </>
-        );
-      })
-    }
-  </div>
+<div class="index-surface shadow-box" style={{ '--petal-mask': PETAL_MASK }}>
+  <PageIntro stats={[{ value: totalCount, label: '个分类' }, { value: postCount, label: '篇文章' }]} />
+  <ol class="category-toc">
+    {categories.map((category) => <li class="motion-reveal">
+      <a class="category-toc-head" href={`/categories/${category.link}`}>
+        <span class="category-toc-name">{category.name}</span>
+        <span class="category-toc-leader" aria-hidden="true"></span>
+        <span class="category-toc-count">{countMap[category.link]}</span>
+      </a>
+      {!!category.children?.length && <ul class="category-toc-children">
+        {category.children.map((child) => <li>
+          <a href={`/categories/${child.link}`}>{child.name}<sup>{countMap[child.link]}</sup></a>
+          {!!child.children?.length && <span class="category-toc-grand">
+            {child.children.map((grandchild) => <a href={`/categories/${grandchild.link}`}>{grandchild.name}<sup>{countMap[grandchild.link]}</sup></a>)}
+          </span>}
+        </li>)}
+      </ul>}
+    </li>)}
+  </ol>
 </div>

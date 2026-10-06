@@ -1,62 +1,34 @@
 ---
-import { CONTENT_PADDING } from '@constants/layout';
-import { type Category, getPostsByCategoryPath } from '@lib/content';
-import { displayDate } from '@lib/date';
-import { encodeSlug, getPostSlug } from '@lib/route';
-import { cn } from '@lib/utils';
-import SubCategory from './SubCategory.astro';
+import PageIntro from '@components/common/PageIntro.astro';
+import PostYears from '@components/common/PostYears.astro';
+import { buildCategoryPath, type Category, getPostsByCategoryPath } from '@lib/content';
 
 interface Props {
-  categories: Category[];
-  countMap: Record<string, number>;
-  // category page
-  rootCategory: Category | null;
+  category: Category | null;
 }
-const { categories, countMap, rootCategory } = Astro.props;
-const posts = rootCategory ? await getPostsByCategoryPath(rootCategory.path) : [];
-const hasPosts = posts.length > 0;
+const { category } = Astro.props;
+const path = category?.path ?? [];
+const posts = category ? await getPostsByCategoryPath(path) : [];
+const children = await Promise.all(
+  (category?.children ?? []).map(async (child) => ({
+    category: child,
+    count: (await getPostsByCategoryPath(child.path)).length,
+  })),
+);
+const breadcrumbs = [
+  { label: '分类', href: '/categories' },
+  ...path.map((name, index) => ({
+    label: name,
+    href: index === path.length - 1 ? undefined : buildCategoryPath(path.slice(0, index + 1)),
+  })),
+];
 ---
-
-<div class={`shadow-box mx-0 flex w-full flex-col bg-gradient-start ${CONTENT_PADDING.normal}`}>
-  <h2
-    class={cn('shoka-decoration-circle px-6 group relative py-5 text-2xl/9 font-bold', {
-      'has-children': hasPosts || (rootCategory?.children?.length ?? 0) > 0,
-    })}
-  >
-    <a href="/" class="dashed-border text-muted-foreground hover:text-blue border-b"> 首页 </a>
-    <span class="text-muted-foreground mx-2 text-xl">/</span>
-    <span class="text-muted-foreground">{rootCategory?.name}</span>
-    <span class="text-muted-foreground mx-2 text-xl">分类</span>
-  </h2>
-
-  <div class="flex w-full flex-col">
-    {
-      categories.map((category) => {
-        const hasChildren = (category.children?.length ?? 0) > 0;
-        return (
-          hasChildren && (
-            <div class="category-first-level-container flex flex-col">
-              {category.children?.map((child) => (
-                <SubCategory category={child} countMap={countMap} />
-              ))}
-            </div>
-          )
-        );
-      })
-    }
-    {
-      hasPosts && (
-        <div class="category-second-level-container flex flex-col">
-          {posts.map((post) => (
-            <p class="shoka-decoration-circle group text-primary hover:text-blue relative px-6 py-2 text-base/9">
-              <span class="text-muted-foreground mr-2 text-xs">{displayDate.shortDate(post.data.date)}</span>
-              <a href={`/post/${encodeSlug(getPostSlug(post))}`} class="dashed-border">
-                {post?.data?.title}
-              </a>
-            </p>
-          ))}
-        </div>
-      )
-    }
-  </div>
+<div class="index-surface shadow-box">
+  <PageIntro stats={[{ value: posts.length, label: '篇文章' }]} breadcrumbs={breadcrumbs}>
+    {children.length > 0 && <nav class="index-tabs" slot="tools" aria-label="子分类">
+      <span aria-current="page">全部<sup>{posts.length}</sup></span>
+      {children.map(({ category: child, count }) => <a href={`/categories/${child.link}`}>{child.name}<sup>{count}</sup></a>)}
+    </nav>}
+  </PageIntro>
+  <PostYears posts={posts} showCategory={children.length > 0} />
 </div>

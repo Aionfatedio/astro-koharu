@@ -8,6 +8,8 @@ interface Props extends PageMetaProps {
   title?: string;
   description?: string;
   siderType?: HomeSiderType;
+  /** Text-only indexes can skip article fullscreen viewers; media pages keep the default. */
+  articleTools?: boolean;
   post?: BlogPost;
   artistProfile?: ArtistProfile | null;
 }
@@ -28,6 +30,7 @@ const {
   title = seoConfig.title,
   description = seoConfig.description,
   siderType,
+  articleTools = true,
   post,
   artistProfile,
   ...metaProps
@@ -54,7 +57,7 @@ const isPostPage = Astro.url.pathname.startsWith('/post/');
     <slot name="head" />
   </head>
   <body>
-    <AppShell post={post} siderType={siderType} isPostPage={isPostPage} artistProfile={artistProfile}>
+    <AppShell articleTools={articleTools} post={post} siderType={siderType} isPostPage={isPostPage} artistProfile={artistProfile}>
       <slot />
     </AppShell>
   </body>

@@ -1,0 +1,41 @@
+---
+import { friendsData } from '@constants/friends-config';
+import FriendCard from './FriendCard.astro';
+---
+
+<div data-friends-grid>
+  {friendsData.length > 0 ? (
+    <div class="friends-grid grid">
+      {friendsData.map((friend) => <FriendCard friend={friend} />)}
+    </div>
+  ) : (
+    <div class="flex min-h-40 flex-col items-center justify-center gap-2 text-center">
+      <h2 class="font-semibold text-foreground text-lg">还没有友链</h2>
+      <p class="text-muted-foreground text-sm">欢迎留下你的小站，成为第一位朋友。</p>
+    </div>
+  )}
+</div>
+
+<style>
+  .friends-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.875rem;
+  }
+
+  @media (max-width: 1199px) {
+    .friends-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 600px) {
+    .friends-grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.625rem;
+    }
+  }
+</style>
+
+<script>
+  import './friends-interactions';
+</script>
