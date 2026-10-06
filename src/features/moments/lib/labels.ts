@@ -69,6 +69,7 @@ export const cursorPaginationLabels = {
 } as const;
 
 export const messageCardLabels = {
+  actions: '消息操作',
   updated: momentsLabels.updated,
   permalink: momentsLabels.permalink,
   copyLink: momentsLabels.copyLink,
