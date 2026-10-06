@@ -34,6 +34,7 @@ export const contentConfig: ResolvedContentConfig = normalizeContentConfig(yamlC
 
 /** Friend links with defaults and boundary validation applied. */
 export const friendsConfig = normalizeFriendsConfig(yamlConfig.friends);
+export const friendGroups = friendsConfig.groups;
 
 /** Announcements default to an empty collection. */
 export const announcementsConfig = yamlConfig.announcements ?? [];

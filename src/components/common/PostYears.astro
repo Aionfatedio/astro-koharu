@@ -12,19 +12,20 @@ interface Props {
   showCategory?: boolean;
   /** Archive mode: larger year rules, and `#year-YYYY` / `#month-YYYY-MM` anchors for the calendar. */
   anchors?: boolean;
+  filterKeysOf?: (post: BlogPost) => string[];
 }
-const { posts, showCategory = true, anchors = false } = Astro.props;
+const { posts, showCategory = true, anchors = false, filterKeysOf } = Astro.props;
 const groups = groupPostsByYear(posts, siteTimezone);
 const monthKey = (post: BlogPost) => formatInTimeZone(post.data.date, siteTimezone, 'yyyy-MM');
 ---
 {groups.length ? <div class:list={['post-years', anchors && 'post-years-archive']} style={{ '--petal-mask': PETAL_MASK }}>
-  {groups.map(({ year, posts: yearPosts }) => <section class="motion-reveal" id={anchors ? `year-${year}` : undefined} tabindex={anchors ? -1 : undefined}>
-    <h2 class="year-rule"><SakuraSVG className="year-rule-bloom" /><span>{year}</span><small>{yearPosts.length} 篇文章</small></h2>
+  {groups.map(({ year, posts: yearPosts }) => <section class="motion-reveal" id={anchors ? `year-${year}` : undefined} tabindex={anchors ? -1 : undefined} data-post-year>
+    <h2 class="year-rule"><SakuraSVG className="year-rule-bloom" /><span>{year}</span><small data-count-template="# 篇文章">{yearPosts.length} 篇文章</small></h2>
     <ol class="post-rows">
       {yearPosts.map((post, index) => {
         const key = monthKey(post);
         const firstOfMonth = anchors && (index === 0 || monthKey(yearPosts[index - 1]) !== key);
-        return <PostRow post={post} showCategory={showCategory} id={firstOfMonth ? `month-${key}` : undefined} />;
+        return <PostRow post={post} showCategory={showCategory} id={firstOfMonth ? `month-${key}` : undefined} filterKeys={filterKeysOf?.(post)} />;
       })}
     </ol>
   </section>)}

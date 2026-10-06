@@ -8,12 +8,14 @@ interface Props {
   post: BlogPost;
   showCategory?: boolean;
   id?: string;
+  /** A post may appear in more than one category branch. */
+  filterKeys?: string[];
 }
-const { post, showCategory = true, id } = Astro.props;
+const { post, showCategory = true, id, filterKeys } = Astro.props;
 const date = displayDate.date(post.data.date);
 const category = getPostLastCategory(post);
 ---
-<li class="post-row" id={id} tabindex={id ? -1 : undefined}>
+<li class="post-row" id={id} tabindex={id ? -1 : undefined} data-filter-keys={filterKeys && JSON.stringify(filterKeys)}>
   <time datetime={date}>{date.slice(5)}</time>
   <a class="post-row-title" href={`/post/${encodeSlug(getPostSlug(post))}`}>{post.data.title}</a>
   {showCategory && category.link && <a class="post-row-category" href={category.link}>{category.name}</a>}

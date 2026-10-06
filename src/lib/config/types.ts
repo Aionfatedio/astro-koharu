@@ -108,6 +108,14 @@ export interface FriendLink {
   desc: string;
   image: string;
   color?: string;
+  /** ID of a group defined in friends.groups. */
+  group?: string;
+}
+
+export interface FriendGroup {
+  id: string;
+  title: string;
+  description?: string;
 }
 
 export interface FriendsIntro {
@@ -120,6 +128,7 @@ export interface FriendsIntro {
 
 export interface FriendsConfig {
   intro: FriendsIntro;
+  groups?: FriendGroup[];
   data: FriendLink[];
 }
 

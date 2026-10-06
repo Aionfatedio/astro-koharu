@@ -1,7 +1,8 @@
 ---
 import PageIntro from '@components/common/PageIntro.astro';
 import PostYears from '@components/common/PostYears.astro';
-import { buildCategoryPath, type Category, getPostsByCategoryPath } from '@lib/content';
+import { buildCategoryPath, type Category, getCategoryPaths, getPostsByCategoryPath } from '@lib/content';
+import type { BlogPost } from 'types/blog';
 
 interface Props {
   category: Category | null;
@@ -9,6 +10,11 @@ interface Props {
 const { category } = Astro.props;
 const path = category?.path ?? [];
 const posts = category ? await getPostsByCategoryPath(path) : [];
+// A post can belong to several branches; keep every matching path under the current category.
+const childBranchesOf = (post: BlogPost) =>
+  getCategoryPaths(post.data.categories)
+    .filter((ancestry) => ancestry.length > path.length && path.every((name, index) => ancestry[index] === name))
+    .map((ancestry) => ancestry[path.length]);
 const children = await Promise.all(
   (category?.children ?? []).map(async (child) => ({
     category: child,
@@ -23,12 +29,16 @@ const breadcrumbs = [
   })),
 ];
 ---
-<div class="index-surface shadow-box">
+<div class="index-surface shadow-box" data-category-filter-root>
   <PageIntro stats={[{ value: posts.length, label: '篇文章' }]} breadcrumbs={breadcrumbs}>
-    {children.length > 0 && <nav class="index-tabs" slot="tools" aria-label="子分类">
-      <span aria-current="page">全部<sup>{posts.length}</sup></span>
-      {children.map(({ category: child, count }) => <a href={`/categories/${child.link}`}>{child.name}<sup>{count}</sup></a>)}
-    </nav>}
+    {children.length > 0 && <div class="index-tabs" slot="tools" role="group" aria-label="子分类">
+      <button type="button" data-category-filter="" aria-pressed="true">全部<sup>{posts.length}</sup></button>
+      {children.map(({ category: child, count }) => <button type="button" data-category-filter={child.name} aria-pressed="false">{child.name}<sup>{count}</sup></button>)}
+    </div>}
   </PageIntro>
-  <PostYears posts={posts} showCategory={children.length > 0} />
+  <PostYears posts={posts} showCategory={children.length > 0} filterKeysOf={childBranchesOf} />
 </div>
+<script>
+  import { setupCategoryFilter } from '@lib/category-filter';
+  setupCategoryFilter();
+</script>
