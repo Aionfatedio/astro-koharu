@@ -63,7 +63,7 @@ interface DecryptFormProps {
 
 /** Locked-state decryption UI: lock icon, hint, password input + unlock button, success overlay. */
 export function DecryptForm({ flow, title, className, iconLabel, buttonLabel, onSuccessAnimationComplete }: DecryptFormProps) {
-  const { state, expanded, hintText, hintFaded, busy, inputRef, handleKeyDown, handleBtnClick } = flow;
+  const { state, expanded, hintText, hintFaded, busy, inputRef, handleBtnClick } = flow;
   const settling = state === 'success' || state === 'rendering';
 
   return (
@@ -83,12 +83,16 @@ export function DecryptForm({ flow, title, className, iconLabel, buttonLabel, on
       >
         {hintText}
       </p>
-      <div
+      <form
         className={cn(
           'encrypted-block-input-group',
           !expanded && 'encrypted-input-collapsed',
           state === 'error' && 'encrypted-shake',
         )}
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleBtnClick();
+        }}
       >
         <input
           ref={inputRef}
@@ -96,18 +100,17 @@ export function DecryptForm({ flow, title, className, iconLabel, buttonLabel, on
           className="encrypted-block-input"
           placeholder="输入密码..."
           autoComplete="off"
-          onKeyDown={handleKeyDown}
           disabled={busy}
           tabIndex={expanded ? 0 : -1}
         />
-        <button type="button" className="encrypted-block-btn" onClick={handleBtnClick} disabled={busy} aria-label={buttonLabel}>
+        <button type="submit" className="encrypted-block-btn" disabled={busy} aria-label={buttonLabel}>
           {state === 'decrypting' ? (
             <Icon icon="ri:loader-4-line" className="animate-spin" />
           ) : (
             <Icon icon="ri:lock-unlock-line" />
           )}
         </button>
-      </div>
+      </form>
       {settling && (
         <div className="encrypted-success-overlay">
           {state === 'rendering' ? <LoadingSpinner /> : <SuccessCheck onComplete={onSuccessAnimationComplete} />}

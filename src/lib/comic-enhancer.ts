@@ -83,6 +83,9 @@ function loadComicReaderScript(): Promise<ComicReadScriptGlobal> {
     };
     script.onerror = () => reject(new Error('[comic-enhancer] Failed to load ComicReader.umd.js'));
     document.head.appendChild(script);
+  }).catch((error: unknown) => {
+    scriptLoading = null;
+    throw error;
   });
 
   return scriptLoading;

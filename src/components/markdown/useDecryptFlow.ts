@@ -22,7 +22,6 @@ export interface DecryptFlow {
   busy: boolean;
   hasEncryptionData: boolean;
   inputRef: React.RefObject<HTMLInputElement | null>;
-  handleKeyDown: (e: React.KeyboardEvent) => void;
   handleBtnClick: () => void;
 }
 
@@ -85,13 +84,6 @@ export function useDecryptFlow({ element, initialHint, onDecrypted }: UseDecrypt
     }
   }, [element, schedule, initialHint, onDecrypted]);
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter') handleDecrypt();
-    },
-    [handleDecrypt],
-  );
-
   const handleBtnClick = useCallback(() => {
     if (!expanded) {
       setExpanded(true);
@@ -115,7 +107,6 @@ export function useDecryptFlow({ element, initialHint, onDecrypted }: UseDecrypt
     busy,
     hasEncryptionData,
     inputRef,
-    handleKeyDown,
     handleBtnClick,
   };
 }
