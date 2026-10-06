@@ -1,15 +1,17 @@
 ---
 import PageIntro from '@components/common/PageIntro.astro';
 import HomeSider from '@components/layout/HomeSider.astro';
-import PostList from '@components/post/PostList.astro';
+import SeriesIssues from '@components/series/SeriesIssues.astro';
 import SeriesCover from '@components/ui/cover/SeriesCover.astro';
 import { siteConfig } from '@constants/site-config';
 import Layout from '@layouts/Layout.astro';
 import TwoColumnLayout from '@layouts/TwoColumnLayout.astro';
+import { siteTimezone } from '@lib/config/site';
 import type { FeaturedSeriesItem } from '@lib/config/types';
 import { getEnabledSeries, getPostsByCategoryName } from '@lib/content';
 import { toPostCardDataList } from '@lib/content/transforms';
 import type { GetStaticPaths } from 'astro';
+import { formatInTimeZone } from 'date-fns-tz';
 
 export const getStaticPaths: GetStaticPaths = async () => {
   // Reserved slug validation is performed in normalizeFeaturedSeries (site-config.ts)
@@ -32,6 +34,11 @@ const { series } = Astro.props;
 const seriesPosts = toPostCardDataList(await getPostsByCategoryName(series.categoryName));
 
 const pageTitle = series.fullName ?? series.label ?? series.categoryName;
+// Oldest–newest year of the run; one year when the series has not crossed a new year yet.
+const span = [
+  ...new Set([seriesPosts.at(-1), seriesPosts[0]].map((post) => post && formatInTimeZone(post.date, siteTimezone, 'yyyy'))),
+];
+const stats = [{ value: seriesPosts.length, label: '期' }, ...(span[0] ? [{ value: span.join('–'), label: '年' }] : [])];
 ---
 
 <Layout articleTools={false} title={`${pageTitle} | ${siteConfig.title}`} description={series.description?.slice(0, 160)}>
@@ -39,8 +46,8 @@ const pageTitle = series.fullName ?? series.label ?? series.categoryName;
     <SeriesCover slot="cover" series={series} />
     <HomeSider slot="sider" />
     <div class="index-surface shadow-box">
-      <PageIntro stats={[{ value: seriesPosts.length, label: '篇文章' }]} />
-      <PostList posts={seriesPosts} showPaginator={false} isSimple={true} />
+      <PageIntro stats={stats} />
+      <SeriesIssues posts={seriesPosts} />
     </div>
   </TwoColumnLayout>
 </Layout>
