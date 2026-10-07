@@ -10,9 +10,11 @@ import Cover from '@components/ui/cover/Cover.astro';
 import { defaultContentConfig } from '@constants/content-config';
 import { HomeSiderType } from '@constants/enum';
 import { CONTENT_PADDING } from '@constants/layout';
-import { siteConfig } from '@constants/site-config';
+import { devConfig, siteConfig } from '@constants/site-config';
 import Layout from '@layouts/Layout.astro';
 import TwoColumnLayout from '@layouts/TwoColumnLayout.astro';
+import { isOpenInEditorAvailable } from '@lib/config/post-actions';
+import { editorConfig, postActionsConfig } from '@lib/config/site';
 import {
   buildCategoryPath,
   getCategoryPaths,
@@ -23,14 +25,15 @@ import {
 } from '@lib/content';
 import { colophonItemsAt } from '@lib/content/colophon';
 import { getPostColophon } from '@lib/content/post-colophon';
+import { getLocalEditorHref, getPostSourceFilename, getPostSourcePath, isPostSourcePublic } from '@lib/content/post-source';
 import { getAdjacentSeriesPosts } from '@lib/content/posts';
 import { toPostRef } from '@lib/content/transforms';
 import { formatForSeo } from '@lib/date';
-import { getPostSlug } from '@lib/route';
+import { encodeSlug, getPostSlug } from '@lib/route';
 import { getOgImageUrl } from '@lib/seo/og-image';
 import { Icon } from 'astro-icon/components';
 import { Comment } from '@/components/comment';
-import EditButton from '@/components/EditButton';
+import PostMarkdownActions from '@/components/post/PostMarkdownActions';
 import { getArtistById } from '@/lib/artists';
 
 export async function getStaticPaths() {
@@ -142,6 +145,20 @@ const resolvedSummary = resolvePostSummary(post);
 const colophonItems = getPostColophon(post);
 const bannerMarks = colophonItemsAt(colophonItems, 'banner');
 const sealMarks = colophonItemsAt(colophonItems, 'seal');
+const postSlug = getPostSlug(post);
+const postSourcePath = getPostSourcePath(`/post/${encodeSlug(postSlug)}`);
+const postEditorHref = isOpenInEditorAvailable(postActionsConfig, editorConfig.enabled, import.meta.env.DEV)
+  ? `/editor/?from=${encodeURIComponent(postSourcePath)}`
+  : undefined;
+const localEditors =
+  import.meta.env.DEV && devConfig.localProjectPath && postRelativePath
+    ? devConfig.editors.map(({ id, name, icon, urlTemplate }) => ({
+        id,
+        name,
+        icon,
+        href: getLocalEditorHref({ urlTemplate }, devConfig, postRelativePath),
+      }))
+    : [];
 const summaryText = resolvedSummary?.text ?? null;
 const summarySource = (resolvedSummary?.source ?? null) as SummarySource | null;
 ---
@@ -190,8 +207,16 @@ const summarySource = (resolvedSummary?.source ?? null) as SummarySource | null;
           }
         </div>
         {
-          import.meta.env.DEV && postRelativePath && (
-            <EditButton client:only="react" postRelativePath={postRelativePath} />
+          isPostSourcePublic(post.data, post.body, import.meta.env.PROD) && (
+            <PostMarkdownActions
+              client:idle
+              sourcePath={postSourcePath}
+              filename={getPostSourceFilename(postSlug)}
+              copy={postActionsConfig.copyMarkdown}
+              download={postActionsConfig.downloadMarkdown}
+              editorHref={postEditorHref}
+              localEditors={localEditors}
+            />
           )
         }
       </nav>

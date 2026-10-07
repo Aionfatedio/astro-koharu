@@ -15,6 +15,7 @@ import { normalizeEditorConfig } from './editor';
 import { enabledFeaturedSeriesSlugs, normalizeFeaturedSeries } from './featured-series';
 import { normalizeFriendsConfig } from './friends';
 import { normalizeMotionConfig } from './motion';
+import { normalizePostActionsConfig } from './post-actions';
 import { RESERVED_ROUTES } from './reserved-routes';
 import type { ResolvedContentConfig, ResolvedMotionConfig, ResolvedSiteConfig } from './types';
 
@@ -48,6 +49,7 @@ export const editorConfig = normalizeEditorConfig(yamlConfig.editor);
 
 /** Validated dictionary used by the article, archive and writing room surfaces. */
 export const colophonConfig = normalizeColophonConfig(yamlConfig.colophon);
+export const postActionsConfig = normalizePostActionsConfig(yamlConfig.postActions);
 
 /**
  * Site timezone in IANA format.

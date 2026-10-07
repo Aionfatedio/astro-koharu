@@ -17,5 +17,5 @@
   },
   "tags": ["-lintignore"],
   "ignore": ["public/**", "cms/**", "src/components/ui/**", "src/constants/design-tokens.ts", "src/layouts/PageLayout.astro"],
-  "ignoreDependencies": ["@iconify-json/*", "ffprobe-static"]
+  "ignoreDependencies": ["ffprobe-static"]
 }
