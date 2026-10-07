@@ -9,6 +9,7 @@
 
 import yamlConfig from '../../../config/site.yaml';
 import { DEFAULT_TIMEZONE, isValidTimezone } from '../timezone';
+import { normalizeColophonConfig } from './colophon';
 import { normalizeContentConfig } from './content';
 import { normalizeEditorConfig } from './editor';
 import { enabledFeaturedSeriesSlugs, normalizeFeaturedSeries } from './featured-series';
@@ -44,6 +45,9 @@ export const motionConfig: ResolvedMotionConfig = normalizeMotionConfig(yamlConf
 
 /** Writing room pages are only available when explicitly enabled. */
 export const editorConfig = normalizeEditorConfig(yamlConfig.editor);
+
+/** Validated dictionary used by the article, archive and writing room surfaces. */
+export const colophonConfig = normalizeColophonConfig(yamlConfig.colophon);
 
 /**
  * Site timezone in IANA format.

@@ -5,11 +5,16 @@ import HomeSider from '@components/layout/HomeSider.astro';
 import Cover from '@components/ui/cover/Cover.astro';
 import Layout from '@layouts/Layout.astro';
 import TwoColumnLayout from '@layouts/TwoColumnLayout.astro';
-import { siteConfig, siteTimezone } from '@lib/config/site';
+import { colophonConfig, siteConfig, siteTimezone } from '@lib/config/site';
 import { getSortedPosts } from '@lib/content';
+import { colophonMarkIds } from '@lib/content/colophon';
+import { colophonFilterChips } from '@lib/content/colophon-view';
 import { bucketPostsByMonth, groupPostsByYear, monthIntensity } from '@lib/content/index-groups';
+import { getPostColophon } from '@lib/content/post-colophon';
 import { PETAL_MASK } from '@lib/sakura/petal';
+import { Icon } from 'astro-icon/components';
 import { formatInTimeZone } from 'date-fns-tz';
+import type { BlogPost } from 'types/blog';
 
 const posts = await getSortedPosts();
 const months = bucketPostsByMonth(posts, siteTimezone);
@@ -23,13 +28,21 @@ const stats = [
   { value: posts.length, label: '篇文章' },
   { value: range, label: '年' },
 ];
+const markIds = new Map<BlogPost, string[]>(posts.map((post) => [post, colophonMarkIds(getPostColophon(post))]));
+const markChips = colophonFilterChips(colophonConfig.marks, [...markIds.values()]);
+const marksOf = markChips.length ? (post: BlogPost) => markIds.get(post) ?? [] : undefined;
 ---
 <Layout articleTools={false} title={`归档 | ${siteConfig.title}`} description="文章归档">
   <TwoColumnLayout showPostFooter={false}>
     <Cover compact slot="cover" title="归档" />
     <HomeSider slot="sider" />
-    <div class="index-surface shadow-box" data-archive>
-      <PageIntro stats={stats} />
+    <div class="index-surface shadow-box" data-archive data-colophon-filter-root>
+      <PageIntro stats={stats}>
+        {markChips.length > 0 && <div class="index-tabs index-tabs-quiet colophon-filter" slot="tools" role="group" aria-label="按落款筛选">
+          <button type="button" data-colophon-filter="" aria-pressed="true">全部<sup>{posts.length}</sup></button>
+          {markChips.map((chip) => <button type="button" data-colophon-filter={chip.id} aria-pressed="false"><Icon name={chip.icon} aria-hidden="true" />{chip.label}<sup>{chip.count}</sup></button>)}
+        </div>}
+      </PageIntro>
       {years.length > 0 && <section class="archive-calendar" aria-labelledby="calendar-title" style={{ '--petal-mask': PETAL_MASK }}>
         <div class="archive-calendar-head">
           <h2 id="calendar-title">写作日历</h2>
@@ -53,11 +66,13 @@ const stats = [
           </div>)}
         </div>
       </section>}
-      <PostYears posts={posts} anchors />
+      <PostYears posts={posts} anchors marksOf={marksOf} />
     </div>
   </TwoColumnLayout>
 </Layout>
 <script>
   import { setupArchiveNavigation } from '@lib/archive-navigation';
+  import { setupColophonFilter } from '@lib/colophon-filter';
   setupArchiveNavigation();
+  setupColophonFilter();
 </script>

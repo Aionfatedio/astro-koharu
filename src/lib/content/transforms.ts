@@ -5,8 +5,10 @@
  * Uses a flexible pick-based API that allows selecting specific fields on demand
  */
 
-import type { BlogPost } from '@/types/blog';
+import type { BlogPost, PostCardMark } from '@/types/blog';
 import { getPostSlug } from '../route';
+import { colophonItemsAt } from './colophon';
+import { getPostColophon } from './post-colophon';
 import { getPostDescriptionWithSummary, getPostLastCategory, getPostReadingTime } from './posts';
 
 /**
@@ -29,6 +31,7 @@ export type PostFieldMap = {
   description: string; // from getPostDescriptionWithSummary()
   wordCount: number; // from reading-time
   readingTime: string; // from reading-time
+  cardMarks: PostCardMark[]; // card-placed colophon marks
 };
 
 /**
@@ -50,6 +53,7 @@ const fieldExtractors: { [K in keyof PostFieldMap]: (post: BlogPost) => PostFiel
   description: (p) => getPostDescriptionWithSummary(p),
   wordCount: (p) => getPostReadingTime(p).words,
   readingTime: (p) => getPostReadingTime(p).text,
+  cardMarks: (p) => colophonItemsAt(getPostColophon(p), 'card').map(({ icon, label }) => ({ icon, label })),
 };
 
 /**
@@ -95,6 +99,7 @@ const POST_CARD_DATA_KEYS = [
   'draft',
   'wordCount',
   'readingTime',
+  'cardMarks',
 ] as const;
 
 /**

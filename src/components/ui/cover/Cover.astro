@@ -1,6 +1,9 @@
 ---
+import ColophonMeta from '@components/post/colophon/ColophonMeta.astro';
 import { Routes } from '@constants/router';
 import { createArticleStatsConfig, motionConfig, siteConfig } from '@constants/site-config';
+import { colophonItemsAt } from '@lib/content/colophon';
+import { getPostColophon } from '@lib/content/post-colophon';
 import { getPostReadingTime } from '@lib/content/posts';
 import { displayDate } from '@lib/date';
 import { getLqipStyle } from '@lib/lqip';
@@ -32,6 +35,7 @@ const bannerLqipStyle = compact ? undefined : getLqipStyle('/img/site_header_192
 
 const href = data && routeBuilder(Routes.Post, data);
 const pageStatsConfig = href ? createArticleStatsConfig(href) : null;
+const metaMarks = data ? colophonItemsAt(getPostColophon(data), 'meta') : [];
 const titleMorph = data ? postTitleMorphName(getPostSlug(data)) : undefined;
 const copyLinkLabel = '复制链接';
 const copiedLabel = '已复制';
@@ -119,6 +123,7 @@ const copyFailedLabel = '复制失败，请手动复制';
                   访问
                 </span>
               )}
+              {metaMarks.length > 0 && <ColophonMeta items={metaMarks} />}
             </p>
           )}
         </>

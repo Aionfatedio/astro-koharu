@@ -2,6 +2,8 @@
 import { render } from 'astro:content';
 import CustomContent from '@components/common/CustomContent.astro';
 import HomeSider from '@components/layout/HomeSider.astro';
+import ColophonBanner from '@components/post/colophon/ColophonBanner.astro';
+import ColophonSeal from '@components/post/colophon/ColophonSeal.astro';
 import PostPagination from '@components/post/PostPagination.astro';
 import SummaryPanel, { type SummarySource } from '@components/post/SummaryPanel';
 import Cover from '@components/ui/cover/Cover.astro';
@@ -19,6 +21,8 @@ import {
   getSortedPosts,
   resolvePostSummary,
 } from '@lib/content';
+import { colophonItemsAt } from '@lib/content/colophon';
+import { getPostColophon } from '@lib/content/post-colophon';
 import { getAdjacentSeriesPosts } from '@lib/content/posts';
 import { toPostRef } from '@lib/content/transforms';
 import { formatForSeo } from '@lib/date';
@@ -135,6 +139,9 @@ const breadcrumbJsonLd = {
 
 // 确定显示的摘要内容和来源类型
 const resolvedSummary = resolvePostSummary(post);
+const colophonItems = getPostColophon(post);
+const bannerMarks = colophonItemsAt(colophonItems, 'banner');
+const sealMarks = colophonItemsAt(colophonItems, 'seal');
 const summaryText = resolvedSummary?.text ?? null;
 const summarySource = (resolvedSummary?.source ?? null) as SummarySource | null;
 ---
@@ -188,6 +195,7 @@ const summarySource = (resolvedSummary?.source ?? null) as SummarySource | null;
           )
         }
       </nav>
+      {bannerMarks.length > 0 && <ColophonBanner items={bannerMarks} />}
       {
         !post.data.password && summaryText && summarySource && (
           <SummaryPanel client:visible summary={summaryText} source={summarySource} className="mt-2" />
@@ -196,6 +204,7 @@ const summarySource = (resolvedSummary?.source ?? null) as SummarySource | null;
       <article class="prose dark:prose-invert" data-pagefind-body>
         <CustomContent Content={Content} />
       </article>
+      {sealMarks.length > 0 && <ColophonSeal items={sealMarks} date={post.data.date} />}
       <PostPagination prevPost={prevPost} nextPost={nextPost} />
       <Comment />
     </div>

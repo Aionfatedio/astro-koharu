@@ -13,8 +13,9 @@ interface Props {
   /** Archive mode: larger year rules, and `#year-YYYY` / `#month-YYYY-MM` anchors for the calendar. */
   anchors?: boolean;
   filterKeysOf?: (post: BlogPost) => string[];
+  marksOf?: (post: BlogPost) => string[];
 }
-const { posts, showCategory = true, anchors = false, filterKeysOf } = Astro.props;
+const { posts, showCategory = true, anchors = false, filterKeysOf, marksOf } = Astro.props;
 const groups = groupPostsByYear(posts, siteTimezone);
 const monthKey = (post: BlogPost) => formatInTimeZone(post.data.date, siteTimezone, 'yyyy-MM');
 ---
@@ -25,7 +26,7 @@ const monthKey = (post: BlogPost) => formatInTimeZone(post.data.date, siteTimezo
       {yearPosts.map((post, index) => {
         const key = monthKey(post);
         const firstOfMonth = anchors && (index === 0 || monthKey(yearPosts[index - 1]) !== key);
-        return <PostRow post={post} showCategory={showCategory} id={firstOfMonth ? `month-${key}` : undefined} filterKeys={filterKeysOf?.(post)} />;
+        return <PostRow post={post} showCategory={showCategory} id={firstOfMonth ? `month-${key}` : undefined} filterKeys={filterKeysOf?.(post)} marks={marksOf?.(post)} />;
       })}
     </ol>
   </section>)}

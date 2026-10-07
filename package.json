@@ -38,7 +38,7 @@
     "migrate": "pnpm koharu migrate",
     "save-slugs": "npx tsx scripts/save-slugs.ts",
     "test": "pnpm test:workspace && pnpm test:config && pnpm test:markdown && pnpm test:meting && pnpm test:umami && pnpm test:toc && pnpm test:glide && pnpm test:drawer && pnpm test:diagram && pnpm test:migrate && pnpm test:moments && pnpm test:motion && pnpm test:index",
-    "test:index": "tsx --test src/lib/content/index-groups.test.ts src/lib/content/index-tags.test.ts src/lib/content/series-issue.test.ts",
+    "test:index": "tsx --test src/lib/content/index-groups.test.ts src/lib/content/index-tags.test.ts src/lib/content/series-issue.test.ts src/lib/content/colophon.test.ts src/lib/content/colophon-view.test.ts",
     "test:workspace": "node --test tests/workspace.test.mjs",
     "test:config": "tsx --test src/lib/config/*.test.ts",
     "test:markdown": "tsx --test src/lib/markdown/*.test.ts",
