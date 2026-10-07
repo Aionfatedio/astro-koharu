@@ -45,7 +45,7 @@ export interface ModalState {
 /**
  * Single source of truth for modal state
  */
-const $activeModal = atom<ModalState>({ type: null });
+export const $activeModal = atom<ModalState>({ type: null });
 
 // Computed helpers for convenience
 export const $isDrawerOpen = computed($activeModal, (m) => m.type === 'drawer');

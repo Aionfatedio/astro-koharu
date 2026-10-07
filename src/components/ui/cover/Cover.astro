@@ -148,8 +148,10 @@ const copyFailedLabel = '复制失败，请手动复制';
       src="/img/site_header_1920.webp"
       alt="cover"
       class="h-full w-full object-cover"
-      sizes="50vw"
-      srcset="/img/site_header_800.webp 800w,/img/site_header_1920.webp 1200w"
+      width="4320"
+      height="2430"
+      sizes="100vw"
+      srcset="/img/site_header_800.webp 800w,/img/site_header_1920.webp 4320w"
       loading="eager"
       fetchpriority="high"
       decoding="async"
@@ -162,7 +164,7 @@ const copyFailedLabel = '复制失败，请手动复制';
   import { readMotionLevel, subscribeMotionLevel } from '@lib/motion-level';
 
   /**
-   * First visit only: the banner fades up from its LQIP and settles from a slight zoom.
+   * First visit only: the banner settles from a slight zoom without hiding its first paint.
    * A cached banner is painted before this module runs, so animating it would visibly jump.
    */
   function settleBanner() {
@@ -174,7 +176,6 @@ const copyFailedLabel = '复制失败，请手动复制';
         if (readMotionLevel() === 'reduced') return;
         const easing = 'cubic-bezier(0.25, 1, 0.5, 1)';
         const animations = [
-          image.animate({ opacity: [0, 1] }, { duration: 700, easing }),
           image.animate({ scale: [1.08, 1] }, { duration: 1800, easing }),
         ];
         const unsubscribe = subscribeMotionLevel(() => {

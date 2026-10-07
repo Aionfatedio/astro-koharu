@@ -234,7 +234,8 @@ export default defineConfig({
   compressHTML: true,
   prefetch: {
     prefetchAll: true,
-    defaultStrategy: 'viewport',
+    // Visible-link prefetch competes with the current page's cold load.
+    defaultStrategy: 'hover',
   },
   markdown: {
     processor: unified({
